@@ -8,7 +8,11 @@ export async function getRoles():Promise<Role[]>{
 }
 
 export async function getRole(uuid:string):Promise<Role>{
-    return (await findById(uuid)).rows[0]
+    let result= await findById(uuid)
+    if(result.rowCount==0){
+        throw new NotFoundError("Role");
+    }
+    return result.rows[0]
 }
 
 export async function createRole(role:CreateRole):Promise<void>{
@@ -16,6 +20,7 @@ export async function createRole(role:CreateRole):Promise<void>{
     if(result.rowCount==0){
         throw new BadRequest()
     }
+    return result.rows[0];
 }
 
 export async function updateRole(role:UpdateRole,uuid:string):Promise<void>{
@@ -23,4 +28,5 @@ export async function updateRole(role:UpdateRole,uuid:string):Promise<void>{
     if(result.rowCount==0){
         throw new NotFoundError("role")
     }
+    return result.rows[0];
 }
