@@ -3,7 +3,7 @@ import {z} from "zod"
 import {ActivationStatus} from "./enums/model-activation-status";
 import {createUserSchema,updateUserByAdminSchema,updateUserSchema} from "../middlewares/schemas/user-schema"
 
-export interface User{
+export interface UserResponse{
     uuid:string,
     firstName:string,
     lastName:string,

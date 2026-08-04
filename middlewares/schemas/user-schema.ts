@@ -2,19 +2,20 @@ import { z} from "zod"
 import {ActivationStatus} from "../../models/enums/model-activation-status"
 import {Role} from "../../models/enums/roles"
 export let createUserSchema=z.object({
-    firstName:z.string().nonempty().max(64).nonempty(),
-    lastName:z.string().nonempty().max(64).nonempty(),
+    firstName:z.string().nonempty().max(64),
+    lastName:z.string().nonempty().max(64),
     email:z.email(),
     profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH"),
     createdAtUTC:z.iso.datetime().default(new Date().toISOString()),
+    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
     language:z.string().length(2).default("en"),
     role:z.nativeEnum(Role),
     status:z.nativeEnum(ActivationStatus).default(ActivationStatus.ACTIVE)
 }).strict()
 
 export let updateUserSchema=z.object({
-    firstName:z.string().nonempty().max(64).nonempty().optional(),
-    lastName:z.string().nonempty().max(64).nonempty().optional(),
+    firstName:z.string().nonempty().max(64).optional(),
+    lastName:z.string().nonempty().max(64).optional(),
     profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH"),
     updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
     language:z.string().length(2).default("en"),
