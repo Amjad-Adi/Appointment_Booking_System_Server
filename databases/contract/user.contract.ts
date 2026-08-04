@@ -1,0 +1,12 @@
+export const TABLE_NAME = "users";
+export const COLUMN_ID = "id";
+export const COLUMN_UUID = "uuid";
+export const COLUMN_FIRST_NAME = "first_name";
+export const COLUMN_LAST_NAME = "last_name";
+export const COLUMN_EMAIL = "email";
+export const COLUMN_PROFILE_PICTURE_PATH = "profile_picture_path";
+export const COLUMN_CREATED_AT_UTC = "created_at_utc";
+export const COLUMN_UPDATED_AT_UTC = "updated_at_utc";
+export const COLUMN_LANGUAGE="language";
+export const COLUMN_ROLE="role";
+export const COLUMN_STATUS="status";
