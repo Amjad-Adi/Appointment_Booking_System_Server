@@ -1,11 +1,11 @@
 import {v4 as uuidv4} from "uuid";
-import {Status} from "./enums/model-status"
+import {ActivationStatus} from "./enums/model-activation-status"
 
 export interface Role {
     id: bigint,
     uuid: string,
     name:string,
-    status:Status
+    status:ActivationStatus
 }
 
 export interface CreateRole {
@@ -14,5 +14,5 @@ export interface CreateRole {
 
 export interface UpdateRole {
     name:string,
-    status:Status
+    status:ActivationStatus
 }

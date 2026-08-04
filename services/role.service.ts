@@ -1,6 +1,5 @@
 import {findAll,findById,create,update} from "../repositories/role.repository"
 import {CreateRole, Role, UpdateRole} from "../models/role"
-import {QueryResult} from "pg";
 import {NotFoundError} from "../errors/not-found-error";
 import {BadRequest} from "../errors/bad-request";
 export async function getRoles():Promise<Role[]>{

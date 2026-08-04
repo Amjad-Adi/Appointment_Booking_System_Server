@@ -8,10 +8,10 @@
   },
   "item": [
     {
-      "name": "Role",
+      "name": "User",
       "item": [
         {
-          "name": "Create Role",
+          "name": "POST User",
           "request": {
             "method": "POST",
             "header": [],
@@ -39,7 +39,7 @@
           "response": []
         },
         {
-          "name": "Get Roles",
+          "name": "GET Users",
           "request": {
             "method": "GET",
             "header": []
@@ -47,7 +47,7 @@
           "response": []
         },
         {
-          "name": "Get Role",
+          "name": "GET User",
           "request": {
             "method": "GET",
             "header": []
@@ -55,7 +55,7 @@
           "response": []
         },
         {
-          "name": "Get NOT FOUND role",
+          "name": "GET NOT FOUND User",
           "request": {
             "method": "GET",
             "header": []
@@ -63,7 +63,7 @@
           "response": []
         },
         {
-          "name": "Update role",
+          "name": "PATCH User",
           "request": {
             "method": "PUT",
             "header": [],
@@ -92,18 +92,31 @@
           "response": []
         },
         {
-          "name": "New Request",
+          "name": "POST User with existing email",
           "request": {
-            "method": "GET",
-            "header": []
-          },
-          "response": []
-        },
-        {
-          "name": "New Request",
-          "request": {
-            "method": "GET",
-            "header": []
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstName\":\"ALI\",\r\n    \"lastName\":\"SALEEM\",\r\n    \"email\":\"alisaleem@gmail.com\",\r\n    \"role\":\"SUPER ADMIN\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users"
+              ]
+            }
           },
           "response": []
         }

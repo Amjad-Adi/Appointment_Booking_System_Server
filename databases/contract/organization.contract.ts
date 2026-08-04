@@ -1,0 +1,11 @@
+export const TABLE_NAME = "organizations";
+export const COLUMN_ID = "id";
+export const COLUMN_UUID = "uuid";
+export const COLUMN_NAME = "name";
+export const COLUMN_EMAIL = "email";
+export const COLUMN_PHONE_NUMBER = "phone_number";
+export const COLUMN_BIO = "bio";
+export const COLUMN_LOCATION_ID = "location_id";
+export const COLUMN_PROFILE_PICTURE_PATH="profile_picture_path";
+export const COLUMN_CREATED_AT_UTC="created_at_utc";
+export const COLUMN_STATUS="status";

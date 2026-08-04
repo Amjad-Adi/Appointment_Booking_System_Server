@@ -2,8 +2,7 @@ import {CreateRole, Role, UpdateRole} from "../models/role"
 import {pool} from "../databases/postgre-connection"
 import {COLUMN_NAME, COLUMN_STATUS, COLUMN_UUID, TABLE_NAME} from "../databases/contract/role.contract"
 import {QueryResult} from "pg";
-import {NotFoundError} from "../errors/not-found-error";
-import {Status} from "../models/enums/model-status";
+import {ActivationStatus} from "../models/enums/model-activation-status";
 
 export async function findAll():Promise<QueryResult<any>>{
     try{
@@ -34,7 +33,7 @@ export async function create(role: CreateRole):Promise<QueryResult<any>> {
         `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_STATUS})
                         VALUES ($1,$2)
                         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_STATUS}`,
-                        [role.name,Status.ACTIVE]);
+                        [role.name,ActivationStatus.ACTIVE]);
     } catch (e) {
         console.error(e)
         throw new Error()
