@@ -1,18 +1,13 @@
-import {findAll, findById, create, update, updateByAdmin, isEmailFound} from "../repositories/organizaiton.repository"
+import {findAll, findById, create, update, updateByAdmin, isEmailFound, isPhoneNumberFound } from "../repositories/organizaiton.repository"
 import {NotFoundError} from "../errors/not-found-error";
 import {BadRequest} from "../errors/bad-request";
 import {Conflict} from "../errors/conflict";
-import {
-    CreateOrganization, Organization,
-    OrganizationResponse,
-    UpdateOrganization,
-    UpdateOrganizationByAdmin
-} from "../models/organization";
+import {CreateOrganization, Organization, OrganizationResponse, UpdateOrganization, UpdateOrganizationByAdmin,} from "../models/organization";
 import {CreateLocation} from "../models/location";
 import {ActivationStatus} from "../models/enums/model-activation-status";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
     let result= await findAll()
-    return result.rows.map(row=>({
+    return result.rows.map((row):OrganizationResponse=>({
             uuid: row.uuid,
             name: row.name,
             email: row.email,
@@ -38,7 +33,7 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
     if(result.rowCount==0){
         throw new NotFoundError("Organization");
     }
-    return result.rows.map(row=>({
+    return result.rows.map((row):OrganizationResponse=>({
             uuid: row.uuid,
             name: row.name,
             email: row.email,
@@ -61,6 +56,9 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
 
 export async function createOrganization(organization:CreateOrganization):Promise<Organization>{
     if(await isEmailFound(organization.email)) {
+        throw new Conflict()
+    }
+    if(await isPhoneNumberFound(organization.phoneNumber)) {
         throw new Conflict()
     }
     let result= await create(organization)
