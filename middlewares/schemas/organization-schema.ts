@@ -4,19 +4,19 @@ import {Role} from "../../models/enums/roles"
 import {CreateLocation} from "../../models/location";
 import {createLocationSchema, updateLocationSchema} from "./location-schema";
 export let createOrganizationSchema=z.object({
-    name:z.string().max(256).nonempty(),
+    name:z.string().trim().nonempty().max(256),
     email:z.email(),
     phoneNumber:z.e164(),
-    bio:z.string().max(4096).nonempty(),
+    bio:z.string().trim().max(4096).nonempty(),
     location:createLocationSchema,
-    profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH")
+    profilePicturePath:z.string().trim().nonempty().default("DEFAULT_PICTURE_PATH")
 }).strict()
 
 export let updateOrganizationSchema=z.object({
-    name:z.string().max(256).nonempty().optional(),
-    bio:z.string().max(4096).nonempty().optional(),
+    name:z.string().trim().nonempty().max(256).optional(),
+    bio:z.string().trim().nonempty().max(4096).optional(),
     location:updateLocationSchema.optional(),
-    profilePicturePath:z.string().nonempty().optional(),
+    profilePicturePath:z.string().trim().nonempty().optional(),
     status:z.nativeEnum(ActivationStatus).optional()
 }).strict();
 
