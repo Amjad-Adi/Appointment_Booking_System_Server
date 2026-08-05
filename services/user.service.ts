@@ -1,13 +1,13 @@
-import {findAll, findById, create, update, updateByAdmin, findByEmail} from "../repositories/user.repository"
-import {CreateUser,User,UpdateUserByAdmin,UpdateUser} from "../models/user";
+import {findAll, findById, create, update, updateByAdmin, isEmailFound} from "../repositories/user.repository"
+import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user";
 import {NotFoundError} from "../errors/not-found-error";
 import {BadRequest} from "../errors/bad-request";
 import {Conflict} from "../errors/conflict";
-export async function getUsers():Promise<User[]>{
+export async function getUsers():Promise<UserResponse[]>{
     return (await findAll()).rows
 }
 
-export async function getUser(uuid:string):Promise<User>{
+export async function getUser(uuid:string):Promise<UserResponse>{
     let result= await findById(uuid)
     if(result.rowCount==0){
         throw new NotFoundError("User");
@@ -16,7 +16,7 @@ export async function getUser(uuid:string):Promise<User>{
 }
 
 export async function createUser(user:CreateUser):Promise<CreateUser>{
-    if(await findByEmail(user.email)===true) {
+    if(await isEmailFound(user.email)===true) {
         throw new Conflict()
     }
     let result= await create(user)

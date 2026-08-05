@@ -17,7 +17,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\":\"Karim\"\r\n}",
+              "raw": "{\r\n    \"firstName\":\"mohammad\",\r\n    \"lastName\":\"Ahamd\",\r\n    \"email\":\"mohammadahmad@gmail.com\",\r\n    \"role\":\"CRM\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -25,14 +25,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/roles",
+              "raw": "http://localhost:3000/api/users",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "3000",
               "path": [
-                "roles"
+                "api",
+                "users"
               ]
             }
           },
@@ -42,7 +43,19 @@
           "name": "GET Users",
           "request": {
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users"
+              ]
+            }
           },
           "response": []
         },
@@ -117,6 +130,129 @@
                 "users"
               ]
             }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Organization",
+      "item": [
+        {
+          "name": "POST Organization",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\":\"Karim\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/roles",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "roles"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Organizations",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "GET Organization",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "GET NOT FOUND Oganization",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH Organiation",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\":\"Ali\",\r\n    \"status\":\"INACTIVE\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/roles/182bcd11-1160-4901-9c72-53032dfc91e0",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "roles",
+                "182bcd11-1160-4901-9c72-53032dfc91e0"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Organization with existing email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstName\":\"ALI\",\r\n    \"lastName\":\"SALEEM\",\r\n    \"email\":\"alisaleem@gmail.com\",\r\n    \"role\":\"SUPER ADMIN\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Organization with existing phone number",
+          "request": {
+            "method": "GET",
+            "header": []
           },
           "response": []
         }
