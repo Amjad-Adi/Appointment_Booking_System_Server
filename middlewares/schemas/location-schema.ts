@@ -9,13 +9,10 @@ export let createLocationSchema=z.object({
     name:z.string().nonempty().max(1024),
     locationOnMap:z.tuple([z.number().min(longitudeMinRange).max(longitudeMaxRange),
         z.number().min(latitudeMinRange).max(latitudeMaxRange)]),
-    createdATUTC:z.iso.datetime().default(new Date().toISOString()),
-    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
 }).strict()
 
 export let updateLocationSchema=z.object({
-    name:z.string().nonempty().max(1024),
+    name:z.string().nonempty().max(1024).optional(),
     locationOnMap:z.tuple([z.number().min(longitudeMinRange).max(longitudeMaxRange),
-        z.number().min(latitudeMinRange).max(latitudeMaxRange)]),
-    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
+        z.number().min(latitudeMinRange).max(latitudeMaxRange)]).optional(),
 }).strict();

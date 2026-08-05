@@ -44,10 +44,10 @@ export async function isEmailFound(email:string):Promise<boolean>{
 export async function create(user: CreateUser):Promise<QueryResult<UserResponse>> {
     try{
         return await pool.query(
-            `INSERT INTO ${TABLE_NAME}(${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_ROLE})
-                        VALUES ($1,$2,$3,$4,$5,$6)
+            `INSERT INTO ${TABLE_NAME}(${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_ROLE})
+                        VALUES ($1,$2,$3,$4,$5)
                         RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_ROLE},${COLUMN_STATUS}`,
-                        [user.firstName, user.lastName,user.email,user.profilePicturePath,user.createdAtUTC,user.role]);
+                        [user.firstName, user.lastName,user.email,user.profilePicturePath,user.role]);
     } catch (e) {
         console.error(e)
         throw new Error()
@@ -62,10 +62,10 @@ export async function update(user: UpdateUser, uuid:string):Promise<QueryResult<
                  ${COLUMN_LAST_NAME}=COALESCE($2,${COLUMN_LAST_NAME}),
                  ${COLUMN_PROFILE_PICTURE_PATH}=COALESCE($3,${COLUMN_PROFILE_PICTURE_PATH}),
                  ${COLUMN_LANGUAGE}=COALESCE($4,${COLUMN_LANGUAGE}),
-                 ${COLUMN_UPDATED_AT_UTC}=COALESCE($5,${COLUMN_UPDATED_AT_UTC})
-             WHERE ${COLUMN_UUID} = $6
+                 ${COLUMN_UPDATED_AT_UTC}=now()
+             WHERE ${COLUMN_UUID} = $5
             RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_ROLE},${COLUMN_STATUS}`,
-            [user.firstName, user.lastName, user.profilePicturePath,user.language,user.updatedAtUTC,uuid]);
+            [user.firstName, user.lastName, user.profilePicturePath,user.language,uuid]);
     }catch (e) {
         console.error(e)
         throw new Error()
@@ -77,12 +77,12 @@ export async function updateByAdmin(user: UpdateUserByAdmin, uuid:string):Promis
     try{
         return await pool.query(
             `UPDATE ${TABLE_NAME}
-             SET ${COLUMN_UPDATED_AT_UTC}=COALESCE($1,${COLUMN_UPDATED_AT_UTC}),
+             SET ${COLUMN_UPDATED_AT_UTC}=now(),
                  ${COLUMN_ROLE}=COALESCE($2,${COLUMN_ROLE}),
-                 ${COLUMN_STATUS}=COALESCE($3,${COLUMN_STATUS}),
+                 ${COLUMN_STATUS}=COALESCE($3,${COLUMN_STATUS})
              WHERE ${COLUMN_UUID} = $4
             RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_ROLE},${COLUMN_STATUS}`,
-            [user.updatedAtUTC, user.role,user.status, uuid]);
+            [user.role,user.status, uuid]);
     }catch (e) {
         console.error(e)
         throw new Error()

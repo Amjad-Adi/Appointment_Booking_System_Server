@@ -9,22 +9,17 @@ export let createOrganizationSchema=z.object({
     phoneNumber:z.e164(),
     bio:z.string().max(4096).nonempty(),
     location:createLocationSchema,
-    profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH"),
-    createdAtUTC:z.iso.datetime().default(new Date().toISOString()),
-    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
-    status:z.nativeEnum(ActivationStatus).default(ActivationStatus.ACTIVE)
+    profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH")
 }).strict()
 
 export let updateOrganizationSchema=z.object({
     name:z.string().max(256).nonempty().optional(),
     bio:z.string().max(4096).nonempty().optional(),
     location:updateLocationSchema.optional(),
-    profilePicturePath:z.string().nonempty().default("DEFAULT_PICTURE_PATH"),
-    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
-    status:z.nativeEnum(ActivationStatus).default(ActivationStatus.ACTIVE)
+    profilePicturePath:z.string().nonempty().optional(),
+    status:z.nativeEnum(ActivationStatus).optional()
 }).strict();
 
 export let updateOrganizationByAdminSchema=z.object({
-    updatedAtUTC:z.iso.datetime().default(new Date().toISOString()),
     status:z.nativeEnum(ActivationStatus).optional()
 }).strict();

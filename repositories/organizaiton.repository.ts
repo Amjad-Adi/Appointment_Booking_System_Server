@@ -72,10 +72,10 @@ export async function create(organization: CreateOrganization):Promise<QueryResu
             locationId=locationData.rows[0].id
         }
        let result= await client.query(
-            `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_STATUS})
-                        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+            `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH})
+                        VALUES ($1,$2,$3,$4,$5,$6)
                         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-                        [organization.name, organization.email,organization.phoneNumber,organization.bio,locationId,organization.profilePicturePath,organization.createdAtUTC,organization.status]);
+                        [organization.name, organization.email,organization.phoneNumber,organization.bio,locationId,organization.profilePicturePath]);
         await client.query("COMMIT")
         return result
     } catch (e) {
@@ -102,10 +102,10 @@ export async function update(organization: UpdateOrganization, uuid:string):Prom
              SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),
                  ${COLUMN_BIO}=COALESCE($2,${COLUMN_BIO}),
                  ${COLUMN_PROFILE_PICTURE_PATH}=COALESCE($3,${COLUMN_PROFILE_PICTURE_PATH}),
-                 ${COLUMN_UPDATED_AT_UTC}=COALESCE($4,${COLUMN_UPDATED_AT_UTC})
-             WHERE ${COLUMN_UUID} = $5
+                 ${COLUMN_UPDATED_AT_UTC}=now()
+             WHERE ${COLUMN_UUID} = $4
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LOCATION_ID},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-             [organization.name,organization.bio, organization.profilePicturePath,organization.updatedAtUTC,uuid]);
+             [organization.name,organization.bio, organization.profilePicturePath,uuid]);
         await client.query("COMMIT")
         return result
     }catch (e) {
@@ -122,11 +122,11 @@ export async function updateByAdmin(user: UpdateOrganizationByAdmin, uuid:string
     try{
         return await pool.query(
             `UPDATE ${TABLE_NAME}
-             SET ${COLUMN_UPDATED_AT_UTC}=COALESCE($1,${COLUMN_UPDATED_AT_UTC}),
+             SET ${COLUMN_UPDATED_AT_UTC}=now(),
                  ${COLUMN_STATUS}=COALESCE($2,${COLUMN_STATUS})
              WHERE ${COLUMN_UUID} = $3
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LOCATION_ID},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-             [user.updatedAtUTC,user.status, uuid]);
+             [user.status, uuid]);
     }catch (e) {
         console.error(e)
         throw new Error()
