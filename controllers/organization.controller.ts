@@ -1,4 +1,4 @@
-import {getOrganization,getOrganizations,updateOrganization,updateOrganizationByAdmin,createOrganization} from "../services/organization.service"
+import {getOrganization,getOrganizations,updateOrganization,updateOrganizationByAdmin,createOrganization} from "../services/backend/organization.service"
 import { type Request, type Response } from "express";
 import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user";
 import {CreateLocation} from "../models/location";

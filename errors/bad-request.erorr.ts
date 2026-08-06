@@ -1,5 +1,5 @@
 import {AppError} from "./app-error";
-export class BadRequest extends AppError {
+export class BadRequestErorr extends AppError {
     code:string;
     constructor() {
         super("Bad Request", 400);

@@ -1,5 +1,5 @@
 import {AppError} from "./app-error";
-export class Conflict extends AppError {
+export class ConflictError extends AppError {
     code:string;
     constructor() {
         super("Conflict", 409);

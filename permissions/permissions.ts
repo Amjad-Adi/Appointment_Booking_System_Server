@@ -1,0 +1,2 @@
+export const GET_USERS_PERMISSION = "GET_USERS";
+export const CREATE_USER_PERMISSION = "CREATE_USER";
