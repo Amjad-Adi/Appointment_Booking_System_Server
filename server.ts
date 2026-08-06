@@ -27,5 +27,5 @@ server.listen(PORT, () => {
 });
 LogInAndGetToken()
 async function LogInAndGetToken(){
-    const token=await logIn(getAuth(firebaseApp),"adminamjad123@gmail.com","nimda1500#")
+    const token=await logIn(getAuth(firebaseApp),process.env.FIREBASE_SUPER_ADMIN_EMAIL as string,process.env.FIREBASE_SUPER_ADMIN_PASSWORD  as string)
 console.log(token)}
