@@ -7,6 +7,7 @@ const PORT = 3000;
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth} from "firebase/auth";
+import {createFireBaseUser} from "./services/backend/firebase-admin.service";
 const firebaseConfig = {
     apiKey: "AIzaSyAaiVYC56TwRWruzyhtH9uWK1PbRwGIero",
     authDomain: "training1-abd2a6d3.firebaseapp.com",
@@ -25,7 +26,13 @@ const server = http.createServer(app);
 server.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
 });
-LogInAndGetToken()
-async function LogInAndGetToken(){
+logInAndGetTokenAsAdmin()
+async function logInAndGetTokenAsAdmin(){
     const token=await logIn(getAuth(firebaseApp),process.env.FIREBASE_SUPER_ADMIN_EMAIL as string,process.env.FIREBASE_SUPER_ADMIN_PASSWORD  as string)
-console.log(token)}
+    console.log("\n\nAdmin Token\n\n"+token)}
+
+logInAndGetTokenAsCustomer()
+async function logInAndGetTokenAsCustomer(){
+    const token=await logIn(getAuth(firebaseApp),process.env.FIREBASE_CUSTOMER_EMAIL as string,process.env.FIREBASE_CUSTOMER_PASSWORD  as string)
+console.log("\n\nCustomer Token\n\n"+token)
+}
