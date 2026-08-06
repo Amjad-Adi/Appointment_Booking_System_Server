@@ -1,6 +1,8 @@
-import {getUsers,getUser,updateUser,updateUserByAdmin,createUser} from "../services/user.service"
+import {getUsers,getUser,updateUser,updateUserByAdmin,createUser} from "../services/backend/user.service"
 import { type Request, type Response } from "express";
 import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user";
+import {createFireBaseUser} from "../services/backend/firebase-admin.service";
+import {UserRecord} from "firebase-admin/auth";
 export async function handleGetUsers(req:Request,res:Response){
     const result:UserResponse[]=await getUsers()
     return res.status(200).json(result)
@@ -14,20 +16,22 @@ export async function handleGetUser(req:Request,res:Response){
 
 export async function handleCreateUser(req:Request,res:Response){
     let user:CreateUser=(req.body)
-    const result:CreateUser=await createUser(user)
+    let userRecord :UserRecord= await createFireBaseUser(user.email,user.password)
+    user.uid=userRecord.uid
+    const result:UserResponse=await createUser(user)
     return res.status(201).json(result)
 }
 
 export async function handleUpdateUser(req:Request,res:Response){
     let user:UpdateUser=(req.body)
     let uuid:string=(req.params.uuid) as any as string;
-    const result:UpdateUser=await updateUser(user,uuid)
+    const result:UserResponse=await updateUser(user,uuid)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateUserByAdmin(req:Request,res:Response){
-    let user:UpdateUserByAdmin=(req.body)
+    let user:UserResponse=(req.body)
     let uuid:string=(req.params.uuid) as any as string;
-    const result:UpdateUserByAdmin=await updateUserByAdmin(user,uuid)
+    const result:UserResponse=await updateUserByAdmin(user,uuid)
     return res.status(200).json(result)
 }

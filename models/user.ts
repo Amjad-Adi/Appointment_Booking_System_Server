@@ -15,6 +15,6 @@ export interface UserResponse{
     role:Role,
     status:ActivationStatus
 }
-export type CreateUser= z.infer<typeof createUserSchema>;
+export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};
 export type UpdateUser= z.infer<typeof updateUserSchema>;
 export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema>;

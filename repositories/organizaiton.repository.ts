@@ -1,6 +1,6 @@
 import {CreateUser, UpdateUser,UpdateUserByAdmin} from "../models/user"
 import {pool} from "../databases/postgre-connection"
-import { COLUMN_UUID, COLUMN_NAME, COLUMN_EMAIL, COLUMN_PHONE_NUMBER, COLUMN_BIO, COLUMN_LOCATION_ID, COLUMN_PROFILE_PICTURE_PATH, COLUMN_CREATED_AT_UTC, COLUMN_UPDATED_AT_UTC, COLUMN_STATUS, TABLE_NAME, ALIAS, ALIAS_COLUMN_PHONE_NUMBER, ALIAS_COLUMN_PROFILE_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,ALIAS_COLUMN_UPDATED_AT_UTC,} from "../databases/contract/organization.contract"
+import { COLUMN_UUID, COLUMN_NAME, COLUMN_EMAIL, COLUMN_PHONE_NUMBER, COLUMN_BIO, COLUMN_LOCATION_ID, COLUMN_PROFILE_PICTURE_PATH, COLUMN_CREATED_AT_UTC, COLUMN_UPDATED_AT_UTC, COLUMN_STATUS, TABLE_NAME, ALIAS, ALIAS_COLUMN_PHONE_NUMBER, ALIAS_COLUMN_PROFILE_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,ALIAS_COLUMN_UPDATED_AT_UTC,} from "../databases/contracts/organization.contract"
 import {
     TABLE_NAME as LOCATION_TABLE_NAME,
     ALIAS as LOCATION_ALIAS,
@@ -16,7 +16,7 @@ import {
     ALIAS_COLUMN_UUID as LOCATION_ALIAS_COLUMN_UUID,
     ALIAS_COLUMN_NAME as LOCATION_ALIAS_COLUMN_NAME,
     COLUMN_UUID as LOCATION_COLUMN_UUID,
-} from "../databases/contract/location.contract"
+} from "../databases/contracts/location.contract"
 import {QueryResult} from "pg";
 import {create as createLocation, updateLocation} from "./location.repository"
 import {CreateLocation, LocationResponse, Location, UpdateLocation} from "../models/location"
