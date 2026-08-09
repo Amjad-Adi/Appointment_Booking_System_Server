@@ -1,7 +1,7 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
 import {ActivationStatus} from "./enums/model-activation-status";
-import {createUserSchema,updateUserByAdminSchema,updateUserSchema} from "../middlewares/schemas/user-schema"
+import {createUserSchema,updateUserByAdminSchema,updateUserSchema} from "../middlewares/schemas/user.schema"
 
 export interface UserResponse{
     uuid:string,
@@ -9,6 +9,7 @@ export interface UserResponse{
     lastName:string,
     email:string,
     profilePicturePath:string,
+    organizationUuid:string,
     createdAtUTC:Date,
     updatedAtUTC:Date,
     language:string,
@@ -16,5 +17,5 @@ export interface UserResponse{
     status:ActivationStatus
 }
 export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};
-export type UpdateUser= z.infer<typeof updateUserSchema>;
-export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema>;
+export type UpdateUser= z.infer<typeof updateUserSchema> & {uuid:string};
+export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema> & {uuid:string};

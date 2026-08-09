@@ -1,10 +1,10 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
 import {ActivationStatus} from "./enums/model-activation-status";
-import {createOrganizationSchema,updateOrganizationSchema,updateOrganizationByAdminSchema} from "../middlewares/schemas/organization-schema"
-import {createLocationSchema} from "../middlewares/schemas/location-schema";
-import {LocationResponse} from "./location";
-export interface Organization{
+import {createOrganizationSchema,updateOrganizationSchema,updateOrganizationByAdminSchema} from "../middlewares/schemas/organization.schema"
+import {createLocationSchema} from "../middlewares/schemas/location.schema";
+import {LocationResponse} from "./location.model";
+export interface Organization {
     uuid:string,
     name:string
     email:string,
@@ -46,5 +46,5 @@ export interface OrganizationRow {
     status: ActivationStatus;
 }
 export type CreateOrganization= z.infer<typeof createOrganizationSchema>;
-export type UpdateOrganization= z.infer<typeof updateOrganizationSchema>;
-export type UpdateOrganizationByAdmin= z.infer<typeof updateOrganizationByAdminSchema>;
+export type UpdateOrganization= z.infer<typeof updateOrganizationSchema> & {uuid:string};
+export type UpdateOrganizationByAdmin= z.infer<typeof updateOrganizationByAdminSchema> & {uuid:string};

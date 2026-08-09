@@ -1,0 +1,110 @@
+import {ServiceResponse, Service, UpdateService,CreateService} from "../models/service.model"
+import {pool} from "../databases/postgre-connection"
+import {
+    COLUMN_UUID,
+    COLUMN_NAME,
+    COLUMN_ORGANIZATION_ID,
+    COLUMN_DESCRIPTION,
+    COLUMN_PRICE,
+    COLUMN_DURATION_IN_MINUTES,
+    COLUMN_CREATED_AT_UTC,
+    COLUMN_UPDATED_AT_UTC,
+    COLUMN_STATUS,
+    TABLE_NAME,
+    ALIAS,
+ COLUMN_PICTURE_PATH
+} from "../databases/contracts/service.contract"
+import {
+    TABLE_NAME as ORGANIZATION_TABLE_NAME,
+    ALIAS as ORGANIZATION_ALIAS,
+    COLUMN_ID as ORGANIZATION_COLUMN_ID,
+    COLUMN_NAME as ORGANIZATION_COLUMN_NAME,
+    ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH,
+    COLUMN_UUID as ORGANIZATION_COLUMN_UUID, COLUMN_PROFILE_PICTURE_PATH, COLUMN_ID,
+} from "../databases/contracts/organization.contract"
+import {QueryResult} from "pg";
+export async function findAll():Promise<ServiceResponse[]>{
+    try{
+        return await pool.query(
+            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} , ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+             FROM ${TABLE_NAME} ${ALIAS}
+             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}`).rows
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+export async function findById(uuid:string):Promise<ServiceResponse>{
+    try{
+        return await pool.query(
+            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+             FROM ${TABLE_NAME} ${ALIAS}
+             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+            [uuid])
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+export async function findIdByUuid(uuid:string):Promise<number>{
+    try{
+        return (await pool.query(
+            `SELECT ${COLUMN_ID}
+             FROM ${TABLE_NAME} ${ALIAS}
+             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+            [uuid])).rows[0]
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+export async function isNameFound(uuid:string,name:string):Promise<boolean>{
+    try {
+        return (await pool.query(
+            `SELECT 1
+             FROM ${TABLE_NAME} ${ALIAS}
+            LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+            WHERE ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1 AND ${ALIAS}.${COLUMN_NAME}=$2`,
+            [uuid,name])).rowCount!=0
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+export async function create(service: CreateService):Promise<QueryResult<Service>> {
+    try{
+        return await pool.query(
+            `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH},${COLUMN_ORGANIZATION_ID})
+                        VALUES ($1,$2,$3,$4,$5,$6,$7)
+                        RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_ORGANIZATION_ID} AS ${ALIAS_COLUMN_ORGANIZATION_ID},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+            [service.name, service.description,service.price,service.durationInMinutes,service.profilePicturePath,service.organizationId]);
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+export async function update(service: UpdateService):Promise<QueryResult<Service>> {
+    try{
+        return await pool.query(
+            `UPDATE ${TABLE_NAME}
+             SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),
+                 ${COLUMN_DESCRIPTION}=COALESCE($2,${COLUMN_DESCRIPTION}),
+                 ${COLUMN_PRICE}=COALESCE($3,${COLUMN_PRICE}),
+                 ${COLUMN_DURATION_IN_MINUTES}=COALESCE($4,${COLUMN_DURATION_IN_MINUTES}),
+                 ${COLUMN_PICTURE_PATH}=COALESCE($5,${COLUMN_PICTURE_PATH}),
+                 ${COLUMN_STATUS}=COALESCE($6,${COLUMN_STATUS}),
+                 ${COLUMN_UPDATED_AT_UTC}=now()
+             WHERE ${COLUMN_UUID} = $7
+            RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_ORGANIZATION_ID} AS ${ALIAS_COLUMN_ORGANIZATION_ID},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+            [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid]);
+    }catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}

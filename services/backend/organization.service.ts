@@ -2,8 +2,8 @@ import {findAll, findById, create, update, updateByAdmin, isEmailFound, isPhoneN
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {CreateOrganization, Organization, OrganizationResponse, UpdateOrganization, UpdateOrganizationByAdmin,} from "../../models/organization";
-import {CreateLocation} from "../../models/location";
+import {CreateOrganization, Organization, OrganizationResponse, UpdateOrganization, UpdateOrganizationByAdmin,} from "../../models/organization.model";
+import {CreateLocation} from "../../models/location.model";
 import {ActivationStatus} from "../../models/enums/model-activation-status";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
     let result= await findAll()
@@ -68,16 +68,16 @@ export async function createOrganization(organization:CreateOrganization):Promis
     return result.rows[0];
 }
 
-export async function updateOrganization(organization:UpdateOrganization,uuid:string):Promise<Organization>{
-    let result= await update(organization,uuid)
+export async function updateOrganization(organization:UpdateOrganization):Promise<Organization>{
+    let result= await update(organization)
     if(result.rowCount==0){
         throw new NotFoundError("organization")
     }
     return result.rows[0];
 }
 
-export async function updateOrganizationByAdmin(organization:UpdateOrganizationByAdmin,uuid:string):Promise<Organization>{
-    let result= await updateByAdmin(organization,uuid)
+export async function updateOrganizationByAdmin(organization:UpdateOrganizationByAdmin):Promise<Organization>{
+    let result= await updateByAdmin(organization)
     if(result.rowCount==0){
         throw new NotFoundError("organization")
     }
