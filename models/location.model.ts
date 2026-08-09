@@ -1,7 +1,7 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
 import {ActivationStatus} from "./enums/model-activation-status";
-import {updateLocationSchema,createLocationSchema} from "../middlewares/schemas/location-schema"
+import {updateLocationSchema,createLocationSchema} from "../middlewares/schemas/location.schema"
 
 export interface LocationResponse{
     uuid:string,

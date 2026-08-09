@@ -1,6 +1,6 @@
 import {PoolClient, QueryResult} from "pg";
 import {TABLE_NAME,COLUMN_ID, COLUMN_UUID ,COLUMN_NAME,COLUMN_LOCATION_ON_MAP,COLUMN_CREATED_AT_UTC,COLUMN_UPDATED_AT_UTC} from "../databases/contracts/location.contract"
-import {CreateLocation, Location, UpdateLocation} from "../models/location";
+import {CreateLocation, Location, UpdateLocation} from "../models/location.model";
 export async function create(location: CreateLocation, client:PoolClient):Promise<QueryResult<Location>> {
     try{
         const point = `POINT(${location.locationOnMap[0]} ${location.locationOnMap[1]})`;

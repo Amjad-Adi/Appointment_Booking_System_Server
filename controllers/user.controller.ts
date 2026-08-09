@@ -7,7 +7,7 @@ import {
     getUserByFireBaseUid
 } from "../services/backend/user.service"
 import { type Request, type Response } from "express";
-import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user";
+import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user.model";
 import {createFireBaseUser} from "../services/backend/firebase-admin.service";
 import {UserRecord} from "firebase-admin/auth";
 import {findByUid} from "../repositories/user.repository";
@@ -36,22 +36,19 @@ export async function handleCreateUser(req:Request,res:Response){
 
 export async function handleUpdateUser(req:Request,res:Response){
     let user:UpdateUser=(req.body)
-    let uuid:string=(req.params.uuid) as any as string;
-    const result:UserResponse=await updateUser(user,uuid)
+    const result:UserResponse=await updateUser(user)
     return res.status(200).json(result)
 }
 
 //UNDONE YET
 export async function handleUpdateCurrentUser(req:Request,res:Response){
     let user:UpdateUser=(req.body)
-    let uuid:string=(req.params.uuid) as any as string;
-    const result:UserResponse=await updateUser(user,uuid)
+    const result:UserResponse=await updateUser(user)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateUserByAdmin(req:Request,res:Response){
     let user:UserResponse=(req.body)
-    let uuid:string=(req.params.uuid) as any as string;
-    const result:UserResponse=await updateUserByAdmin(user,uuid)
+    const result:UserResponse=await updateUserByAdmin(user)
     return res.status(200).json(result)
 }

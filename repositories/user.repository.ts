@@ -1,4 +1,4 @@
-import {CreateUser, UpdateUser, UpdateUserByAdmin, UserResponse} from "../models/user"
+import {CreateUser, UpdateUser, UpdateUserByAdmin, UserResponse} from "../models/user.model"
 import {pool} from "../databases/postgre-connection"
 import {
     COLUMN_UUID,
@@ -12,41 +12,75 @@ import {
     COLUMN_ROLE,
     COLUMN_STATUS,
     TABLE_NAME,
-    COLUMN_UID
-} from "../databases/contracts/user.contract"
+    COLUMN_UID,
+    ALIAS_COLUMN_FIRST_NAME,
+    ALIAS_COLUMN_LAST_NAME,
+    ALIAS_COLUMN_ORGANIZATION_ID,
+    ALIAS_COLUMN_CREATED_AT_UTC,
+    ALIAS_COLUMN_UPDATED_AT_UTC,
+    ALIAS_COLUMN_PROFILE_PICTURE_PATH,
+    COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS
+}
+    from "../databases/contracts/user.contract"
 import {QueryResult} from "pg";
-
-export async function findAll():Promise<QueryResult<UserResponse>>{
+import {
+    TABLE_NAME as ORGANIZATION_TABLE_NAME,
+    ALIAS as ORGANIZATION_ALIAS,
+    COLUMN_ID as ORGANIZATION_COLUMN_ID,
+    COLUMN_UUID as ORGANIZATION_COLUMN_UID,
+    COLUMN_NAME as ORGANIZATION_COLUMN_NAME,
+    ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH,
+    COLUMN_UUID as ORGANIZATION_COLUMN_UUID,
+    ALIAS_COLUMN_ORGANIZATION_UUID as ORGANIZATION_ALIAS_COLUMN_UUID
+} from "../databases/contracts/organization.contract"
+export async function findAll():Promise<UserResponse[]>{
     try{
-        return await pool.query(
-            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_LANGUAGE},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
-             FROM ${TABLE_NAME}`)
+        return (await pool.query(
+            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
+             FROM ${TABLE_NAME} ${ALIAS}
+             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}`)).rows
     } catch (e) {
         console.error(e)
         throw new Error()
     }
 }
 
-export async function findByUid(uid:string):Promise<QueryResult<UserResponse>>{
+export async function findByUid(uid:string):Promise<UserResponse>{
     try {
-        return await pool.query(
-            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
-             FROM ${TABLE_NAME}
+        return (await pool.query(
+            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
+             FROM ${TABLE_NAME} ${ALIAS}
+             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
              WHERE ${COLUMN_UID} = $1`,
-             [uid])
+             [uid])).rows[0]
     } catch (e) {
         console.error(e)
         throw new Error()
     }
 }
 
-export async function findById(uuid:string):Promise<QueryResult<UserResponse>>{
+export async function findByUuid(uuid:string):Promise<UserResponse>{
     try {
-        return await pool.query(
-            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
-             FROM ${TABLE_NAME}
+        return (await pool.query(
+            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${COLUMN_ORGANIZATION_ID} AS ${ALIAS_COLUMN_ORGANIZATION_ID},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
+            FROM ${TABLE_NAME}
              WHERE ${COLUMN_UUID} = $1`,
-            [uuid])
+            [uuid])).rows[0]
+    } catch (e) {
+        console.error(e)
+        throw new Error()
+    }
+}
+
+
+export async function findById(id:number):Promise<UserResponse>{
+    try {
+        let result:UserResponse= (await pool.query(
+            `SELECT ${COLUMN_UUID},${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${COLUMN_ORGANIZATION_ID} AS ${ALIAS_COLUMN_ORGANIZATION_ID},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE}, ${COLUMN_STATUS}
+            FROM ${TABLE_NAME}
+             WHERE ${COLUMN_ID} = $1`,
+            [id])).rows[0]
+        result.
     } catch (e) {
         console.error(e)
         throw new Error()
@@ -67,20 +101,21 @@ export async function isEmailFound(email:string):Promise<boolean>{
 }
 
 
-export async function create(user: CreateUser):Promise<QueryResult<UserResponse>> {
+export async function create(user: CreateUser):Promise<UserResponse> {
     try{
-        return await pool.query(
+        let result= (await pool.query(
             `INSERT INTO ${TABLE_NAME}(${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_UID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LANGUAGE},${COLUMN_ROLE})
                         VALUES ($1,$2,$3,$4,$5,$6,$7)
-                        RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE},${COLUMN_STATUS}`,
-                        [user.firstName, user.lastName,user.email,user.uid,user.profilePicturePath,user.language,user.role]);
+                        RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${COLUMN_ORGANIZATION_ID} AS ${ALIAS_COLUMN_ORGANIZATION_ID},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE},${COLUMN_STATUS}`,
+                        [user.firstName, user.lastName,user.email,user.uid,user.profilePicturePath,user.language,user.role])).rows[0];
+
     } catch (e) {
         console.error(e)
         throw new Error()
     }
 }
 
-export async function update(user: UpdateUser, uuid:string):Promise<QueryResult<UserResponse>> {
+export async function update(user: UpdateUser):Promise<QueryResult<UserResponse>> {
     try{
         return await pool.query(
             `UPDATE ${TABLE_NAME}
@@ -91,7 +126,7 @@ export async function update(user: UpdateUser, uuid:string):Promise<QueryResult<
                  ${COLUMN_UPDATED_AT_UTC}=now()
              WHERE ${COLUMN_UUID} = $5
              RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE},${COLUMN_STATUS}`,
-             [user.firstName, user.lastName, user.profilePicturePath,user.language,uuid]);
+             [user.firstName, user.lastName, user.profilePicturePath,user.language,user.uuid]);
     }catch (e) {
         console.error(e)
         throw new Error()
@@ -99,7 +134,7 @@ export async function update(user: UpdateUser, uuid:string):Promise<QueryResult<
 }
 
 
-export async function updateByAdmin(user: UpdateUserByAdmin, uuid:string):Promise<QueryResult<UserResponse>> {
+export async function updateByAdmin(user: UpdateUserByAdmin):Promise<QueryResult<UserResponse>> {
     try{
         return await pool.query(
             `UPDATE ${TABLE_NAME}
@@ -108,7 +143,7 @@ export async function updateByAdmin(user: UpdateUserByAdmin, uuid:string):Promis
                  ${COLUMN_STATUS}=COALESCE($3,${COLUMN_STATUS})
              WHERE ${COLUMN_UUID} = $4
             RETURNING ${COLUMN_UUID},${COLUMN_FIRST_NAME},${COLUMN_LAST_NAME},${COLUMN_EMAIL},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_LANGUAGE},${COLUMN_ROLE},${COLUMN_STATUS}`,
-            [user.role,user.status, uuid]);
+            [user.role,user.status, user.uuid]);
     }catch (e) {
         console.error(e)
         throw new Error()
