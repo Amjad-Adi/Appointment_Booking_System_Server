@@ -3,45 +3,46 @@ import {
     findById,
     create,
     update,
-    isNameFound, findIdByUuid
+    isNameFound
 } from "../../repositories/service.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
+import {findIdByUuid} from "../../repositories/organizaiton.repository";
 export async function getServices():Promise<ServiceResponse[]>{
-    return (await findAll()).rows
+    return (await findAll())
 }
 
 export async function getService(uuid:string):Promise<ServiceResponse>{
-    let result= await findById(uuid)
-    if(result.rowCount==0){
+    let result:ServiceResponse= await findById(uuid)
+    if(result===undefined){
         throw new NotFoundError("Service");
     }
-    return result.rows[0]
+    return result
 }
 
 
 export async function createService(service:CreateService):Promise<Service>{
-    let organizationId= await findIdByUuid(service.organizationUuid)
-    if(organizationId==null){
+    let organizationId:number= await findIdByUuid(service.organizationUuid)
+    if(organizationId==undefined){
         throw new NotFoundError("Organization");
     }
     service.organizationId=organizationId
     if(await isNameFound(service.organizationUuid,service.name)===true) {
         throw new ConflictError()
     }
-    let result= await create(service)
-    if(result.rowCount==0){
+    let result:Service= await create(service)
+    if(result===undefined){
         throw new BadRequestErorr()
     }
-    return result.rows[0];
+    return result;
 }
 
 export async function updateService(service:UpdateService):Promise<Service>{
-    let result= await update(service)
-    if(result.rowCount==0){
+    let result:Service= await update(service)
+    if(result===undefined){
         throw new NotFoundError("service")
     }
-    return result.rows[0];
+    return result;
 }

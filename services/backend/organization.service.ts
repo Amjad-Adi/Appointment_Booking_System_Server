@@ -1,13 +1,26 @@
-import {findAll, findById, create, update, updateByAdmin, isEmailFound, isPhoneNumberFound } from "../../repositories/organizaiton.repository"
+import {
+    findAll,
+    findIdByUuid,
+    findUserOrganization,
+    create,
+    update,
+    updateByAdmin,
+    isEmailFound,
+    isPhoneNumberFound,
+    findByUuid
+} from "../../repositories/organizaiton.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {CreateOrganization, Organization, OrganizationResponse, UpdateOrganization, UpdateOrganizationByAdmin,} from "../../models/organization.model";
+import {
+    CreateOrganization, Organization, OrganizationResponse,
+    OrganizationRow, UpdateOrganization, UpdateOrganizationByAdmin,
+} from "../../models/organization.model";
 import {CreateLocation} from "../../models/location.model";
 import {ActivationStatus} from "../../models/enums/model-activation-status";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
-    let result= await findAll()
-    return result.rows.map((row):OrganizationResponse=>({
+    let result:OrganizationRow[]= await findAll()
+    return result.map((row):OrganizationResponse=>({
             uuid: row.uuid,
             name: row.name,
             email: row.email,
@@ -15,9 +28,9 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
             bio: row.bio,
             profilePicturePath: row.profilePicturePath,
             location: {
-                uuid: row.locationUUID,
+                uuid: row.locationUuid,
                 name: row.locationName,
-                locationOnMap:[row.longitude, row.latitude] as [number,number],
+                locationOnMap:[row.longitude, row.latitude] as [number|null,number|null],
                 createdAtUTC: row.locationCreatedAtUTC,
                 updatedAtUTC: row.locationUpdatedAtUTC,
             },
@@ -29,29 +42,28 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
 }
 
 export async function getOrganization(uuid:string):Promise<OrganizationResponse>{
-    let result= await findById(uuid)
-    if(result.rowCount==0){
+    let result:OrganizationRow= await findByUuid(uuid)
+    if(result==null){
         throw new NotFoundError("Organization");
     }
-    return result.rows.map((row):OrganizationResponse=>({
-            uuid: row.uuid,
-            name: row.name,
-            email: row.email,
-            phoneNumber: row.phoneNumber,
-            bio: row.bio,
-            profilePicturePath: row.profilePicturePath,
-            location: {
-                uuid: row.locationUUID,
-                name: row.locationName,
-                locationOnMap:[row.longitude, row.latitude] as [number,number],
-                createdAtUTC: row.locationCreatedAtUTC,
-                updatedAtUTC: row.locationUpdatedAtUTC,
-            },
-            createdAtUTC: row.createdAtUTC,
-            updatedAtUTC: row.updatedAtUTC,
-            status: row.status
-        }
-    ))[0]
+    return {
+        uuid: result.uuid,
+        name: result.name,
+        email: result.email,
+        phoneNumber: result.phoneNumber,
+        bio: result.bio,
+        profilePicturePath: result.profilePicturePath,
+        location: {
+            uuid: result.locationUuid,
+            name: result.locationName,
+            locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
+            createdAtUTC: result.locationCreatedAtUTC,
+            updatedAtUTC: result.locationUpdatedAtUTC,
+        },
+        createdAtUTC: result.createdAtUTC,
+        updatedAtUTC: result.updatedAtUTC,
+        status: result.status
+    }
 }
 
 export async function createOrganization(organization:CreateOrganization):Promise<Organization>{
@@ -62,24 +74,28 @@ export async function createOrganization(organization:CreateOrganization):Promis
         throw new ConflictError()
     }
     let result= await create(organization)
-    if(result.rowCount==0){
+    if(result===undefined){
         throw new BadRequestErorr()
     }
-    return result.rows[0];
+    return result;
 }
 
 export async function updateOrganization(organization:UpdateOrganization):Promise<Organization>{
-    let result= await update(organization)
-    if(result.rowCount==0){
+    let result:Organization= await update(organization)
+    if(result===undefined){
         throw new NotFoundError("organization")
     }
-    return result.rows[0];
+    return result;
 }
 
 export async function updateOrganizationByAdmin(organization:UpdateOrganizationByAdmin):Promise<Organization>{
-    let result= await updateByAdmin(organization)
-    if(result.rowCount==0){
+    let result:Organization= await updateByAdmin(organization)
+    if(result===undefined){
         throw new NotFoundError("organization")
     }
-    return result.rows[0];
+    return result;
+}
+
+export async function getUserOrganization(uuid:string):Promise<string>{
+    return ((await findUserOrganization(uuid)).uuid)
 }
