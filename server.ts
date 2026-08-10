@@ -7,7 +7,6 @@ const PORT = 3000;
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth} from "firebase/auth";
-import {createFireBaseUser} from "./services/backend/firebase-admin.service";
 const firebaseConfig = {
     apiKey: "AIzaSyAaiVYC56TwRWruzyhtH9uWK1PbRwGIero",
     authDomain: "training1-abd2a6d3.firebaseapp.com",

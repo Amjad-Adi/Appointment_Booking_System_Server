@@ -35,12 +35,12 @@ export interface OrganizationRow {
     phoneNumber: string;
     bio: string;
     profilePicturePath: string;
-    locationUUID: string;
-    locationName: string;
-    longitude: number;
-    latitude: number;
-    locationCreatedAtUTC: Date;
-    locationUpdatedAtUTC: Date;
+    locationUuid: string|null;
+    locationName: string|null;
+    longitude: number|null;
+    latitude: number|null;
+    locationCreatedAtUTC: Date|null;
+    locationUpdatedAtUTC: Date|null;
     createdAtUTC: Date;
     updatedAtUTC: Date;
     status: ActivationStatus;

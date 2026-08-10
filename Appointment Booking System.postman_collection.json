@@ -13,11 +13,21 @@
         {
           "name": "POST User",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"firstName\":\"mohammad\",\r\n    \"lastName\":\"Ahamd\",\r\n    \"email\":\"mohammadahmad@gmail.com\",\r\n    \"role\":\"CRM\"\r\n}",
+              "raw": "{\r\n    \"firstName\":\"Ali\",\r\n    \"lastName\":\"Naseem\",\r\n    \"email\":\"alinaseem@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -37,11 +47,149 @@
               ]
             }
           },
-          "response": []
+          "response": [
+            {
+              "name": "POST User",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"firstName\":\"Ali\",\r\n    \"lastName\":\"Naseem\",\r\n    \"email\":\"alinaseem@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3000/api/users",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "98"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 13:37:28 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786369103"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "38"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"26-wSmTlwb0ZtOx8OT7Sg/IehU9K1A\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"fail\",\n    \"message\": \"Conflict\"\n}"
+            }
+          ]
         },
         {
           "name": "GET Users",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
@@ -57,40 +205,436 @@
               ]
             }
           },
-          "response": []
+          "response": [
+            {
+              "name": "GET Users",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/users",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "97"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 13:38:03 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786369103"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "1075"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"433-xOWQONrzDjISm07i45GUZns4muU\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n    {\n        \"uuid\": \"575bc946-7097-48e2-825a-d71f9c319b16\",\n        \"firstName\": \"Amjad\",\n        \"last_name\": \"Adi\",\n        \"email\": \"adminamjad123@gmail.com\",\n        \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n        \"organizationUuid\": \"575bc946-7097-48e2-825a-d71f9c319b16\",\n        \"createdAtUTC\": \"2026-08-10T12:52:42.019Z\",\n        \"updatedAtUTC\": \"2026-08-10T12:52:42.019Z\",\n        \"language\": \"en\",\n        \"role\": \"SUPER ADMIN\",\n        \"status\": \"ACTIVE\"\n    },\n    {\n        \"uuid\": \"4d139983-ea44-4d62-9cc0-f560c58b8fb2\",\n        \"firstName\": \"Mohammad\",\n        \"last_name\": \"Karam\",\n        \"email\": \"testuser@gmail.com\",\n        \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n        \"organizationUuid\": \"4d139983-ea44-4d62-9cc0-f560c58b8fb2\",\n        \"createdAtUTC\": \"2026-08-10T12:52:42.019Z\",\n        \"updatedAtUTC\": \"2026-08-10T12:52:42.019Z\",\n        \"language\": \"en\",\n        \"role\": \"CUSTOMER\",\n        \"status\": \"ACTIVE\"\n    },\n    {\n        \"uuid\": \"0fafff97-3563-46ea-8d26-b3c882811139\",\n        \"firstName\": \"Ali\",\n        \"last_name\": \"Naseem\",\n        \"email\": \"alinaseem@gmail.com\",\n        \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n        \"organizationUuid\": \"0fafff97-3563-46ea-8d26-b3c882811139\",\n        \"createdAtUTC\": \"2026-08-10T13:19:26.717Z\",\n        \"updatedAtUTC\": \"2026-08-10T13:19:26.717Z\",\n        \"language\": \"en\",\n        \"role\": \"CUSTOMER\",\n        \"status\": \"ACTIVE\"\n    }\n]"
+            }
+          ]
         },
         {
           "name": "GET User",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{$randomBsAdjective}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users/4d139983-ea44-4d62-9cc0-f560c58b8fb2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "4d139983-ea44-4d62-9cc0-f560c58b8fb2"
+              ]
+            }
           },
-          "response": []
+          "response": [
+            {
+              "name": "GET User",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/users/4d139983-ea44-4d62-9cc0-f560c58b8fb2",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users",
+                    "4d139983-ea44-4d62-9cc0-f560c58b8fb2"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "97"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 13:40:30 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786369270"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "320"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"140-JXv82y9DuY/lclAGi/pV3zwV4P8\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"uuid\": \"4d139983-ea44-4d62-9cc0-f560c58b8fb2\",\n    \"firstName\": \"Mohammad\",\n    \"lastName\": \"Karam\",\n    \"email\": \"testuser@gmail.com\",\n    \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n    \"organizationId\": null,\n    \"createdAtUTC\": \"2026-08-10T12:52:42.019Z\",\n    \"updatedAtUTC\": \"2026-08-10T12:52:42.019Z\",\n    \"language\": \"en\",\n    \"role\": \"CUSTOMER\",\n    \"status\": \"ACTIVE\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Current User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "GET Current User",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/users/me",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "96"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 13:41:04 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786369270"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "357"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"165-t99uS2ALIvQQsrUI9t1zjOhyFqg\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"uuid\": \"4d139983-ea44-4d62-9cc0-f560c58b8fb2\",\n    \"firstName\": \"Mohammad\",\n    \"last_name\": \"Karam\",\n    \"email\": \"testuser@gmail.com\",\n    \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n    \"organizationUuid\": \"4d139983-ea44-4d62-9cc0-f560c58b8fb2\",\n    \"createdAtUTC\": \"2026-08-10T12:52:42.019Z\",\n    \"updatedAtUTC\": \"2026-08-10T12:52:42.019Z\",\n    \"language\": \"en\",\n    \"role\": \"CUSTOMER\",\n    \"status\": \"ACTIVE\"\n}"
+            }
+          ]
         },
         {
           "name": "GET NOT FOUND User",
           "request": {
             "method": "GET",
-            "header": []
-          },
-          "response": []
-        },
-        {
-          "name": "PATCH User",
-          "request": {
-            "method": "PUT",
             "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"name\":\"Ali\",\r\n    \"status\":\"INACTIVE\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
             "url": {
-              "raw": "http://localhost:3000/roles/182bcd11-1160-4901-9c72-53032dfc91e0",
+              "raw": "http://localhost:3000/roles/182bcd11-1160-4901-9c72-51031dfc91e0",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -98,20 +642,149 @@
               "port": "3000",
               "path": [
                 "roles",
-                "182bcd11-1160-4901-9c72-53032dfc91e0"
+                "182bcd11-1160-4901-9c72-51031dfc91e0"
               ]
             }
           },
-          "response": []
+          "response": [
+            {
+              "name": "GET NOT FOUND User",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/roles/182bcd11-1160-4901-9c72-51031dfc91e0",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "roles",
+                    "182bcd11-1160-4901-9c72-51031dfc91e0"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "99"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 12:56:38 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786366659"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"30-VYphXyzwWFENquIx+LKrTrMht6M\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"fail\",\n    \"message\": \"Resource Not Found\"\n}"
+            }
+          ]
         },
         {
           "name": "POST User with existing email",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"firstName\":\"ALI\",\r\n    \"lastName\":\"SALEEM\",\r\n    \"email\":\"alisaleem@gmail.com\",\r\n    \"role\":\"SUPER ADMIN\"\r\n}",
+              "raw": "{\r\n    \"firstName\":\"Ali\",\r\n    \"lastName\":\"Naseem\",\r\n    \"email\":\"alinaseem@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"SUPER ADMIN\"\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -128,6 +801,226 @@
               "path": [
                 "api",
                 "users"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "POST User with existing email",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"firstName\":\"Ali\",\r\n    \"lastName\":\"Naseem\",\r\n    \"email\":\"alinaseem@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"SUPER ADMIN\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3000/api/users",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users"
+                  ]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "97"
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 10 Aug 2026 13:48:20 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786369729"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "38"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"26-wSmTlwb0ZtOx8OT7Sg/IehU9K1A\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"status\": \"fail\",\n    \"message\": \"Conflict\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"firstName\":\"ahmad\",\r\n    \"lastName\":\"adi\",\r\n    \"email\":\"ahamdadi@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "register"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Current User",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "New Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users/f70885e1-5cf7-4760-8eb6-9d2a5be06456",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "f70885e1-5cf7-4760-8eb6-9d2a5be06456"
               ]
             }
           },
@@ -169,24 +1062,92 @@
         {
           "name": "GET Organizations",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/organizations",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "organizations"
+              ]
+            }
           },
           "response": []
         },
         {
           "name": "GET Organization",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/organizations/b9a594eb-e6a2-469e-8df0-941eab40c5fc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "organizations",
+                "b9a594eb-e6a2-469e-8df0-941eab40c5fc"
+              ]
+            }
           },
           "response": []
         },
         {
           "name": "GET NOT FOUND Oganization",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "header": []
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/organizations/b9a594eb-e6a2-469e-8df0-941eab41c5fc",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "organizations",
+                "b9a594eb-e6a2-469e-8df0-941eab41c5fc"
+              ]
+            }
           },
           "response": []
         },
@@ -257,6 +1218,40 @@
           "response": []
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "admin_token",
+      "secret": true
+    },
+    {
+      "key": "customer_token",
+      "secret": true
     }
   ]
 }

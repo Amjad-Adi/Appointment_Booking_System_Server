@@ -4,11 +4,11 @@ import {ActivationStatus} from "./enums/model-activation-status";
 import {updateLocationSchema,createLocationSchema} from "../middlewares/schemas/location.schema"
 
 export interface LocationResponse{
-    uuid:string,
-    name:string,
-    readonly locationOnMap:[longitude:number,latitude:number],
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
+    uuid:string|null,
+    name:string|null,
+    readonly locationOnMap:[longitude:number|null,latitude:number|null],
+    createdAtUTC:Date|null,
+    updatedAtUTC:Date|null,
 }
 
 export interface Location{
