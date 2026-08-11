@@ -5,6 +5,8 @@ import {findByUuid} from "../repositories/user.repository";
 import {ForbiddenError} from "../errors/forbidden.error";
 import {findUserOrganization} from "../repositories/organizaiton.repository";
 import {getUserOrganization} from "../services/backend/organization.service";
+import {isUserWorking} from "../services/backend/user.service";
+import {ConflictError} from "../errors/conflict.error";
 export function authorize(permission:string) {
     return function (req: Request, res: Response, next: NextFunction) {
         const role: string = req.user?.role;
@@ -19,12 +21,18 @@ export function authorize(permission:string) {
     }
 }
 
-export function authorizeOrganizationManager(organizationUuid:string){
-    return async function (req: Request, res: Response, next: NextFunction) {
+export async function authorizeOrganizationManager(req: Request, res: Response, next: NextFunction){
         const userUuid: string = req.user.uuid;
-        if(await getUserOrganization(userUuid)!=organizationUuid){
+        if((await getUserOrganization(userUuid)).uuid!=req.params.uuid){
             throw new ForbiddenError()
         }
         next();
+}
+
+export async function rejectWorkingUsers(req: Request, res: Response, next: NextFunction){
+    const userUuid: string = req.user.uuid;
+    if((await isUserWorking(userUuid))){
+        throw new ConflictError()
     }
+    next();
 }

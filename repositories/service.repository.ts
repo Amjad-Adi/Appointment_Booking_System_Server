@@ -34,7 +34,7 @@ export async function findAll():Promise<ServiceResponse[]>{
              LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}`)).rows;
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }
 
@@ -48,7 +48,7 @@ export async function findById(uuid:string):Promise<ServiceResponse>{
             [uuid])).rows[0]
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }
 
@@ -62,7 +62,7 @@ export async function isNameFound(uuid:string,name:string):Promise<boolean>{
             [uuid,name])).rowCount!=0
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }
 
@@ -75,7 +75,7 @@ export async function create(service: CreateService):Promise<Service> {
                         [service.name, service.description,service.price,service.durationInMinutes,service.profilePicturePath,service.organizationId])).rows[0];
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }
 
@@ -95,6 +95,6 @@ export async function update(service: UpdateService):Promise<Service> {
             [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid])).rows[0];
     }catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }

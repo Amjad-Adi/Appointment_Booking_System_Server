@@ -1,7 +1,7 @@
 import { z} from "zod"
 import {ActivationStatus} from "../../models/enums/model-activation-status"
 import {Role} from "../../models/enums/roles"
-export let createUserSchema=z.object({
+export const createUserSchema=z.object({
     firstName:z.string().trim().nonempty().max(64),
     lastName:z.string().trim().nonempty().max(64),
     email:z.email(),
@@ -12,8 +12,8 @@ export let createUserSchema=z.object({
     role:z.nativeEnum(Role),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 
-export let updateUserSchema=z.object({
-    firstName:z.string().trim().nonempty().max(64,{error:"EDED"}).optional(),
+export const updateUserSchema=z.object({
+    firstName:z.string().trim().nonempty().max(64).optional(),
     lastName:z.string().trim().nonempty().max(64).optional(),
     password:z.string().trim().nonempty().max(64).optional(),
     confirmPassword:z.string().trim().nonempty().max(64).optional(),
@@ -21,7 +21,7 @@ export let updateUserSchema=z.object({
     language:z.string().trim().length(2).optional(),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 
-export let updateUserByAdminSchema=z.object({
+export const updateUserByAdminSchema=z.object({
     role:z.nativeEnum(Role).optional(),
     status:z.nativeEnum(ActivationStatus).optional()
 }).strict();

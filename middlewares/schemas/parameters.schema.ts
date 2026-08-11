@@ -1,4 +1,4 @@
 import { z} from "zod"
-export let validateUuid=z.object({
+export const validateUuid=z.object({
     uuid:z.uuid()
 });

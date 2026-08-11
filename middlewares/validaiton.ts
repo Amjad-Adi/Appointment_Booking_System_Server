@@ -18,7 +18,6 @@ export function validateParameter(schema:z.ZodSchema) {
         if (!result.success) {
             throw new BadRequestErorr();
         }
-        req.body = result.data;
         next()
     }
 }

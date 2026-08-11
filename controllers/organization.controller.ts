@@ -1,40 +1,54 @@
-import {getOrganization,getOrganizations,updateOrganization,updateOrganizationByAdmin,createOrganization} from "../services/backend/organization.service"
-import { type Request, type Response } from "express";
-import {CreateUser,UserResponse,UpdateUserByAdmin,UpdateUser} from "../models/user.model";
-import {CreateLocation} from "../models/location.model";
 import {
-    CreateOrganization, Organization,
+    createOrganization,
+    getOrganization,
+    getOrganizations, getUserOrganization,
+    updateOrganization,
+    updateOrganizationByAdmin
+} from "../services/backend/organization.service"
+import {type Request, type Response} from "express";
+import {
+    CreateOrganization,
+    Organization,
     OrganizationResponse,
     UpdateOrganization,
     UpdateOrganizationByAdmin
 } from "../models/organization.model";
+
 export async function handleGetOrganizations(req:Request,res:Response){
     const result:OrganizationResponse[]=await getOrganizations()
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganization(req:Request,res:Response){
-    let uuid:string=(req.params.uuid) as any as string;
+    let uuid:string=(req.params.uuid)  as string;
     const result:OrganizationResponse=await getOrganization(uuid)
+    return res.status(200).json(result)
+}
+
+export async function handleGetCurrentOrganization(req:Request,res:Response){
+    let uuid:string=(req.user.uuid) as string;
+    const result:OrganizationResponse=await getUserOrganization(uuid)
     return res.status(200).json(result)
 }
 
 export async function handleCreateOrganization(req:Request,res:Response){
     let organization:CreateOrganization=(req.body)
+    organization.organizationManagerUuid=req.user.uuid;
     const result:Organization=await createOrganization(organization)
     return res.status(201).json(result)
 }
 
-export async function handleUpdateOrganization(req:Request,res:Response){
+export async function handleUpdateCurrentOrganization(req:Request,res:Response){
     let organization:UpdateOrganization=(req.body)
-    let uuid:string=(req.params.uuid) as any as string;
+    organization.uuid=(await getUserOrganization(req.user.uuid)).uuid;
+    console.log(organization)
     const result:Organization=await updateOrganization(organization)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateOrganizationByAdmin(req:Request, res:Response){
     let organization:UpdateOrganizationByAdmin=(req.body)
-    let uuid:string=(req.params.uuid) as any as string;
+    organization.uuid=(req.params.uuid) as string;
     const result:Organization=await updateOrganizationByAdmin(organization)
     return res.status(200).json(result)
 }

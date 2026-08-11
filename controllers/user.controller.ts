@@ -8,9 +8,12 @@ import {
 } from "../services/backend/user.service"
 import { type Request, type Response } from "express";
 import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User} from "../models/user.model";
-import {createUserByFireBase} from "../services/frontend/firebase-client.service";
+import {createFireBaseUser, updateFireBaseUser} from "../services/backend/firebase-admin.service"
+import {} from "../utils/UserRequest"
 import {findByUid} from "../repositories/user.repository";
 import {getAuth} from "firebase/auth";
+import {UserRecord} from "firebase-admin/auth";
+import {BadRequestErorr} from "../errors/bad-request.erorr";
 export async function handleGetUsers(req:Request,res:Response){
     const result:UserResponse[]=await getUsers()
     return res.status(200).json(result)
@@ -27,10 +30,15 @@ export async function handleGetCurrentUser(req:Request,res:Response){
 }
 
 export async function handleCreateUser(req:Request,res:Response){
-    let user:CreateUser=(req.body)
-    let userRecord= await createUserByFireBase(user.email,user.password)
-    user.uid=userRecord.uid
-    const result:User=await createUser(user)
+    let user: CreateUser = (req.body)
+    let userRecord: UserRecord | undefined;
+    try {
+        userRecord = await createFireBaseUser(user.email, user.password)
+    }catch(err){
+        throw new BadRequestErorr()
+    }
+    user.uid = (userRecord as UserRecord).uid
+    const result: User = await createUser(user)
     return res.status(201).json(result)
 }
 
@@ -40,15 +48,25 @@ export async function handleUpdateUser(req:Request,res:Response){
     return res.status(200).json(result)
 }
 
-//UNDONE YET
 export async function handleUpdateCurrentUser(req:Request,res:Response){
     let user:UpdateUser=(req.body)
+    user.uuid = req.user.uuid;
+    user.uid = req.user.uid;
+    if(user.password !== undefined){
+        try {
+            await updateFireBaseUser(user.uid, user.password)
+        }catch(err){
+            throw new BadRequestErorr()
+        }
+    }
     const result:User=await updateUser(user)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateUserByAdmin(req:Request,res:Response){
+    let uuid:string=(req.params.uuid) as any as string;
     let user:User=(req.body)
+    user.uuid=uuid;
     const result:User=await updateUserByAdmin(user)
     return res.status(200).json(result)
 }

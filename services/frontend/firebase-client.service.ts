@@ -15,12 +15,12 @@ export async function createUserByFireBase( email: string, password: string){
     const result=await createUserWithEmailAndPassword(getAuth(),email, password);
     sendEmailVerification(result.user)
     const token=await result.user.getIdToken();
-    await app.post("api/users/register", {
-        token,
-        firstName,
-        lastName,
-        role: "CUSTOMER"
-    });
+    // await app.post("api/users/register", {
+    //     token,
+    //     firstName,
+    //     lastName,
+    //     role: "CUSTOMER"
+    // });
 }
 export async function logIn(auth:Auth,email:string,password:string) {
     try {

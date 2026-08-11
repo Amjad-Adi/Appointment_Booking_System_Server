@@ -31,5 +31,5 @@ export interface UserResponse{
 }
 
 export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};
-export type UpdateUser= z.infer<typeof updateUserSchema> & {uuid:string};
+export type UpdateUser= z.infer<typeof updateUserSchema> & {uid:string ,uuid:string};
 export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema> & {uuid:string};
