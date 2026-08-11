@@ -36,9 +36,9 @@ async function logInAndGetTokenAsCustomer(){
 console.log("\n\nCustomer Token\n\n"+token)
 }
 
-logInAndGetTokenAsManager()
-async function logInAndGetTokenAsManager(){
-    const token=await logIn(getAuth(firebaseApp),process.env.FIREBASE_MANAGER_EMAIL as string,process.env.FIREBASE_MANAGER_PASSWORD  as string)
-    console.log("\n\nManager Token\n\n"+token)
+logInAndGetTokenAsOwner()
+async function logInAndGetTokenAsOwner(){
+    const token=await logIn(getAuth(firebaseApp),process.env.FIREBASE_OWNER_EMAIL as string,process.env.FIREBASE_OWNER_PASSWORD  as string)
+    console.log("\n\nOwner Token\n\n"+token)
 }
 

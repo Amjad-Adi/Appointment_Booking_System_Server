@@ -16,6 +16,7 @@ import {
 } from "../permissions/permissions";
 import {serviceRouter} from "./service.route";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
+import {invitationRouter} from "./invitation.route";
 export let organizationRouter=express.Router()
 organizationRouter.route("/")
     .get(handleGetOrganizations)
@@ -25,7 +26,7 @@ organizationRouter.route("/me")
     .patch(authenticateUser,validateBody(updateOrganizationSchema),handleUpdateCurrentOrganization)
 
 organizationRouter.use("/:uuid/services",serviceRouter)
-
+organizationRouter.use("/:uuid/invite",invitationRouter)
 organizationRouter.route("/:uuid")
     .get(authenticateUser,validateParameter(validateUuid),handleGetOrganization)
     .patch(authenticateUser,authorize(WRITE_ORGANIZATION_AS_ADMIN),validateParameter(validateUuid),validateBody(updateOrganizationByAdminSchema),handleUpdateOrganizationByAdmin)

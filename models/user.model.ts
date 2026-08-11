@@ -1,6 +1,6 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
-import {ActivationStatus} from "./enums/model-activation-status";
+import {ActivationStatus} from "./enums/activation-status";
 import {createUserSchema,updateUserByAdminSchema,updateUserSchema} from "../middlewares/schemas/user.schema"
 
 export interface User{

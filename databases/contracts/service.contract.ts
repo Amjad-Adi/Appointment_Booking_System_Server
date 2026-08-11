@@ -1,4 +1,4 @@
-import {ActivationStatus} from "../../models/enums/model-activation-status";
+import {ActivationStatus} from "../../models/enums/activation-status";
 
 export const TABLE_NAME = "services";
 export const COLUMN_ID = "id";
