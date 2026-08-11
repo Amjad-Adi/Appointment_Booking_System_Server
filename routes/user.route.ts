@@ -18,11 +18,10 @@ import {
     WRITE_USER_AS_ADMIN,
 } from "../permissions/permissions";
 import {authenticateUser} from "../authentication/firebase.authentication";
-import {validateUuid} from "../middlewares/schemas/uuid.schema";
+import {validateUuid} from "../middlewares/schemas/parameters.schema";
 export let userRouter=express.Router()
 userRouter.route("/")
     .get(authenticateUser,authorize(READ_USERS),handleGetUsers)
-    .post(authenticateUser,authorize(CREATE_USER),validateBody(createUserSchema),handleCreateUser)
 
 userRouter.route("/me")
     .get(authenticateUser,handleGetCurrentUser)
@@ -33,4 +32,4 @@ userRouter.route("/register")
 
 userRouter.route("/:uuid")
     .get(authenticateUser,authorize(READ_USER),validateParameter(validateUuid),handleGetUser)
-    .patch(authenticateUser,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid),validateBody(updateUserByAdminSchema),handleUpdateUser)
+    .patch(authenticateUser,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)

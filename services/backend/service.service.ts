@@ -25,7 +25,7 @@ export async function getService(uuid:string):Promise<ServiceResponse>{
 
 export async function createService(service:CreateService):Promise<Service>{
     let organizationId:number= await findIdByUuid(service.organizationUuid)
-    if(organizationId==undefined){
+    if(organizationId===undefined){
         throw new NotFoundError("Organization");
     }
     service.organizationId=organizationId

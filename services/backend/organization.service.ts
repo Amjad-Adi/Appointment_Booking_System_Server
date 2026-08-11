@@ -6,8 +6,7 @@ import {
     update,
     updateByAdmin,
     isEmailFound,
-    isPhoneNumberFound,
-    findByUuid
+    isPhoneNumberFound,findByUuid
 } from "../../repositories/organizaiton.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
@@ -16,8 +15,6 @@ import {
     CreateOrganization, Organization, OrganizationResponse,
     OrganizationRow, UpdateOrganization, UpdateOrganizationByAdmin,
 } from "../../models/organization.model";
-import {CreateLocation} from "../../models/location.model";
-import {ActivationStatus} from "../../models/enums/model-activation-status";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
     let result:OrganizationRow[]= await findAll()
     return result.map((row):OrganizationResponse=>({
@@ -43,7 +40,7 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
 
 export async function getOrganization(uuid:string):Promise<OrganizationResponse>{
     let result:OrganizationRow= await findByUuid(uuid)
-    if(result==null){
+    if(result===undefined){
         throw new NotFoundError("Organization");
     }
     return {
@@ -96,6 +93,27 @@ export async function updateOrganizationByAdmin(organization:UpdateOrganizationB
     return result;
 }
 
-export async function getUserOrganization(uuid:string):Promise<string>{
-    return ((await findUserOrganization(uuid)).uuid)
+export async function getUserOrganization(userUuid:string):Promise<OrganizationResponse>{
+    let result:OrganizationRow=await findUserOrganization(userUuid)
+    if(result===undefined){
+        throw new NotFoundError("Organization");
+    }
+    return {
+        uuid: result.uuid,
+        name: result.name,
+        email: result.email,
+        phoneNumber: result.phoneNumber,
+        bio: result.bio,
+        profilePicturePath: result.profilePicturePath,
+        location: {
+            uuid: result.locationUuid,
+            name: result.locationName,
+            locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
+            createdAtUTC: result.locationCreatedAtUTC,
+            updatedAtUTC: result.locationUpdatedAtUTC,
+        },
+        createdAtUTC: result.createdAtUTC,
+        updatedAtUTC: result.updatedAtUTC,
+        status: result.status
+    }
 }

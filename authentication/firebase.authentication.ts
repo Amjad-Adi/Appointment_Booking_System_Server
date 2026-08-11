@@ -19,8 +19,9 @@ export async function authenticateUser(req:Request,res:Response,next:NextFunctio
         const fireBaseUid = decodedToken.uid;
         const user = await getUserByFireBaseUid(fireBaseUid);
         req.user = user;
+        req.user.uid=decodedToken.uid;
         next();
     }catch (e) {
-        mapFirebaseError(e)
+        next(mapFirebaseError(e))
     }
 }

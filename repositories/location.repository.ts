@@ -1,6 +1,7 @@
 import {PoolClient} from "pg";
 import {TABLE_NAME,COLUMN_ID, COLUMN_UUID ,COLUMN_NAME,COLUMN_LOCATION_ON_MAP,COLUMN_CREATED_AT_UTC,COLUMN_UPDATED_AT_UTC} from "../databases/contracts/location.contract"
 import {CreateLocation, Location, UpdateLocation} from "../models/location.model";
+import {pool} from "../databases/postgre-connection";
 export async function create(location: CreateLocation, client:PoolClient):Promise<Location> {
     try{
         const point = `POINT(${location.locationOnMap[0]} ${location.locationOnMap[1]})`;
@@ -11,9 +12,10 @@ export async function create(location: CreateLocation, client:PoolClient):Promis
                             [location.name,point])).rows[0]
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }
+
 export async function updateLocation(location: UpdateLocation,uuid:string, client:PoolClient):Promise<Location> {
     try{
         let point: string|null =null
@@ -30,6 +32,6 @@ export async function updateLocation(location: UpdateLocation,uuid:string, clien
         [location.name,point,uuid])).rows[0];
     } catch (e) {
         console.error(e)
-        throw new Error()
+        throw e;
     }
 }

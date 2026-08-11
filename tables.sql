@@ -46,7 +46,7 @@ CREATE TABLE organizations(
 	profile_picture_path TEXT DEFAULT 'DEFAULT_PICTURE_PATH',
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-	status VARCHAR(256) NOT NULL CHECK (status in(' ')),
+	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 	FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
@@ -208,3 +208,4 @@ values('Mohammad','Karam','testuser@gmail.com','mEKXUxFaO0UnGbMEp89hNZ9VsXG2','C
 
 SELECT * FROM users;
 select * from locations;
+SELECT * FROM organizations;

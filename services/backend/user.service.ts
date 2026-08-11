@@ -11,6 +11,7 @@ import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User} from "../
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
+import {findUserOrganization} from "../../repositories/organizaiton.repository";
 export async function getUsers():Promise<UserResponse[]>{
     return (await findAll())
 }
@@ -56,4 +57,9 @@ export async function updateUserByAdmin(user:UpdateUserByAdmin):Promise<User>{
         throw new NotFoundError("user")
     }
     return result;
+}
+
+
+export async function isUserWorking(userUuid:string):Promise<boolean>{
+    return (await findUserOrganization(userUuid)) !== undefined
 }

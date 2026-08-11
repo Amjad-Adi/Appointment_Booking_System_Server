@@ -1,6 +1,7 @@
 import express from "express";
 import {ErrorHandler} from "./middlewares/error-handler";
 import {NotFoundError} from "./errors/not-found.error";
+import { ErrorRequestHandler } from "express"
 import {mainRouter} from "./routes/main-router.route";
 import { randomUUID } from "crypto";
 import helmet from "helmet";
@@ -9,6 +10,8 @@ import rateLimit from "express-rate-limit";
 import RateLimiterMemory from "rate-limiter-flexible";
 import pino from "pino";
 import {pinoHttp} from "pino-http";
+import {BadRequestErorr} from "./errors/bad-request.erorr";
+import bodyParserErrorHandler from "express-body-parser-error-handler";
 const logger = pino();
 export let app = express();
 const corsOptions = {
@@ -25,7 +28,8 @@ app.use((req, res, next) => {
 app.use(pinoHttp({logger}));
 app.use(helmet());
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "100kb" }));
+app.use(express.json({limit: "100kb"}));
+app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
 app.use(rateLimit({ windowMs: 60000, max: 100 }));
 app.use("/api",mainRouter)
 app.use((req,res)=>
