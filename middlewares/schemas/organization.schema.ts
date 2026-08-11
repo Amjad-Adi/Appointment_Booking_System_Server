@@ -1,5 +1,5 @@
 import { z} from "zod"
-import {ActivationStatus} from "../../models/enums/model-activation-status"
+import {ActivationStatus} from "../../models/enums/activation-status"
 import {Role} from "../../models/enums/roles"
 import {CreateLocation} from "../../models/location.model";
 import {createLocationSchema, updateLocationSchema} from "./location.schema";

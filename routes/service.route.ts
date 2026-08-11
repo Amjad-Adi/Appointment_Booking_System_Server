@@ -9,7 +9,7 @@ import {validateUuid} from "../middlewares/schemas/parameters.schema";
 export let serviceRouter=express.Router()
 serviceRouter.route("/")
     .get(handleGetServices)
-    .post(authenticateUser,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateService)
+    .post(authenticateUser,authorizeOrganizationManager,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateService)
 
 serviceRouter.route("/:uuid")
     .get(validateParameter(validateUuid),handleGetService)

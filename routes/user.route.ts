@@ -5,7 +5,6 @@ import {createUserSchema, updateUserSchema,updateUserByAdminSchema} from "../mid
 import {
     handleGetUser,
     handleCreateUser,
-    handleUpdateUser,
     handleUpdateUserByAdmin,
     handleGetUsers,
     handleGetCurrentUser, handleUpdateCurrentUser

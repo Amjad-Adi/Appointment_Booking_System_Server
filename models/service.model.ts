@@ -1,6 +1,6 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
-import {ActivationStatus} from "./enums/model-activation-status";
+import {ActivationStatus} from "./enums/activation-status";
 import {createServiceSchema,updateServiceSchema} from "../middlewares/schemas/service.schema"
 import {createLocationSchema} from "../middlewares/schemas/location.schema";
 import {LocationResponse} from "./location.model";
