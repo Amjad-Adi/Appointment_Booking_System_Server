@@ -16,6 +16,9 @@ CREATE TABLE users(
 	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+ALTER TABLE users DROP CONSTRAINT users_role_check;
+ALTER TABLE users DROP CONSTRAINT roles_data;
+ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role in('SUPER ADMIN','OWNER','MANAGER','WORKER', 'CRM', 'CUSTOMER'));
 CREATE TABLE locations(
 	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	name varchar(1024) NOT NULL,
@@ -196,16 +199,28 @@ CREATE TABLE organization_employee_block_slot(
 	FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE invitations(
+ 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	title VARCHAR(256) NOT NULL,
+	body VARCHAR(4096),
+	email VARCHAR(320) NOT NULL,
+	user_id BIGINT NOT NULL,
+	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	expires_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+    status VARCHAR(16) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED')),
+	FOREIGN KEY(user_id) REFERENCES users(id)
+);
 INSERT INTO locations (name, location_on_map)
 VALUES ('Birzeit University', ST_GeomFromText('POINT(35.2137 31.7683)', 4326));
 SELECT ST_X(location_on_map) AS longitude ,ST_Y(location_on_map) AS latitude
 FROM locations;
 INSERT INTO users(first_name,last_name, email,firebase_uid,role)
-values('Amjad','Adi','adminamjad123@gmail.com','mycFV8dE73XCBa6Tm4uZqa15mqf2','SUPER ADMIN');
+VALUES('Amjad','Adi','adminamjad123@gmail.com','mycFV8dE73XCBa6Tm4uZqa15mqf2','SUPER ADMIN');
 
 INSERT INTO users(first_name,last_name, email,firebase_uid,role)
-values('Mohammad','Karam','testuser@gmail.com','mEKXUxFaO0UnGbMEp89hNZ9VsXG2','CUSTOMER');
+VALUES('Mohammad','Karam','testuser@gmail.com','mEKXUxFaO0UnGbMEp89hNZ9VsXG2','CUSTOMER');
 
 SELECT * FROM users;
-select * from locations;
+SELECT * FROM locations;
 SELECT * FROM organizations;
