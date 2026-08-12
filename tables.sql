@@ -2,7 +2,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE users(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	first_name VARCHAR(64) NOT NULL,
  	last_name VARCHAR(64) NOT NULL,
 	email VARCHAR(320) UNIQUE NOT NULL,
@@ -16,9 +16,7 @@ CREATE TABLE users(
 	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-ALTER TABLE users DROP CONSTRAINT users_role_check;
-ALTER TABLE users DROP CONSTRAINT roles_data;
-ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role in('SUPER ADMIN','OWNER','MANAGER','WORKER', 'CRM', 'CUSTOMER'));
+ALTER TABLE users ALTER COLUMN status role CHECK (role in('SUPER ADMIN','''WORKER','MANAGER',, 'CRM', 'CUSTOMER')),
 CREATE TABLE locations(
 	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	name varchar(1024) NOT NULL,
@@ -30,7 +28,7 @@ CREATE TABLE locations(
 
 
 CREATE TABLE system_messages(
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
 	message TEXT NOT NULL,
 	type VARCHAR(256) NOT NULL CHECK (type in ('CRITICAL','IMPORTANT','WARNING','SUCCESS','INFO','REMINDER','ANNOUNCEMENT')),
 	status VARCHAR(256) NOT NULL CHECK (status in('ACTIVE,INACTIVE')),
@@ -40,7 +38,7 @@ CREATE TABLE system_messages(
 
 CREATE TABLE organizations(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	name VARCHAR(256),
 	email VARCHAR(320) UNIQUE NOT NULL,
 	phone_number VARCHAR(20),
@@ -55,7 +53,7 @@ CREATE TABLE organizations(
 
 
 CREATE TABLE special_days(
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
 	organization_id BIGINT NOT NULL,
 	name VARCHAR(256),
 	day_date DATE NOT NULL DEFAULT now(),
@@ -66,7 +64,7 @@ CREATE TABLE special_days(
 
 CREATE TABLE services(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	name VARCHAR(256),
 	description VARCHAR(4096),
 	price REAL NOT NULL,
@@ -90,7 +88,7 @@ CREATE TABLE customer_favourite_service(
 
 CREATE TABLE slots(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	name VARCHAR(256),
 	description VARCHAR(4096),
 	organization_id BIGINT NOT NULL,
@@ -111,7 +109,7 @@ CREATE TABLE service_use_slot(
 
 CREATE TABLE slot_blocks(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	reason VARCHAR(4096),
 	start_time TIMESTAMPTZ NOT NUll,
 	end_time TIMESTAMPTZ NOT NUll,
@@ -124,7 +122,7 @@ CREATE TABLE slot_blocks(
 
 CREATE TABLE appointments(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	name VARCHAR(256),
 	note VARCHAR(4096),
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -143,7 +141,7 @@ CREATE TABLE appointments(
 CREATE TABLE reviews(
 	customer_id BIGINT NOT NULL,
 	appointment_id BIGINT NOT NULL,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	rating REAL,
 	comment VARCHAR(4096) NOT NULL,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -155,7 +153,7 @@ CREATE TABLE reviews(
 
 CREATE TABLE notifications(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	user_id BIGINT NOT NULL,
 	appointment_id BIGINT NOT NULL,
 	message TEXT NOT NULL,
@@ -170,7 +168,7 @@ CREATE TABLE notifications(
 
 CREATE TABLE appointment_histories(
 	appointment_id BIGINT NOT NULL,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
 	name VARCHAR(256),
 	note VARCHAR(4096),
 	stored_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -199,18 +197,25 @@ CREATE TABLE organization_employee_block_slot(
 	FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE invitations(
- 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid uuid DEFAULT gen_random_uuid() UNIQUE,
-	title VARCHAR(256) NOT NULL,
-	body VARCHAR(4096),
-	email VARCHAR(320) NOT NULL,
+CREATE TABLE refresh_tokens(
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	user_id BIGINT NOT NULL,
+	token_hash TEXT NOT NULL,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-	expires_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-    status VARCHAR(16) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'EXPIRED')),
-	FOREIGN KEY(user_id) REFERENCES users(id)
+	expires_at_utc TIMESTAMPTZ NOT NULL DEFAULT now() + INTERVAL '7 days',
+    revoked BOOLEAN NOT NULL DEFAULT False,
+    revoked_at_utc TIMESTAMPTZ,
+	FOREIGN KEY (user_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE TABLE blacklisted_tokens(
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	jti UUID NOT NULL,
+	expires_at_utc TIMESTAMPTZ NOT NULL,
+	blacklisted_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	reason VARCHAR(4096)
+);
+
 INSERT INTO locations (name, location_on_map)
 VALUES ('Birzeit University', ST_GeomFromText('POINT(35.2137 31.7683)', 4326));
 SELECT ST_X(location_on_map) AS longitude ,ST_Y(location_on_map) AS latitude
@@ -224,3 +229,6 @@ VALUES('Mohammad','Karam','testuser@gmail.com','mEKXUxFaO0UnGbMEp89hNZ9VsXG2','C
 SELECT * FROM users;
 SELECT * FROM locations;
 SELECT * FROM organizations;
+SELECT * FROM services;
+SELECT * FROM blacklisted_token;
+
