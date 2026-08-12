@@ -7,7 +7,7 @@ import {
     handleUpdateOrganizationByAdmin,
     handleGetOrganization, handleUpdateOrganization
 } from "../controllers/organization.controller";
-import {authenticateUser} from "../authentication/firebase.authentication";
+import { authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../authoraization/autoraization";
 import {
     CREATE_ORGANIZATION,
@@ -25,9 +25,9 @@ const roleSchemas={
 export let organizationRouter=express.Router()
 organizationRouter.route("/")
     .get(handleGetOrganizations)
-    .post(authenticateUser,authorize(CREATE_ORGANIZATION),rejectWorkingUsers,validateBody(createOrganizationSchema),handleCreateOrganization)
+    .post(authenticateToken,authorize(CREATE_ORGANIZATION),rejectWorkingUsers,validateBody(createOrganizationSchema),handleCreateOrganization)
 
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
 organizationRouter.route("/:organizationUuid")
-    .get(authenticateUser,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
-    .patch(authenticateUser,authorizeOrganizationUser,authorize(WRITE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
+    .get(authenticateToken,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(WRITE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)

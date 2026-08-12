@@ -1,0 +1,9 @@
+export const TABLE_NAME = "blacklisted_tokens";
+export const COLUMN_ID = "id";
+export const COLUMN_JTI = "jti";
+export const COLUMN_BLACKLISTED_AT_UTC="blacklisted_at_utc";
+export const COLUMN_EXPIRES_AT_UTC = "expires_at_utc";
+export const COLUMN_REASON="reason";
+export const ALIAS="b"
+export const ALIAS_COLUMN_EXPIRES_AT_UTC = `"expiresAtUTC"`;
+export const ALIAS_COLUMN_BLACKLISTED_AT_UTC = `"blacklistedAtUTC"`;

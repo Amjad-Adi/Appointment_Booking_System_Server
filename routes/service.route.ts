@@ -2,7 +2,7 @@ import express from "express";
 import {validateBody, validateBodyByRole, validateParameter} from "../middlewares/validaiton";
 import {createServiceSchema, updateServiceSchema} from "../middlewares/schemas/service.schema"
 import {handleGetOrganizationService,handleUpdateOrganizationService,handleCreateOrganizationService,handleGetOrganizationServices} from "../controllers/service.controller";
-import {authenticateUser} from "../authentication/firebase.authentication";
+import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
 import {CREATE_SERVICE, WRITE_ORGANIZATION, WRITE_SERVICE} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
@@ -11,8 +11,8 @@ import {Role} from "../models/enums/roles";
 export let serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
     .get(handleGetOrganizationServices)
-    .post(authenticateUser,authorizeOrganizationUser,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)
+    .post(authenticateToken,authorizeOrganizationUser,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)
 
 serviceRouter.route("/:serviceUuid")
     .get(validateParameter(validateUuid,"serviceUuid"),handleGetOrganizationService)
-    .patch(authenticateUser,authorizeOrganizationUser,authorize(WRITE_SERVICE),validateParameter(validateUuid,"serviceUuid"),validateBody(updateServiceSchema),handleUpdateOrganizationService)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(WRITE_SERVICE),validateParameter(validateUuid,"serviceUuid"),validateBody(updateServiceSchema),handleUpdateOrganizationService)
