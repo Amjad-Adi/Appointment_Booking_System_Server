@@ -77,6 +77,33 @@ export async function findByUuid(uuid:string):Promise<UserResponse>{
 }
 
 
+export async function findIdByUuid(uuid:string):Promise<number>{
+    try{
+        return (await pool.query(
+            `SELECT ${COLUMN_ID}
+             FROM ${TABLE_NAME}
+             WHERE ${COLUMN_UUID} = $1`,
+            [uuid])).rows[0]?.id
+    } catch (e) {
+        console.error(e)
+        throw e;
+    }
+}
+
+
+export async function findUidByUuid(uuid:string):Promise<string>{
+    try{
+        return (await pool.query(
+            `SELECT ${COLUMN_UID}
+             FROM ${TABLE_NAME}
+             WHERE ${COLUMN_UUID} = $1`,
+            [uuid])).rows[0]?.firebase_uid
+    } catch (e) {
+        console.error(e)
+        throw e;
+    }
+}
+
 export async function findById(id:number):Promise<UserResponse>{
     try {
         return (await pool.query(
@@ -84,7 +111,7 @@ export async function findById(id:number):Promise<UserResponse>{
              FROM ${TABLE_NAME} ${ALIAS}
              LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
              ON ${ALIAS}.${COLUMN_ORGANIZATION_ID} = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+             WHERE ${ALIAS}.${COLUMN_ID} = $1`,
             [id])).rows[0]
     } catch (e) {
         console.error(e)

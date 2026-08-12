@@ -13,7 +13,7 @@ import {
     UpdateOrganization,
     UpdateOrganizationByAdmin
 } from "../models/organization.model";
-
+import {} from "../utils/UserRequest"
 export async function handleGetOrganizations(req:Request,res:Response){
     const result:OrganizationResponse[]=await getOrganizations()
     return res.status(200).json(result)

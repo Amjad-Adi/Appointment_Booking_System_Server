@@ -5,7 +5,7 @@ import {
     update,
     updateByAdmin,
     isEmailFound,
-    findByUid
+    findByUid, findIdByUuid, findUidByUuid, findById
 } from "../../repositories/user.repository"
 import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User} from "../../models/user.model";
 import {NotFoundError} from "../../errors/not-found.error";
@@ -26,6 +26,14 @@ export async function getUser(uuid:string):Promise<UserResponse>{
 
 export async function getUserByFireBaseUid(uid:string):Promise<UserResponse>{
     let result:UserResponse= await findByUid(uid)
+    if(result===undefined){
+        throw new NotFoundError("User");
+    }
+    return result
+}
+
+export async function getUserById(id:number):Promise<UserResponse>{
+    let result:UserResponse= await findById(id)
     if(result===undefined){
         throw new NotFoundError("User");
     }
@@ -62,4 +70,22 @@ export async function updateUserByAdmin(user:UpdateUserByAdmin):Promise<User>{
 
 export async function isUserWorking(userUuid:string):Promise<boolean>{
     return (await findUserOrganization(userUuid)) !== undefined
+}
+
+
+export async function getIdByUuid(uuid:string):Promise<number>{
+    let result:number= await findIdByUuid(uuid);
+    if(result===undefined){
+        throw new NotFoundError("User");
+    }
+    return result;
+}
+
+
+export async function getUidByUuid(uuid:string):Promise<string>{
+    let result:string= await findUidByUuid(uuid);
+    if(result===undefined){
+        throw new NotFoundError("User");
+    }
+    return result;
 }
