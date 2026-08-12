@@ -29,6 +29,7 @@ export function mapFirebaseError(error: unknown){
 
         case "auth/id-token-expired":
         case "auth/id-token-revoked":
+        case "auth/argument-error":
             throw new UnauthorizedError();
 
         default:

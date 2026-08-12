@@ -1,12 +1,11 @@
 import {
     findAll,
-    findIdByUuid,
     findUserOrganization,
     create,
     update,
     updateByAdmin,
     isEmailFound,
-    isPhoneNumberFound,findByUuid
+    isPhoneNumberFound, findByUuid, findIdByUuid
 } from "../../repositories/organizaiton.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
@@ -116,4 +115,12 @@ export async function getUserOrganization(userUuid:string):Promise<OrganizationR
         updatedAtUTC: result.updatedAtUTC,
         status: result.status
     }
+}
+
+export async function getIdByUuid(uuid:string):Promise<number>{
+    let result:number= await findIdByUuid(uuid);
+    if(result===undefined){
+        throw new NotFoundError("Organization");
+    }
+    return result;
 }

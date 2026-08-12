@@ -1,17 +1,18 @@
 import express from "express";
-import {validateBody, validateParameter} from "../middlewares/validaiton";
+import {validateBody, validateBodyByRole, validateParameter} from "../middlewares/validaiton";
 import {createServiceSchema, updateServiceSchema} from "../middlewares/schemas/service.schema"
-import {handleCreateService,handleGetService,handleUpdateService,handleGetServices} from "../controllers/service.controller";
+import {handleGetOrganizationService,handleUpdateOrganizationService,handleCreateOrganizationService,handleGetOrganizationServices} from "../controllers/service.controller";
 import {authenticateUser} from "../authentication/firebase.authentication";
-import {authorize,authorizeOrganizationManager} from "../authoraization/autoraization";
-import {CREATE_SERVICE, WRITE_SERVICE} from "../permissions/permissions";
+import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
+import {CREATE_SERVICE, WRITE_ORGANIZATION, WRITE_SERVICE} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
-export let serviceRouter=express.Router()
+import {handleUpdateOrganization} from "../controllers/organization.controller";
+import {Role} from "../models/enums/roles";
+export let serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
-    .get(handleGetServices)
-    .post(authenticateUser,authorizeOrganizationManager,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateService)
+    .get(handleGetOrganizationServices)
+    .post(authenticateUser,authorizeOrganizationUser,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)
 
-serviceRouter.route("/:uuid")
-    .get(validateParameter(validateUuid),handleGetService)
-    .patch(authenticateUser,authorizeOrganizationManager,authorize(WRITE_SERVICE),validateParameter(validateUuid),validateBody(updateServiceSchema),handleUpdateService)
-
+serviceRouter.route("/:serviceUuid")
+    .get(validateParameter(validateUuid,"serviceUuid"),handleGetOrganizationService)
+    .patch(authenticateUser,authorizeOrganizationUser,authorize(WRITE_SERVICE),validateParameter(validateUuid,"serviceUuid"),validateBody(updateServiceSchema),handleUpdateOrganizationService)
