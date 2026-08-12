@@ -7,6 +7,7 @@ import {findUserOrganization} from "../repositories/organizaiton.repository";
 import {getUserOrganization} from "../services/backend/organization.service";
 import {isUserWorking} from "../services/backend/user.service";
 import {ConflictError} from "../errors/conflict.error";
+import {Role} from "../models/enums/roles";
 export function authorize(permission:string) {
     return function (req: Request, res: Response, next: NextFunction) {
         const role: string = req.user?.role;
@@ -21,9 +22,9 @@ export function authorize(permission:string) {
     }
 }
 
-export async function authorizeOrganizationManager(req: Request, res: Response, next: NextFunction){
+export async function authorizeOrganizationUser(req: Request, res: Response, next: NextFunction){
         const userUuid: string = req.user.uuid;
-        if((await getUserOrganization(userUuid)).uuid!=req.params.uuid){
+        if(req.user.role!==Role.SUPER_ADMIN&&(await getUserOrganization(userUuid)).uuid!=req.params.organizationUuid){
             throw new ForbiddenError()
         }
         next();

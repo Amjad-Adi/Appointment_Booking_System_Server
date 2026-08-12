@@ -26,40 +26,42 @@ import {
     COLUMN_UUID as ORGANIZATION_COLUMN_UUID, COLUMN_PROFILE_PICTURE_PATH, COLUMN_ID,
 } from "../databases/contracts/organization.contract"
 import {QueryResult} from "pg";
-export async function findAll():Promise<ServiceResponse[]>{
-    try{
-        return (await pool.query(
-            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-             FROM ${TABLE_NAME} ${ALIAS}
-             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}`)).rows;
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
-}
-
-export async function findById(uuid:string):Promise<ServiceResponse>{
+export async function findAll(organizationId:number):Promise<ServiceResponse[]>{
     try{
         return (await pool.query(
             `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
              FROM ${TABLE_NAME} ${ALIAS}
              LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-            [uuid])).rows[0]
+             WHERE ${ALIAS}.${COLUMN_ORGANIZATION_ID}=$1`,
+            [organizationId])).rows;
     } catch (e) {
         console.error(e)
         throw e;
     }
 }
 
-export async function isNameFound(uuid:string,name:string):Promise<boolean>{
+export async function findById(organizationId:number,serviceUuid:string):Promise<ServiceResponse>{
+    try{
+        return (await pool.query(
+            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+             FROM ${TABLE_NAME} ${ALIAS}
+             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+             WHERE ${ALIAS}.${COLUMN_ORGANIZATION_ID}=$1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
+            [organizationId,serviceUuid])).rows[0]
+    } catch (e) {
+        console.error(e)
+        throw e;
+    }
+}
+
+export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
     try {
         return (await pool.query(
             `SELECT 1
              FROM ${TABLE_NAME} ${ALIAS}
             LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
             WHERE ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1 AND ${ALIAS}.${COLUMN_NAME}=$2`,
-            [uuid,name])).rowCount!=0
+            [organizationUuid,name])).rowCount!=0
     } catch (e) {
         console.error(e)
         throw e;
@@ -70,7 +72,7 @@ export async function create(service: CreateService):Promise<Service> {
     try{
         return (await pool.query(
             `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH},${COLUMN_ORGANIZATION_ID})
-                        VALUES ($1,$2,$3,$4,$5,$6,$7)
+                        VALUES ($1,$2,$3,$4,$5,$6)
                         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
                         [service.name, service.description,service.price,service.durationInMinutes,service.profilePicturePath,service.organizationId])).rows[0];
     } catch (e) {

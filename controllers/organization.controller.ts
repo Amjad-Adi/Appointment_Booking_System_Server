@@ -20,14 +20,8 @@ export async function handleGetOrganizations(req:Request,res:Response){
 }
 
 export async function handleGetOrganization(req:Request,res:Response){
-    let uuid:string=(req.params.uuid)  as string;
+    let uuid:string=(req.params.organizationUuid)  as string;
     const result:OrganizationResponse=await getOrganization(uuid)
-    return res.status(200).json(result)
-}
-
-export async function handleGetCurrentOrganization(req:Request,res:Response){
-    let uuid:string=(req.user.uuid) as string;
-    const result:OrganizationResponse=await getUserOrganization(uuid)
     return res.status(200).json(result)
 }
 
@@ -38,17 +32,16 @@ export async function handleCreateOrganization(req:Request,res:Response){
     return res.status(201).json(result)
 }
 
-export async function handleUpdateCurrentOrganization(req:Request,res:Response){
+export async function handleUpdateOrganization(req:Request,res:Response){
     let organization:UpdateOrganization=(req.body)
-    organization.uuid=(await getUserOrganization(req.user.uuid)).uuid;
-    console.log(organization)
+    organization.uuid=req.params.organizationUuid as string
     const result:Organization=await updateOrganization(organization)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateOrganizationByAdmin(req:Request, res:Response){
     let organization:UpdateOrganizationByAdmin=(req.body)
-    organization.uuid=(req.params.uuid) as string;
+    organization.uuid=(req.params.organizationUuid) as string;
     const result:Organization=await updateOrganizationByAdmin(organization)
     return res.status(200).json(result)
 }

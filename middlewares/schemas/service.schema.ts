@@ -6,7 +6,7 @@ export const createServiceSchema=z.object({
     name:z.string().trim().nonempty().max(256),
     description:z.string().trim().max(4096).nonempty().optional(),
     price:z.number(),
-    durationInMinutes:z.string().trim().max(4096).nonempty(),
+    durationInMinutes:z.number().int().positive(),
     profilePicturePath:z.string().trim().nonempty().default("DEFAULT_PICTURE_PATH"),
 }).strict()
 
@@ -15,7 +15,7 @@ export const updateServiceSchema=z.object({
     name:z.string().trim().nonempty().max(256).optional(),
     description:z.string().trim().max(4096).nonempty().optional(),
     price:z.number().optional(),
-    durationInMinutes:z.string().trim().max(4096).nonempty().optional(),
+    durationInMinutes:z.number().int().positive().optional(),
     profilePicturePath:z.string().trim().nonempty().optional(),
     status:z.nativeEnum(ActivationStatus).optional()
 }).strict()

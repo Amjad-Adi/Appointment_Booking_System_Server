@@ -1,4 +1,2 @@
 import { z} from "zod"
-export const validateUuid=z.object({
-    uuid:z.uuid()
-});
+export const validateUuid= z.uuid();

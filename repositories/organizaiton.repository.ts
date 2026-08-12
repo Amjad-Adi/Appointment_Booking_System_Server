@@ -75,7 +75,7 @@ export async function findIdByUuid(uuid:string):Promise<number>{
             `SELECT ${COLUMN_ID}
              FROM ${TABLE_NAME}
              WHERE ${COLUMN_UUID} = $1`,
-            [uuid])).rows[0]
+            [uuid])).rows[0]?.id
     } catch (e) {
         console.error(e)
         throw e;
@@ -144,20 +144,24 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
     try{
         await client.query("BEGIN")
         let location:UpdateLocation=organization.location as UpdateLocation
-        let locationUUID:string=(await pool.query(
-            `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID}
-             FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
-             JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
-        await updateLocation(location,locationUUID,client)
+        if(location!==undefined) {
+            let locationUuid: string = (await pool.query(
+                `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID}
+                 FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
+                          JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} =
+                                                         ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
+            await updateLocation(location, locationUuid, client)
+        }
         let result= await client.query(
             `UPDATE ${TABLE_NAME}
              SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),
                  ${COLUMN_BIO}=COALESCE($2,${COLUMN_BIO}),
                  ${COLUMN_PROFILE_PICTURE_PATH}=COALESCE($3,${COLUMN_PROFILE_PICTURE_PATH}),
-                 ${COLUMN_UPDATED_AT_UTC}=now()
-             WHERE ${COLUMN_UUID} = $4
+                 ${COLUMN_UPDATED_AT_UTC}=now(),
+                 ${COLUMN_STATUS}=COALESCE($4,${COLUMN_STATUS})
+             WHERE ${COLUMN_UUID} = $5
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LOCATION_ID},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-             [organization.name,organization.bio, organization.profilePicturePath,organization.uuid]);
+             [organization.name,organization.bio, organization.profilePicturePath,organization.status,organization.uuid]);
         await client.query("COMMIT")
         return result.rows[0]
     }catch (e) {

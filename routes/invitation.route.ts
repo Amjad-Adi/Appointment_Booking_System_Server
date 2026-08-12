@@ -1,7 +1,7 @@
 import express from "express";
 import {validateBody, validateParameter} from "../middlewares/validaiton";
 import {authenticateUser} from "../authentication/firebase.authentication";
-import {authorize,authorizeOrganizationManager} from "../authoraization/autoraization";
+import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
 import {CREATE_SERVICE, WRITE_SERVICE} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 export let invitationRouter=express.Router()

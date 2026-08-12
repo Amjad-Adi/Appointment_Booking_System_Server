@@ -10,12 +10,12 @@ import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
-export async function getServices():Promise<ServiceResponse[]>{
-    return (await findAll())
+export async function getServices(organizationId:number):Promise<ServiceResponse[]>{
+    return (await findAll(organizationId))
 }
 
-export async function getService(uuid:string):Promise<ServiceResponse>{
-    let result:ServiceResponse= await findById(uuid)
+export async function getService(organizationId:number,serviceUuid:string):Promise<ServiceResponse>{
+    let result:ServiceResponse= await findById(organizationId,serviceUuid)
     if(result===undefined){
         throw new NotFoundError("Service");
     }

@@ -20,7 +20,7 @@ export async function handleGetUsers(req:Request,res:Response){
 }
 
 export async function handleGetUser(req:Request,res:Response){
-    let uuid:string=(req.params.uuid) as any as string;
+    let uuid:string=(req.params.userUuid) as any as string;
     const result:UserResponse=await getUser(uuid)
     return res.status(200).json(result)
 }
@@ -64,7 +64,7 @@ export async function handleUpdateCurrentUser(req:Request,res:Response){
 }
 
 export async function handleUpdateUserByAdmin(req:Request,res:Response){
-    let uuid:string=(req.params.uuid) as any as string;
+    let uuid:string=(req.params.userUuid) as any as string;
     let user:User=(req.body)
     user.uuid=uuid;
     const result:User=await updateUserByAdmin(user)
