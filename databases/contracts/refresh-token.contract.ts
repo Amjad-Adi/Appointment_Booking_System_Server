@@ -1,0 +1,14 @@
+export const TABLE_NAME = "refresh_tokens";
+export const COLUMN_ID = "id";
+export const COLUMN_USER_ID = "user_id";
+export const COLUMN_TOKEN_HASH = "token_hash";
+export const COLUMN_CREATED_AT_UTC="created_at_utc";
+export const COLUMN_EXPIRES_AT_UTC = "expires_at_utc";
+export const COLUMN_REVOKED="revoked";
+export const COLUMN_REVOKED_AT_UTC="revoked_at_utc";
+export const ALIAS="re"
+export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
+export const ALIAS_COLUMN_EXPIRES_AT_UTC = `"expiresAtUTC"`;
+export const ALIAS_COLUMN_REVOKED_AT_UTC = `"revokedAtUTC"`;
+export const ALIAS_COLUMN_USER_ID = `"userId"`;
+export const ALIAS_COLUMN_TOKEN_HASH = `"tokenHash"`;

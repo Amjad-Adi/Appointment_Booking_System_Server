@@ -21,6 +21,11 @@ export const updateUserSchema=z.object({
     language:z.string().trim().length(2).optional(),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 
+export const loginUserSchema=z.object({
+    email:z.email(),
+    password:z.string().trim().nonempty().max(64)
+}).strict();
+
 export const updateUserByAdminSchema=z.object({
     role:z.nativeEnum(Role).optional(),
     status:z.nativeEnum(ActivationStatus).optional()

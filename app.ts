@@ -7,6 +7,7 @@ import { randomUUID } from "crypto";
 import helmet from "helmet";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import RateLimiterMemory from "rate-limiter-flexible";
 import pino from "pino";
 import {pinoHttp} from "pino-http";
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 app.use(pinoHttp({logger}));
 app.use(helmet());
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json({limit: "100kb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
 app.use(rateLimit({ windowMs: 60000, max: 100 }));

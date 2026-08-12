@@ -16,19 +16,19 @@ import {
     CREATE_USER,
     WRITE_USER_AS_ADMIN,
 } from "../permissions/permissions";
-import {authenticateUser} from "../authentication/firebase.authentication";
+import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 export let userRouter=express.Router()
 userRouter.route("/")
-    .get(authenticateUser,authorize(READ_USERS),handleGetUsers)
+    .get(authenticateToken,authorize(READ_USERS),handleGetUsers)
 
 userRouter.route("/me")
-    .get(authenticateUser,handleGetCurrentUser)
-    .patch(authenticateUser,validateBody(updateUserSchema),handleUpdateCurrentUser)
+    .get(authenticateToken,handleGetCurrentUser)
+    .patch(authenticateToken,validateBody(updateUserSchema),handleUpdateCurrentUser)
 
 userRouter.route("/register")
     .post(validateBody(createUserSchema),handleCreateUser)
 
 userRouter.route("/:userUuid")
-    .get(authenticateUser,authorize(READ_USER),validateParameter(validateUuid,"userUuid"),handleGetUser)
-    .patch(authenticateUser,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
+    .get(authenticateToken,authorize(READ_USER),validateParameter(validateUuid,"userUuid"),handleGetUser)
+    .patch(authenticateToken,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
