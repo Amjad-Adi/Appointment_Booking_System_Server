@@ -86,19 +86,19 @@ CREATE TABLE customer_favourite_service(
 	FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE slots(
+CREATE TABLE rooms(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	name VARCHAR(256),
 	description VARCHAR(4096),
 	organization_id BIGINT NOT NULL,
-	location_id BIGINT,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-	status VARCHAR(256) NOT NULL CHECK (status in(' ')),
-	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL ON UPDATE CASCADE
+	updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
+	occupancy_status VARCHAR(10) NOT NULL CHECK (occupancy_status in('OCCUPIED','AVAILABLE')) DEFAULT 'AVAILABLE',
+	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
+DROP TABLE rooms;
 CREATE TABLE service_use_slot(
 	slot_id BIGINT NOT NULL,
 	service_id BIGINT NOT NULL,

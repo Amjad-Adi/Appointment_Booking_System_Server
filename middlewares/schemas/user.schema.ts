@@ -9,7 +9,7 @@ export const createUserSchema=z.object({
     confirmPassword:z.string().trim().nonempty().max(64),
     profilePicturePath:z.string().trim().nonempty().default("DEFAULT_PICTURE_PATH"),
     language:z.string().trim().length(2).default("en"),
-    role:z.nativeEnum(Role),
+    role:z.enum(Role),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 
 export const updateUserSchema=z.object({
@@ -27,6 +27,6 @@ export const loginUserSchema=z.object({
 }).strict();
 
 export const updateUserByAdminSchema=z.object({
-    role:z.nativeEnum(Role).optional(),
-    status:z.nativeEnum(ActivationStatus).optional()
+    role:z.enum(Role).optional(),
+    status:z.enum(ActivationStatus).optional()
 }).strict();

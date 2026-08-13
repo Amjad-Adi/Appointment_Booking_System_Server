@@ -16,5 +16,5 @@ export const ALIAS="s"
 export const ALIAS_COLUMN_DURATION_IN_MINUTES=`"durationInMinutes"`;
 export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
-export const ALIAS_COLUMN_PICTURE_PATH = "servicePicturePath";
-export const ALIAS_COLUMN_ORGANIZATION_ID="organization_Id";
+export const ALIAS_COLUMN_PICTURE_PATH = `"servicePicturePath"`;
+export const ALIAS_COLUMN_ORGANIZATION_ID=`"organization_Id"`;

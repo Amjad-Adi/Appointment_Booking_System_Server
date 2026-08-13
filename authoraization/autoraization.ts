@@ -14,7 +14,7 @@ export function authorize(permission:string) {
         if(!role){
             throw new ForbiddenError()
         }
-        if (rolesPermissions.get(role)?.includes(permission)) {
+        if (rolesPermissions[role]?.includes(permission)) {
             next();
         } else{
             throw new ForbiddenError();

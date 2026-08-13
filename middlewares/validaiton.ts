@@ -3,6 +3,7 @@ import express from "express";
 import {BadRequestErorr} from "../errors/bad-request.erorr";
 import {Role} from "../models/enums/roles";
 import {ZodSchema} from "zod/v3";
+import {NotFoundError} from "../errors/not-found.error";
 export function validateBody(schema:z.ZodSchema) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
         let result = schema.safeParse(req.body);
@@ -16,11 +17,9 @@ export function validateBody(schema:z.ZodSchema) {
 
 export function validateParameter(schema:z.ZodSchema,parameterName:string) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
-        console.log(parameterName)
-        console.log(req.params.parameterName)
         let result = schema.safeParse(req.params[parameterName]);
         if (!result.success) {
-            throw new BadRequestErorr();
+            throw new NotFoundError();
         }
         next()
     }

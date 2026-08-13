@@ -11,7 +11,7 @@ import { authenticateToken} from "../controllers/authentication/jwt.authenticati
 import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../authoraization/autoraization";
 import {
     CREATE_ORGANIZATION,
-    WRITE_ORGANIZATION, WRITE_ORGANIZATION_AS_ADMIN,
+    UPDATE_ORGANIZATION,
 } from "../permissions/permissions";
 import {serviceRouter} from "./service.route";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
@@ -30,4 +30,4 @@ organizationRouter.route("/")
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
 organizationRouter.route("/:organizationUuid")
     .get(authenticateToken,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
-    .patch(authenticateToken,authorizeOrganizationUser,authorize(WRITE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
