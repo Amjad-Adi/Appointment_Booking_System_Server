@@ -1,5 +1,5 @@
 import {
-    create as createRefreshTokenService, findRefreshToken, remove,
+    create as createRefreshTokenService, findRefreshToken, remove,revoke
 } from "../../repositories/refresh-token.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
@@ -43,8 +43,14 @@ export async function getRefreshToken(token:string):Promise<RefreshToken>{
 }
 
 
-export async function deleteToken(token:string):Promise<void>{
+export async function revokeToken(token:string):Promise<void>{
+    const hashedToken=hashRefreshToken(token)
+    await revoke(hashedToken)
+}
+
+export async function removeToken(token:string):Promise<void>{
     const hashedToken=hashRefreshToken(token)
     await remove(hashedToken)
 }
+
 
