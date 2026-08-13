@@ -15,6 +15,5 @@ export const ALIAS_COLUMN_PHONE_NUMBER=`"phoneNumber"`;
 export const ALIAS_COLUMN_PROFILE_PICTURE_PATH=`"profilePicturePath"`;
 export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
-export const ALIAS_COLUMN_UUID = "organizationUuid";
-export const ALIAS_COLUMN_NAME = "organizationName";
+export const ALIAS_COLUMN_NAME = `"organizationName"`;
 export const ALIAS_COLUMN_ORGANIZATION_UUID = `"organizationUuid"`;

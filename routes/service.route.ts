@@ -3,8 +3,13 @@ import {validateBody, validateBodyByRole, validateParameter} from "../middleware
 import {createServiceSchema, updateServiceSchema} from "../middlewares/schemas/service.schema"
 import {handleGetOrganizationService,handleUpdateOrganizationService,handleCreateOrganizationService,handleGetOrganizationServices} from "../controllers/service.controller";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
+<<<<<<< Updated upstream
+import {authorize,authorizeOrganizationUser} from "../middlewares/authoraization/autoraization";
 import {CREATE_SERVICE, WRITE_ORGANIZATION, WRITE_SERVICE} from "../permissions/permissions";
+=======
+import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
+import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions";
+>>>>>>> Stashed changes
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 import {handleUpdateOrganization} from "../controllers/organization.controller";
 import {Role} from "../models/enums/roles";
@@ -15,4 +20,4 @@ serviceRouter.route("/")
 
 serviceRouter.route("/:serviceUuid")
     .get(validateParameter(validateUuid,"serviceUuid"),handleGetOrganizationService)
-    .patch(authenticateToken,authorizeOrganizationUser,authorize(WRITE_SERVICE),validateParameter(validateUuid,"serviceUuid"),validateBody(updateServiceSchema),handleUpdateOrganizationService)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(UPDATE_SERVICE),validateParameter(validateUuid,"serviceUuid"),validateBody(updateServiceSchema),handleUpdateOrganizationService)

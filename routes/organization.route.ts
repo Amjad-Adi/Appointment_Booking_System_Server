@@ -8,18 +8,16 @@ import {
     handleGetOrganization, handleUpdateOrganization
 } from "../controllers/organization.controller";
 import { authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../middlewares/authoraization/autoraization";
+import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../authoraization/autoraization";
 import {
     CREATE_ORGANIZATION,
-    WRITE_ORGANIZATION, WRITE_ORGANIZATION_AS_ADMIN,
+    UPDATE_ORGANIZATION,
 } from "../permissions/permissions";
 import {serviceRouter} from "./service.route";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 import {invitationRouter} from "./invitation.route";
 import { Role } from "../models/enums/roles";
 import {z, ZodType} from "zod";
-import {rateLimit, rateLimiterFactory} from "../middlewares/rate-limiter";
-import {roomRouter} from "./room.route";
 const roleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
@@ -27,10 +25,9 @@ const roleSchemas={
 export let organizationRouter=express.Router()
 organizationRouter.route("/")
     .get(handleGetOrganizations)
-    .post(authenticateToken,rateLimit(rateLimiterFactory("authenticated")),authorize(CREATE_ORGANIZATION),rejectWorkingUsers,validateBody(createOrganizationSchema),handleCreateOrganization)
+    .post(authenticateToken,authorize(CREATE_ORGANIZATION),rejectWorkingUsers,validateBody(createOrganizationSchema),handleCreateOrganization)
 
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
-organizationRouter.use("/:organizationUuid/rooms",validateParameter(validateUuid,"organizationUuid"),roomRouter)
 organizationRouter.route("/:organizationUuid")
-    .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
-    .patch(authenticateToken,rateLimit(rateLimiterFactory("authenticated")),authorizeOrganizationUser,authorize(WRITE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
+    .get(authenticateToken,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
