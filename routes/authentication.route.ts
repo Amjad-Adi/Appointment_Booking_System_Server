@@ -3,12 +3,13 @@ import {login, logOut, refreshToken} from "../controllers/authentication/authent
 import {validateBody} from "../middlewares/validaiton";
 import {loginUserSchema} from "../middlewares/schemas/user.schema";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
+import {RATE_LIMIT_FOR_AUTHENTICATION, rateLimit, rateLimiterFactory} from "../middlewares/rate-limiter";
 export let authenticationRouter=express.Router()
 authenticationRouter.route("/login")
-    .post(validateBody(loginUserSchema),login);
+    .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),validateBody(loginUserSchema),login);
 
 authenticationRouter.route("/logout")
     .post(authenticateToken,logOut);
 
 authenticationRouter.route("/refresh")
-    .post(refreshToken);
+    .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);
