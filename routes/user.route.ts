@@ -14,7 +14,7 @@ import {
     READ_USERS,
     READ_USER,
     CREATE_USER,
-    WRITE_USER_AS_ADMIN,
+    UPDATE_USER_AS_ADMIN,
 } from "../permissions/permissions";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
@@ -31,4 +31,4 @@ userRouter.route("/register")
 
 userRouter.route("/:userUuid")
     .get(authenticateToken,authorize(READ_USER),validateParameter(validateUuid,"userUuid"),handleGetUser)
-    .patch(authenticateToken,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
+    .patch(authenticateToken,authorize(UPDATE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)

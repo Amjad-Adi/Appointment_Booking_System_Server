@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import {
     READ_USERS, READ_USER,
     WRITE_USER_AS_ADMIN,
@@ -9,3 +10,25 @@ export const rolesPermissions=new Map<String, string[]>;
 rolesPermissions.set("SUPER ADMIN", [WRITE_USER_AS_ADMIN,WRITE_ORGANIZATION,CREATE_USER,READ_USERS,READ_USER,WRITE_SERVICE])
 rolesPermissions.set("CUSTOMER", [])
 rolesPermissions.set("OWNER", [CREATE_ORGANIZATION,WRITE_ORGANIZATION,CREATE_SERVICE,WRITE_SERVICE,CREATE_ROOM,WRITE_ROOM])
+=======
+import {READ_USERS, READ_USER, UPDATE_ORGANIZATION, CREATE_USER, CREATE_ORGANIZATION, CREATE_SERVICE, UPDATE_USER_AS_ADMIN, UPDATE_SERVICE} from "./permissions";
+export const rolesPermissions: Record<string, string[]> = {
+    "SUPER ADMIN": [
+        UPDATE_USER_AS_ADMIN,
+        UPDATE_ORGANIZATION,
+        CREATE_USER,
+        READ_USERS,
+        READ_USER,
+        UPDATE_SERVICE
+    ],
+
+    "CUSTOMER": [],
+
+    "OWNER": [
+        CREATE_ORGANIZATION,
+        UPDATE_ORGANIZATION,
+        CREATE_SERVICE,
+        UPDATE_SERVICE
+    ]
+};
+>>>>>>> Stashed changes
