@@ -18,9 +18,9 @@ export const updateOrganizationSchema=z.object({
     phoneNumber:z.e164().optional(),
     location:updateLocationSchema.optional(),
     profilePicturePath:z.string().trim().nonempty().optional(),
-    status:z.nativeEnum(ActivationStatus).optional()
+    status:z.enum(ActivationStatus).optional()
 }).strict();
 
 export const updateOrganizationByAdminSchema=z.object({
-    status:z.nativeEnum(ActivationStatus).optional()
+    status:z.enum(ActivationStatus).optional()
 }).strict();

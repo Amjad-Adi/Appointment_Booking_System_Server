@@ -17,5 +17,5 @@ export const updateServiceSchema=z.object({
     price:z.number().optional(),
     durationInMinutes:z.number().int().positive().optional(),
     profilePicturePath:z.string().trim().nonempty().optional(),
-    status:z.nativeEnum(ActivationStatus).optional()
+    status:z.enum(ActivationStatus).optional()
 }).strict()
