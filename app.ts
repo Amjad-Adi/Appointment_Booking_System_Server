@@ -6,13 +6,13 @@ import {mainRouter} from "./routes/main-router.route";
 import { randomUUID } from "crypto";
 import helmet from "helmet";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-import RateLimiterMemory from "rate-limiter-flexible";
+import RateLimiterMemory from "rate-limiter-flexible";//Redis is better tan memory because it handles multi servers
 import pino from "pino";
 import {pinoHttp} from "pino-http";
 import {BadRequestErorr} from "./errors/bad-request.erorr";
 import bodyParserErrorHandler from "express-body-parser-error-handler";
+import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "./middlewares/rate-limiter";
 const logger = pino();
 export let app = express();
 const corsOptions = {
@@ -32,7 +32,6 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({limit: "100kb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
-app.use(rateLimit({ windowMs: 60000, max: 100 }));
 app.use("/api",mainRouter)
 app.use((req,res)=>
     {throw new NotFoundError("Resource")})
