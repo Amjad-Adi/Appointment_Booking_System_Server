@@ -2,8 +2,8 @@ import express from "express";
 import {validateBody, validateParameter} from "../middlewares/validaiton";
 import {handleGetOrganizationRooms,handleUpdateOrganizationRoom,handleCreateOrganizationRoom,handleGetOrganizationRoom} from "../controllers/room.controller";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize,authorizeOrganizationUser} from "../middlewares/authoraization/autoraization";
-import {CREATE_ROOM, WRITE_ROOM} from "../permissions/permissions";
+import {authorize,authorizeOrganizationUser} from "../authoraization/autoraization";
+import {CREATE_ROOM, UPDATE_ROOM} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 import {createRoomSchema, updateRoomSchema} from "../middlewares/schemas/room.schema";
 export let roomRouter=express.Router({mergeParams:true});
@@ -13,4 +13,4 @@ roomRouter.route("/")
 
 roomRouter.route("/:roomUuid")
     .get(validateParameter(validateUuid,"roomUuid"),handleGetOrganizationRoom)
-    .patch(authenticateToken,authorizeOrganizationUser,authorize(WRITE_ROOM),validateParameter(validateUuid,"roomUuid"),validateBody(updateRoomSchema),handleUpdateOrganizationRoom)
+    .patch(authenticateToken,authorizeOrganizationUser,authorize(UPDATE_ROOM),validateParameter(validateUuid,"roomUuid"),validateBody(updateRoomSchema),handleUpdateOrganizationRoom)
