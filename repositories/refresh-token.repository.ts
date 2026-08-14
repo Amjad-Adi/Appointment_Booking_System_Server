@@ -40,12 +40,27 @@ export async function create(refreshToken: CreateRefreshToken):Promise<RefreshTo
         throw e;
     }
 }
-export async function remove(tokenHash:string):Promise<void> {
+export async function revoke(tokenHash:string):Promise<void> {
     try{
         (await pool.query(
-            `DELETE FROM ${TABLE_NAME}
-                        WHERE ${COLUMN_TOKEN_HASH}=$1`
+            `UPDATE ${TABLE_NAME}
+                            SET ${COLUMN_REVOKED} = TRUE,
+                                ${COLUMN_REVOKED_AT_UTC} = now()
+                            WHERE ${COLUMN_TOKEN_HASH} = $1`
                         ,[tokenHash]));
+    } catch (e) {
+        console.error(e)
+        throw e;
+    }
+}
+
+export async function remove(tokenHash:string):Promise<void> {
+    try {
+        (await pool.query(
+            `DELETE
+             FROM ${TABLE_NAME}
+             WHERE ${COLUMN_TOKEN_HASH} = $1`
+            , [tokenHash]));
     } catch (e) {
         console.error(e)
         throw e;
