@@ -29,9 +29,7 @@ import {
     COLUMN_CREATED_AT_UTC as LOCATION_COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_CREATED_AT_UTC as LOCATION_ALIAS_COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_UPDATED_AT_UTC as LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC,
-    ALIAS_COLUMN_UUID as LOCATION_ALIAS_COLUMN_UUID,
     ALIAS_COLUMN_NAME as LOCATION_ALIAS_COLUMN_NAME,
-    COLUMN_UUID as LOCATION_COLUMN_UUID,
 } from "../databases/contracts/location.contract"
 import {
     TABLE_NAME as USER_TABLE_NAME,
@@ -40,74 +38,49 @@ import {
     COLUMN_UUID as USER_COLUMN_UUID,
 } from "../databases/contracts/user.contract"
 import {create as createLocation, updateLocation} from "./location.repository"
-import {UpdateLocation} from "../models/location.model"
+import {Location, UpdateLocation} from "../models/location.model"
 import {CreateOrganization, UpdateOrganization, UpdateOrganizationByAdmin, OrganizationRow, Organization} from "../models/organization.model";
 import {setUserOrganizationId} from "./user.repository";
 export async function findAll():Promise<OrganizationRow[]>{
-    try{
-        return (await pool.query(
-            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID} AS ${LOCATION_ALIAS_COLUMN_UUID},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-             FROM ${TABLE_NAME} ${ALIAS}
-             LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows;
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+         FROM ${TABLE_NAME} ${ALIAS}
+         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows;
 }
 
 export async function findByUuid(uuid:string):Promise<OrganizationRow>{
-    try {
-        return (await pool.query(
-            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID} AS ${LOCATION_ALIAS_COLUMN_UUID},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-             FROM ${TABLE_NAME} ${ALIAS}
-             LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
-             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-             [uuid])).rows[0]
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+         FROM ${TABLE_NAME} ${ALIAS}
+         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
+         WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+         [uuid])).rows[0]
 }
 
 export async function findIdByUuid(uuid:string):Promise<number>{
-    try{
-        return (await pool.query(
-            `SELECT ${COLUMN_ID}
-             FROM ${TABLE_NAME}
-             WHERE ${COLUMN_UUID} = $1`,
-            [uuid])).rows[0]?.id
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT ${COLUMN_ID}
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_UUID} = $1`,
+        [uuid])).rows[0]?.id
 }
 
 export async function findUserOrganization(userUuid:string):Promise<OrganizationRow>{
-    try {
-        return (await pool.query(
-            `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID} AS ${LOCATION_ALIAS_COLUMN_UUID},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-             FROM ${TABLE_NAME} ${ALIAS}
-             INNER JOIN ${USER_TABLE_NAME} ${USER_ALIAS} ON ${ALIAS}.${COLUMN_ID}=${USER_ALIAS}.${USER_COLUMN_ORGANIZATION_ID}
-             LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
-             WHERE ${USER_ALIAS}.${USER_COLUMN_UUID} = $1`,
-            [userUuid])).rows[0];
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+         FROM ${TABLE_NAME} ${ALIAS}
+         INNER JOIN ${USER_TABLE_NAME} ${USER_ALIAS} ON ${ALIAS}.${COLUMN_ID}=${USER_ALIAS}.${USER_COLUMN_ORGANIZATION_ID}
+         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
+         WHERE ${USER_ALIAS}.${USER_COLUMN_UUID} = $1`,
+        [userUuid])).rows[0];
 }
 
 export async function isEmailFound(email:string):Promise<boolean>{
-    try {
-        return (await pool.query(
-            `SELECT 1
-             FROM ${TABLE_NAME}
-             WHERE ${COLUMN_EMAIL} = $1`,
-             [email])).rowCount!=0
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT 1
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_EMAIL} = $1`,
+         [email])).rowCount!=0
 }
 
 
@@ -118,7 +91,7 @@ export async function create(organization: CreateOrganization):Promise<Organizat
         let location=organization.location
         let locationId:number|null=null
         if(!(location==null)) {
-            let locationData= await createLocation(location,client)
+            let locationData:Location= await createLocation(location,client)
             locationId=locationData.id
         }
        let result= await client.query(
@@ -131,7 +104,6 @@ export async function create(organization: CreateOrganization):Promise<Organizat
         await client.query("COMMIT")
         return result.rows[0];
     } catch (e) {
-        console.error(e)
         await client.query("ROLLBACK")
         throw e;
     }finally {
@@ -145,12 +117,11 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
         await client.query("BEGIN")
         let location:UpdateLocation=organization.location as UpdateLocation
         if(location!==undefined) {
-            let locationUuid: string = (await pool.query(
-                `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_UUID}
+            location.id = (await pool.query(
+                `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
                  FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
-                          JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} =
-                                                         ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
-            await updateLocation(location, locationUuid, client)
+                JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} = ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
+            await updateLocation(location, client)
         }
         let result= await client.query(
             `UPDATE ${TABLE_NAME}
@@ -165,7 +136,6 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
         await client.query("COMMIT")
         return result.rows[0]
     }catch (e) {
-        console.error(e)
         await client.query("ROLLBACK")
         throw e;
     }finally {
@@ -175,29 +145,19 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
 
 
 export async function updateByAdmin(organization: UpdateOrganizationByAdmin):Promise<Organization> {
-    try{
-        return(await pool.query(
-            `UPDATE ${TABLE_NAME}
-             SET ${COLUMN_UPDATED_AT_UTC}=now(),
-                 ${COLUMN_STATUS}=COALESCE($1,${COLUMN_STATUS})
-             WHERE ${COLUMN_UUID} = $2
-             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LOCATION_ID},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-             [organization.status, organization.uuid])).rows[0];
-    }catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return(await pool.query(
+        `UPDATE ${TABLE_NAME}
+         SET ${COLUMN_UPDATED_AT_UTC}=now(),
+             ${COLUMN_STATUS}=COALESCE($1,${COLUMN_STATUS})
+         WHERE ${COLUMN_UUID} = $2
+         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_LOCATION_ID},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+         [organization.status, organization.uuid])).rows[0];
 }
 
 export async function isPhoneNumberFound(phoneNumber: string): Promise<boolean> {
-    try {
-        return (await pool.query(
-            `SELECT 1
-             FROM ${TABLE_NAME}
-             WHERE ${COLUMN_PHONE_NUMBER} = $1`,
-            [phoneNumber])).rowCount!=0
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT 1
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_PHONE_NUMBER} = $1`,
+        [phoneNumber])).rowCount!=0
 }

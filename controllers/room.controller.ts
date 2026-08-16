@@ -7,16 +7,14 @@ import {findIdByUuid} from "../repositories/organizaiton.repository";
 import {getIdByUuid} from "../services/backend/organization.service";
 export async function handleGetOrganizationRooms(req:Request,res:Response){
     let organizationUuid:string=req.params.organizationUuid  as string;
-    let organizationId= await getIdByUuid(organizationUuid)
-    const result:RoomResponse[]=await getRooms(organizationId)
+    const result:RoomResponse[]=await getRooms(organizationUuid)
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganizationRoom(req:Request,res:Response){
     let roomUuid:string=req.params.roomUuid as string;
     let organizationUuid:string=req.params.organizationUuid  as string;
-    let organizationId=await getIdByUuid(organizationUuid)
-    const result:RoomResponse=await getRoom(organizationId,roomUuid)
+    const result:RoomResponse=await getRoom(organizationUuid,roomUuid)
     return res.status(200).json(result)
 }
 

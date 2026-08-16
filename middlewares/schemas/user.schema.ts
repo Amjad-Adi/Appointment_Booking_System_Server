@@ -7,8 +7,8 @@ export const createUserSchema=z.object({
     email:z.email(),
     password:z.string().trim().nonempty().max(64),
     confirmPassword:z.string().trim().nonempty().max(64),
-    profilePicturePath:z.string().trim().nonempty().default("DEFAULT_PICTURE_PATH"),
-    language:z.string().trim().length(2).default("en"),
+    profilePicturePath:z.string().trim().nonempty().optional(),
+    language:z.string().trim().length(2).optional(),
     role:z.enum(Role),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 

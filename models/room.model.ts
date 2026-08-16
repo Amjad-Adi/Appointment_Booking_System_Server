@@ -7,32 +7,14 @@ export interface Room{
     uuid:string,
     name:string
     description:string,
-    organizationId:string,
     createdAtUTC:Date,
     updatedAtUTC:Date,
     status:ActivationStatus
     occupancyStatus:RoomOccupancyStatus
 }
-export interface RoomResponse{
-    uuid:string,
-    name:string
-    description:string,
-    organizationId:string,
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
-    status:ActivationStatus
-    occupancyStatus:RoomOccupancyStatus
-}
-export interface RoomResponse{
-    uuid:string,
-    name:string
-    description:string,
+export interface RoomResponse extends Room{
     organizationUuid:string,
     organizationName:string,
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
-    status:ActivationStatus
-    occupancyStatus:RoomOccupancyStatus
 }
 export type CreateRoom= z.infer<typeof createRoomSchema> & {organizationUuid:string,organizationId:number;};
 export type UpdateRoom= z.infer<typeof updateRoomSchema> & {uuid:string};

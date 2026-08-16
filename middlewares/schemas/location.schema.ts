@@ -11,8 +11,4 @@ export const createLocationSchema=z.object({
         z.number().min(latitudeMinRange).max(latitudeMaxRange)]),
 }).strict()
 
-export const updateLocationSchema=z.object({
-    name:z.string().trim().nonempty().max(1024).optional(),
-    locationOnMap:z.tuple([z.number().min(longitudeMinRange).max(longitudeMaxRange),
-        z.number().min(latitudeMinRange).max(latitudeMaxRange)]).optional(),
-}).strict();
+export const updateLocationSchema=createLocationSchema.partial();
