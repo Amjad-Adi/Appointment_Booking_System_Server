@@ -9,8 +9,15 @@ export const createUserSchema=z.object({
     confirmPassword:z.string().trim().nonempty().max(64),
     profilePicturePath:z.string().trim().nonempty().optional(),
     language:z.string().trim().length(2).optional(),
-    role:z.enum(Role),
-}).strict().refine((data)=>data.password===data.confirmPassword);
+    role:z.enum(Role).refine((role)=>(role==Role.CUSTOMER||role==Role.OWNER)),
+}).strict().refine((data)=>data.password===data.confirmPassword)
+
+export const inviteUserSchema=z.object({
+    firstName:z.string().trim().nonempty().max(64),
+    lastName:z.string().trim().nonempty().max(64),
+    email:z.email(),
+    role:z.enum(Role).refine((role)=>(role!=Role.SUPER_ADMIN&&role!=Role.CUSTOMER)),
+}).strict();
 
 export const updateUserSchema=z.object({
     firstName:z.string().trim().nonempty().max(64).optional(),

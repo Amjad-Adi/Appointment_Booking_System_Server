@@ -13,6 +13,7 @@ export const COLUMN_ORGANIZATION_ID="organization_Id";
 export const COLUMN_ROLE="role";
 export const COLUMN_STATUS="status";
 export const ALIAS="u"
+export const SECONDARY_ALIAS="u1"
 export const ALIAS_COLUMN_FIRST_NAME = `"firstName"`;
 export const ALIAS_COLUMN_LAST_NAME = `"lastName"`;
 export const ALIAS_COLUMN_PROFILE_PICTURE_PATH = `"profilePicturePath"`;

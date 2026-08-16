@@ -8,28 +8,26 @@ import {
 } from "../middlewares/schemas/invitations.schema";
 export interface Invitation{
     uuid:string,
-    title:string
-    body:string,
     createdAtUTC:Date,
     expiredAtUTC:Date,
     invitationStatus:InvitationStatus
 }
 
 
-export interface ReceivedInvitationResponse extends Invitation{
+export interface InvitationResponse extends Invitation{
     senderUuid:string,
-    senderName:string,
+    senderFirstName:string,
+    senderLastName:string,
     senderEmail:string,
+    senderProfilePicturePath:string,
     organizationUuid:string,
     organizationName:string,
-}
-
-export interface SentInvitationResponse extends Invitation,ReceivedInvitationResponse{
     recipientUuid:string,
-    recipientName:string,
+    recipientFirstName:string,
+    recipientLastName:string,
     recipientEmail:string,
+    recipientProfilePicturePath:string,
 }
 
-
-export type CreateInvitation= z.infer<typeof createInvitationSchema> & {senderUuid:string};
-export type UpdateInvitation= z.infer<typeof updateInvitationSchema>
+export type CreateInvitation= z.infer<typeof createInvitationSchema> & {organizationId:number,senderId:number};
+export type UpdateInvitation= z.infer<typeof updateInvitationSchema> & {uuid:string}
