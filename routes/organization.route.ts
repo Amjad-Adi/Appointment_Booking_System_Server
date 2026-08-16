@@ -8,16 +8,17 @@ import {
     handleGetOrganization, handleUpdateOrganization
 } from "../controllers/organization.controller";
 import { authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../authoraization/authoraization";
+import {authorize,rejectWorkingUsers,authorizeOrganizationUser} from "../middlewares/authoraization/autoraization";
 import {
     CREATE_ORGANIZATION,
     UPDATE_ORGANIZATION,
 } from "../permissions/permissions";
 import {serviceRouter} from "./service.route";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
-import {invitationRouter} from "./invitation.route";
+import {sendInvitationRouter} from "./send-invitation.route";
 import { Role } from "../models/enums/roles";
 import {z, ZodType} from "zod";
+import {roomRouter} from "./room.route";
 const roleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
@@ -28,6 +29,8 @@ organizationRouter.route("/")
     .post(authenticateToken,authorize(CREATE_ORGANIZATION),rejectWorkingUsers,validateBody(createOrganizationSchema),handleCreateOrganization)
 
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
+organizationRouter.use("/:organizationUuid/rooms",validateParameter(validateUuid,"organizationUuid"),roomRouter)
+organizationRouter.use("/:organizationUuid/invitations",validateParameter(validateUuid,"organizationUuid"),sendInvitationRouter)
 organizationRouter.route("/:organizationUuid")
-    .get(authenticateToken,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)
+    .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string
     .patch(authenticateToken,authorizeOrganizationUser,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)

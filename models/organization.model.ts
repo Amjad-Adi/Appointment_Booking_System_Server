@@ -10,7 +10,7 @@ export interface Organization {
     email:string,
     phoneNumber:string,
     bio:string,
-    location:number,
+    locationId:number,
     profilePicturePath:string,
     createdAtUTC:Date,
     updatedAtUTC:Date,
@@ -35,7 +35,6 @@ export interface OrganizationRow {
     phoneNumber: string;
     bio: string;
     profilePicturePath: string;
-    locationUuid: string|null;
     locationName: string|null;
     longitude: number|null;
     latitude: number|null;

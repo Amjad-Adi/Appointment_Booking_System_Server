@@ -10,12 +10,12 @@ import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {RoomResponse,CreateRoom,UpdateRoom,Room} from "../../models/room.model";
-export async function getRooms(organizationId:number):Promise<RoomResponse[]>{
-    return (await findAll(organizationId))
+export async function getRooms(organizationUuid:string):Promise<RoomResponse[]>{
+    return (await findAll(organizationUuid))
 }
 
-export async function getRoom(organizationId:number,roomUuid:string):Promise<RoomResponse>{
-    let result:RoomResponse= await findById(organizationId,roomUuid)
+export async function getRoom(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{
+    let result:RoomResponse= await findById(organizationUuid,roomUuid)
     if(result===undefined){
         throw new NotFoundError("Rooom");
     }

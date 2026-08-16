@@ -9,10 +9,9 @@ import {
     handleGetUsers,
     handleGetCurrentUser, handleUpdateCurrentUser
 } from "../controllers/user.controller";
-import {authorize} from "../authoraization/authoraization";
+import {authorize} from "../middlewares/authoraization/autoraization";
 import {
     READ_USERS,
-    READ_USER,
     CREATE_USER,
     UPDATE_USER_AS_ADMIN,
 } from "../permissions/permissions";
@@ -30,5 +29,5 @@ userRouter.route("/register")
     .post(validateBody(createUserSchema),handleCreateUser)
 
 userRouter.route("/:userUuid")
-    .get(authenticateToken,authorize(READ_USER),validateParameter(validateUuid,"userUuid"),handleGetUser)
+    .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)
     .patch(authenticateToken,authorize(UPDATE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)

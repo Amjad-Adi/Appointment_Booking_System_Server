@@ -24,7 +24,6 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
             bio: row.bio,
             profilePicturePath: row.profilePicturePath,
             location: {
-                uuid: row.locationUuid,
                 name: row.locationName,
                 locationOnMap:[row.longitude, row.latitude] as [number|null,number|null],
                 createdAtUTC: row.locationCreatedAtUTC,
@@ -50,7 +49,6 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
         bio: result.bio,
         profilePicturePath: result.profilePicturePath,
         location: {
-            uuid: result.locationUuid,
             name: result.locationName,
             locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
             createdAtUTC: result.locationCreatedAtUTC,
@@ -105,7 +103,6 @@ export async function getUserOrganization(userUuid:string):Promise<OrganizationR
         bio: result.bio,
         profilePicturePath: result.profilePicturePath,
         location: {
-            uuid: result.locationUuid,
             name: result.locationName,
             locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
             createdAtUTC: result.locationCreatedAtUTC,

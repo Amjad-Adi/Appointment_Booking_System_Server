@@ -16,18 +16,8 @@ export interface User{
     status:ActivationStatus
 }
 
-export interface UserResponse{
-    uuid:string,
-    firstName:string,
-    lastName:string,
-    email:string,
-    profilePicturePath:string,
-    organizationUuid:string,
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
-    language:string,
-    role:Role,
-    status:ActivationStatus
+export interface UserResponse extends User{
+    organizationUuid:string
 }
 
 export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};

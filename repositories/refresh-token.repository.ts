@@ -16,53 +16,33 @@ import {
 } from "../databases/contracts/blacklisted-token.contract";
 
 export async function findRefreshToken(hashedRefreshToken:string):Promise<RefreshToken>{
-    try{
-        return (await pool.query(
-            `SELECT ${COLUMN_USER_ID} AS ${ALIAS_COLUMN_USER_ID},${COLUMN_TOKEN_HASH} AS ${ALIAS_COLUMN_TOKEN_HASH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC} AS ${ALIAS_COLUMN_EXPIRES_AT_UTC},${COLUMN_REVOKED},${COLUMN_REVOKED_AT_UTC} AS ${ALIAS_COLUMN_REVOKED_AT_UTC}
-                            FROM ${TABLE_NAME}
-                            WHERE ${COLUMN_TOKEN_HASH}=$1`,
-            [hashedRefreshToken])).rows[0]
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `SELECT ${COLUMN_USER_ID} AS ${ALIAS_COLUMN_USER_ID},${COLUMN_TOKEN_HASH} AS ${ALIAS_COLUMN_TOKEN_HASH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC} AS ${ALIAS_COLUMN_EXPIRES_AT_UTC},${COLUMN_REVOKED},${COLUMN_REVOKED_AT_UTC} AS ${ALIAS_COLUMN_REVOKED_AT_UTC}
+                        FROM ${TABLE_NAME}
+                        WHERE ${COLUMN_TOKEN_HASH}=$1`,
+        [hashedRefreshToken])).rows[0]
 }
 
 export async function create(refreshToken: CreateRefreshToken):Promise<RefreshToken> {
-    try{
-        return (await pool.query(
-            `INSERT INTO ${TABLE_NAME}(${COLUMN_USER_ID},${COLUMN_TOKEN_HASH})
-                        VALUES ($1,$2)
-                        RETURNING ${COLUMN_USER_ID} AS ${ALIAS_COLUMN_USER_ID},${COLUMN_TOKEN_HASH} AS ${ALIAS_COLUMN_TOKEN_HASH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC} AS ${ALIAS_COLUMN_EXPIRES_AT_UTC},${COLUMN_REVOKED},${COLUMN_REVOKED_AT_UTC} AS ${ALIAS_COLUMN_REVOKED_AT_UTC}`,
-            [refreshToken.userId, refreshToken.tokenHash])).rows[0];
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    return (await pool.query(
+        `INSERT INTO ${TABLE_NAME}(${COLUMN_USER_ID},${COLUMN_TOKEN_HASH})
+                    VALUES ($1,$2)
+                    RETURNING ${COLUMN_USER_ID} AS ${ALIAS_COLUMN_USER_ID},${COLUMN_TOKEN_HASH} AS ${ALIAS_COLUMN_TOKEN_HASH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC} AS ${ALIAS_COLUMN_EXPIRES_AT_UTC},${COLUMN_REVOKED},${COLUMN_REVOKED_AT_UTC} AS ${ALIAS_COLUMN_REVOKED_AT_UTC}`,
+        [refreshToken.userId, refreshToken.tokenHash])).rows[0];
 }
 export async function revoke(tokenHash:string):Promise<void> {
-    try{
-        (await pool.query(
-            `UPDATE ${TABLE_NAME}
-                            SET ${COLUMN_REVOKED} = TRUE,
-                                ${COLUMN_REVOKED_AT_UTC} = now()
-                            WHERE ${COLUMN_TOKEN_HASH} = $1`
-                        ,[tokenHash]));
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    (await pool.query(
+        `UPDATE ${TABLE_NAME}
+                        SET ${COLUMN_REVOKED} = TRUE,
+                            ${COLUMN_REVOKED_AT_UTC} = now()
+                        WHERE ${COLUMN_TOKEN_HASH} = $1`
+                    ,[tokenHash]));
 }
 
 export async function remove(tokenHash:string):Promise<void> {
-    try {
-        (await pool.query(
-            `DELETE
-             FROM ${TABLE_NAME}
-             WHERE ${COLUMN_TOKEN_HASH} = $1`
-            , [tokenHash]));
-    } catch (e) {
-        console.error(e)
-        throw e;
-    }
+    (await pool.query(
+        `DELETE
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_TOKEN_HASH} = $1`
+        , [tokenHash]));
 }

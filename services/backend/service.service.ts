@@ -8,14 +8,14 @@ import {
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
+import {CreateService, Service, PublicServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
-export async function getServices(organizationId:number):Promise<ServiceResponse[]>{
-    return (await findAll(organizationId))
+export async function getServices(organizationUuid:string):Promise<PublicServiceResponse[]>{
+    return (await findAll(organizationUuid))
 }
 
-export async function getService(organizationId:number,serviceUuid:string):Promise<ServiceResponse>{
-    let result:ServiceResponse= await findById(organizationId,serviceUuid)
+export async function getService(organizationUuid:string,serviceUuid:string):Promise<PublicServiceResponse>{
+    let result:PublicServiceResponse= await findById(organizationUuid,serviceUuid)
     if(result===undefined){
         throw new NotFoundError("Service");
     }

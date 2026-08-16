@@ -12,11 +12,12 @@ CREATE TABLE users(
 	updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	organization_id BIGINT,
 	language CHAR(2) DEFAULT 'en',
-	role VARCHAR(16) NOT NULL CHECK (role in('WORKER','MANAGER','SUPER ADMIN', 'CRM', 'CUSTOMER')),
+	role VARCHAR(16) NOT NULL CHECK (role in('WORKER','OWNER','MANAGER','SUPER ADMIN', 'CRM', 'CUSTOMER')),
 	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-ALTER TABLE users ALTER COLUMN status role CHECK (role in('SUPER ADMIN','''WORKER','MANAGER',, 'CRM', 'CUSTOMER')),
+DROP TABLE users;
+ALTER TABLE users ALTER COLUMN role CHECK (role in('SUPER ADMIN','WORKER','MANAGER', 'CRM', 'CUSTOMER')),
 CREATE TABLE locations(
 	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	name varchar(1024) NOT NULL,
@@ -216,19 +217,35 @@ CREATE TABLE blacklisted_tokens(
 	reason VARCHAR(4096)
 );
 
+CREATE TABLE invitations(
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	sender_id BIGINT,
+	recipient_id BIGINT,
+	title VARCHAR(256) NOT NULL,
+	body VARCHAR(4096) NOT NULL,
+	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	expires_at_utc TIMESTAMPTZ NOT NULL,
+	invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status in('PENDING','REJECTED','ACCEPTED','FAILED','EXPIRED')) DEFAULT 'PENDING',
+	FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (recipient_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
+);
+
 INSERT INTO locations (name, location_on_map)
 VALUES ('Birzeit University', ST_GeomFromText('POINT(35.2137 31.7683)', 4326));
 SELECT ST_X(location_on_map) AS longitude ,ST_Y(location_on_map) AS latitude
 FROM locations;
-INSERT INTO users(first_name,last_name, email,firebase_uid,role)
-VALUES('Amjad','Adi','adminamjad123@gmail.com','mycFV8dE73XCBa6Tm4uZqa15mqf2','SUPER ADMIN');
-
-INSERT INTO users(first_name,last_name, email,firebase_uid,role)
-VALUES('Mohammad','Karam','testuser@gmail.com','mEKXUxFaO0UnGbMEp89hNZ9VsXG2','CUSTOMER');
-
+INSERT INTO users (first_name, last_name, email, firebase_uid, role)
+VALUES
+    ('Qasem', 'Mohammad', 'qasemmohammad@gmail.com', 'eFwJcSrnDwUOVNImfD0SEMPspkQ2', 'CUSTOMER'),
+    ('Ahamd', 'Adi', 'ahamdadi@gmail.com', 'OriZRPraMWXWTkHh53izTjnLDU33', 'OWNER'),
+    ('Ali', 'Naseem', 'alinaseem@gmail.com', 'Jilt7vIuzLVEg4aQ35fYOuEDqEz2', 'CUSTOMER'),
+    ('Mohammad', 'Karam', 'testuser@gmail.com', 'mEKXUxFaO0UnGbMEp89hNZ9VsXG2', 'CUSTOMER'),
+    ('Amjad', 'Adi', 'adminamjad123@gmail.com', 'mycFV8dE73XCBa6Tm4uZqa15mqf2', 'SUPER ADMIN');
 SELECT * FROM users;
 SELECT * FROM locations;
 SELECT * FROM organizations;
 SELECT * FROM services;
 SELECT * FROM blacklisted_token;
-
+SELECT * FROM invitations;
+DELETE FROM users;

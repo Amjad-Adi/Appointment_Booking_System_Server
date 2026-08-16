@@ -9,7 +9,7 @@ export const createOrganizationSchema=z.object({
     phoneNumber:z.e164(),
     bio:z.string().trim().max(4096).nonempty().optional(),
     location:createLocationSchema,
-    profilePicturePath:z.string().trim().nonempty().default("DEFAULT_PICTURE_PATH")
+    profilePicturePath:z.string().trim().nonempty().optional()
 }).strict()
 
 export const updateOrganizationSchema=z.object({
