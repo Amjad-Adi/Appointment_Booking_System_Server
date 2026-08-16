@@ -4,7 +4,7 @@ import {getAuth} from "firebase/auth";
 import {UnauthorizedError} from "../../errors/unauthorized.error";
 import {generateToken} from "./jwt.authentication.controller";
 import {UserResponse} from "../../models/user.model";
-import {getUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/backend/user.service";
+import {getUserUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/backend/user.service";
 import {mapFirebaseError} from "../../middlewares/map-firebase-error";
 import {findRefreshToken, remove} from "../../repositories/refresh-token.repository";
 import {RefreshToken} from "../../models/refresh-token.model";
@@ -54,7 +54,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
         throw new UnauthorizedError()
     }
     const user = await getUserById(refreshTokenRecord.userId);
-    const uid = await getUidByUuid(user.uuid);
+    const uid = await getUserUidByUuid(user.uuid);
     const tokens=await generateToken(uid);
     await removeToken(refreshTokenString)
     res.cookie('refreshToken',tokens.refreshToken,cookieOptions);

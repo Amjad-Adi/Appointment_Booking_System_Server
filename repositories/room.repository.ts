@@ -33,13 +33,13 @@ export async function findAll(organizationUuid:string):Promise<RoomResponse[]>{
         [organizationUuid])).rows;
 }
 
-export async function findById(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{
+export async function findByUuid(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}, ${ALIAS}.${COLUMN_OCCUPANCY_STATUS} as ${ALIAS_COLUMN_OCCUPANCY_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
-        [organizationUuid,roomUuid])).rows[0]
+         WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+        [roomUuid])).rows[0]
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{

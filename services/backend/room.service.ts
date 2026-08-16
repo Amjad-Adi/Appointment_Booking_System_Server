@@ -1,6 +1,6 @@
 import {
     findAll,
-    findById,
+    findByUuid,
     create,
     update,
     isNameFound
@@ -8,22 +8,28 @@ import {
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {findIdByUuid} from "../../repositories/organizaiton.repository";
+import {findIdByUuid, isEmailFound, isPhoneNumberFound} from "../../repositories/organizaiton.repository";
 import {RoomResponse,CreateRoom,UpdateRoom,Room} from "../../models/room.model";
-export async function getRooms(organizationUuid:string):Promise<RoomResponse[]>{
+import {ForbiddenError} from "../../errors/forbidden.error";
+import {getUserOrganization} from "./organization.service";
+import {isUserAuthorizedToOrganization, isUserWorking} from "./user.service";
+export async function getRooms(organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
+    await isUserAuthorizedToOrganization(userUuid,organizationUuid);
     return (await findAll(organizationUuid))
 }
 
-export async function getRoom(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{
-    let result:RoomResponse= await findById(organizationUuid,roomUuid)
+export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:string):Promise<RoomResponse>{
+    await isUserAuthorizedToOrganization(userUuid,organizationUuid);
+    let result:RoomResponse= await findByUuid(organizationUuid,roomUuid)
     if(result===undefined){
-        throw new NotFoundError("Rooom");
+        throw new NotFoundError("Room");
     }
     return result
 }
 
 
-export async function createRoom(room:CreateRoom):Promise<Room>{
+export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
+    await isUserAuthorizedToOrganization(userUuid,room.organizationUuid)
     let organizationId:number= await findIdByUuid(room.organizationUuid)
     if(organizationId===undefined){
         throw new NotFoundError("Organization");
@@ -39,10 +45,15 @@ export async function createRoom(room:CreateRoom):Promise<Room>{
     return result;
 }
 
-export async function updateRoom(room:UpdateRoom):Promise<Room>{
+export async function updateRoom(room:UpdateRoom,organizationUuid:string,userUuid:string):Promise<Room>{
+    await isUserAuthorizedToOrganization(userUuid,organizationUuid)
+    let roomCheck:RoomResponse=await getRoom(organizationUuid,room.uuid,userUuid)//check if that organizaiton have that room
+    if(roomCheck===undefined){
+        throw new NotFoundError("Room");
+    }
     let result:Room= await update(room)
     if(result===undefined){
-        throw new NotFoundError("room")
+        throw new NotFoundError("Room")
     }
     return result;
 }

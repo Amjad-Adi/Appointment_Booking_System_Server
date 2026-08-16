@@ -4,30 +4,36 @@ import {
 import { type Request, type Response } from "express";
 import {CreateRoom, Room, UpdateRoom, RoomResponse} from "../models/room.model";
 import {findIdByUuid} from "../repositories/organizaiton.repository";
-import {getIdByUuid} from "../services/backend/organization.service";
+import {getOrganizationIdByUuid} from "../services/backend/organization.service";
+import {} from "../utils/UserRequest"
 export async function handleGetOrganizationRooms(req:Request,res:Response){
     let organizationUuid:string=req.params.organizationUuid  as string;
-    const result:RoomResponse[]=await getRooms(organizationUuid)
+    let userUuid:string=req.user.uuid as string;
+    const result:RoomResponse[]=await getRooms(organizationUuid,userUuid)
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganizationRoom(req:Request,res:Response){
     let roomUuid:string=req.params.roomUuid as string;
+    let userUuid:string=req.user.uuid as string;
     let organizationUuid:string=req.params.organizationUuid  as string;
-    const result:RoomResponse=await getRoom(organizationUuid,roomUuid)
+    const result:RoomResponse=await getRoom(organizationUuid,roomUuid,userUuid)
     return res.status(200).json(result)
 }
 
 export async function handleCreateOrganizationRoom(req:Request,res:Response){
     let room:CreateRoom=(req.body)
     room.organizationUuid=req.params.organizationUuid as string;
-    const result:Room=await createRoom(room)
+    let userUuid:string=req.user.uuid as string;
+    const result:Room=await createRoom(room,userUuid)
     return res.status(201).json(result)
 }
 
 export async function handleUpdateOrganizationRoom(req:Request,res:Response){
     let room:UpdateRoom=(req.body)
     room.uuid=req.params.roomUuid as string
-    const result:Room=await updateRoom(room)
+    let userUuid:string=req.user.uuid as string;
+    let organizationUuid:string=req.params.organizationUuid  as string;
+    const result:Room=await updateRoom(room,organizationUuid,userUuid)
     return res.status(200).json(result)
 }

@@ -23,17 +23,6 @@ export function authorize(permission:string) {
 }
 
 export async function authorizeOrganizationUser(req: Request, res: Response, next: NextFunction){
-        const userUuid: string = req.user.uuid;
-        if(req.user.role!==Role.SUPER_ADMIN&&(await getUserOrganization(userUuid)).uuid!=req.params.organizationUuid){
-            throw new ForbiddenError()
-        }
-        next();
-}
-
-export async function rejectWorkingUsers(req: Request, res: Response, next: NextFunction){
     const userUuid: string = req.user.uuid;
-    if((await isUserWorking(userUuid))){
-        throw new ConflictError()
-    }
     next();
 }

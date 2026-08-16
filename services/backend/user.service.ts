@@ -12,6 +12,8 @@ import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {findUserOrganization} from "../../repositories/organizaiton.repository";
+import {ForbiddenError} from "../../errors/forbidden.error";
+import {getUserOrganization} from "./organization.service";
 export async function getUsers():Promise<UserResponse[]>{
     return (await findAll())
 }
@@ -73,7 +75,7 @@ export async function isUserWorking(userUuid:string):Promise<boolean>{
 }
 
 
-export async function getIdByUuid(uuid:string):Promise<number>{
+export async function getUserIdByUuid(uuid:string):Promise<number>{
     let result:number= await findIdByUuid(uuid);
     if(result===undefined){
         throw new NotFoundError("User");
@@ -82,10 +84,18 @@ export async function getIdByUuid(uuid:string):Promise<number>{
 }
 
 
-export async function getUidByUuid(uuid:string):Promise<string>{
+export async function getUserUidByUuid(uuid:string):Promise<string>{
     let result:string= await findUidByUuid(uuid);
     if(result===undefined){
         throw new NotFoundError("User");
     }
     return result;
+}
+
+
+export async function isUserAuthorizedToOrganization(userUuid:string, organizationUuid:string):Promise<boolean>{
+    if((await getUserOrganization(userUuid))?.uuid!==organizationUuid){
+        throw new ForbiddenError()
+    }
+    return true;
 }

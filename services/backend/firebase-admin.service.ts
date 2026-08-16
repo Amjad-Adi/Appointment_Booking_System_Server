@@ -25,3 +25,18 @@ export async function revokeUserSessions(uid: string) {
         throw mapFirebaseError(e)
     }
 }
+
+export async function inviteFireBaseUser(email:string,invitationUuid:string) {
+    try{
+        const actionCodeSettings={
+            url:process.env.DEVELOPMENT_HOS+"/me/invitations/"+invitationUuid,
+            handleCodeInApp:true
+        }
+        return await getAuth().generateSignInWithEmailLink(
+            email,
+            actionCodeSettings
+        )
+        }catch(e) {
+        throw mapFirebaseError(e)
+    }
+}
