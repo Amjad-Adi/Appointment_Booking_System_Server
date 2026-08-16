@@ -14,7 +14,7 @@ export interface Service{
     status:ActivationStatus
 }
 
-export interface PublicServiceResponse extends Service{
+export interface ServiceResponse extends Service{
     organizationUuid:string,
     organizationName:string,
     profilePicturePath:string,

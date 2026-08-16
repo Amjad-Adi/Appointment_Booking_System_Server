@@ -44,6 +44,6 @@ export interface OrganizationRow {
     updatedAtUTC: Date;
     status: ActivationStatus;
 }
-export type CreateOrganization= z.infer<typeof createOrganizationSchema> & {organizationManagerUuid:string};
-export type UpdateOrganization= z.infer<typeof updateOrganizationSchema> & {uuid:string};
+export type CreateOrganization= z.infer<typeof createOrganizationSchema> & {organizationOwnerUuid:string};
+export type UpdateOrganization= z.infer<typeof updateOrganizationSchema> & {uuid:string ,userUuid:string};
 export type UpdateOrganizationByAdmin= z.infer<typeof updateOrganizationByAdminSchema> & {uuid:string};

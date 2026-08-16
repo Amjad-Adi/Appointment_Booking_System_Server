@@ -14,6 +14,8 @@ import {
     CreateOrganization, Organization, OrganizationResponse,
     OrganizationRow, UpdateOrganization, UpdateOrganizationByAdmin,
 } from "../../models/organization.model";
+import {isUserWorking} from "./user.service";
+import {ForbiddenError} from "../../errors/forbidden.error";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
     let result:OrganizationRow[]= await findAll()
     return result.map((row):OrganizationResponse=>({
@@ -61,10 +63,9 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
 }
 
 export async function createOrganization(organization:CreateOrganization):Promise<Organization>{
-    if(await isEmailFound(organization.email)) {
-        throw new ConflictError()
-    }
-    if(await isPhoneNumberFound(organization.phoneNumber)) {
+    const [emailFound,phoneNumberFound,userWorking]=await Promise.all(
+        [await isEmailFound(organization.email),await isPhoneNumberFound(organization.phoneNumber),(await isUserWorking(organization.organizationOwnerUuid))])
+    if(emailFound||phoneNumberFound||userWorking){
         throw new ConflictError()
     }
     let result= await create(organization)
@@ -75,6 +76,9 @@ export async function createOrganization(organization:CreateOrganization):Promis
 }
 
 export async function updateOrganization(organization:UpdateOrganization):Promise<Organization>{
+    if((await getUserOrganization(organization.userUuid)).uuid!=organization.uuid){
+        throw new ForbiddenError()
+    }
     let result:Organization= await update(organization)
     if(result===undefined){
         throw new NotFoundError("organization")
@@ -114,7 +118,7 @@ export async function getUserOrganization(userUuid:string):Promise<OrganizationR
     }
 }
 
-export async function getIdByUuid(uuid:string):Promise<number>{
+export async function getOrganizationIdByUuid(uuid:string):Promise<number>{
     let result:number= await findIdByUuid(uuid);
     if(result===undefined){
         throw new NotFoundError("Organization");

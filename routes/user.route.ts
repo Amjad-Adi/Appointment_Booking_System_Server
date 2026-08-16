@@ -25,8 +25,6 @@ userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)
     .patch(authenticateToken,validateBody(updateUserSchema),handleUpdateCurrentUser)
 
-userRouter.route("/register")
-    .post(validateBody(createUserSchema),handleCreateUser)
 
 userRouter.route("/:userUuid")
     .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)
