@@ -27,7 +27,7 @@ export async function handleGetOrganization(req:Request,res:Response){
 
 export async function handleCreateOrganization(req:Request,res:Response){
     let organization:CreateOrganization=(req.body)
-    organization.organizationManagerUuid=req.user.uuid;
+    organization.organizationOwnerUuid=req.user.uuid;
     const result:Organization=await createOrganization(organization)
     return res.status(201).json(result)
 }

@@ -9,7 +9,7 @@ import {hashRefreshToken} from "../../utils/hash";
 import {createRefreshToken} from "../../services/backend/jwt-management-service";
 import {CreateRefreshToken, RefreshToken} from "../../models/refresh-token.model";
 import {UserRecord} from "firebase-admin/auth";
-import {getIdByUuid, getUserByFireBaseUid} from "../../services/backend/user.service";
+import {getUserIdByUuid, getUserByFireBaseUid} from "../../services/backend/user.service";
 import {ConflictError} from "../../errors/conflict.error";
 import {NotFoundError} from "../../errors/not-found.error";
 import jwt, {JwtPayload, SignOptions, VerifyOptions} from "jsonwebtoken";
@@ -75,7 +75,7 @@ export async function generateToken(userUid:string){
     const refreshToken:string=crypto.randomBytes(32).toString('hex')
     const refreshHashedToken:string=hashRefreshToken(refreshToken)
     const currentUser:UserResponse = await getUserByFireBaseUid(userUid);
-    const currentUserId:number=await getIdByUuid(currentUser.uuid);
+    const currentUserId:number=await getUserIdByUuid(currentUser.uuid);
     const refreshTokenToStore:CreateRefreshToken={
         userId: currentUserId,
         tokenHash:refreshHashedToken

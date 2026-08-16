@@ -1,4 +1,4 @@
-import {PublicServiceResponse, Service, UpdateService,CreateService} from "../models/service.model"
+import {ServiceResponse, Service, UpdateService,CreateService} from "../models/service.model"
 import {pool} from "../databases/postgre-connection"
 import {
     COLUMN_UUID,
@@ -26,7 +26,7 @@ import {
     COLUMN_UUID as ORGANIZATION_COLUMN_UUID, COLUMN_PROFILE_PICTURE_PATH, ALIAS_COLUMN_ORGANIZATION_UUID,
 } from "../databases/contracts/organization.contract"
 import {QueryResult} from "pg";
-export async function findAll(organizationUuid:string):Promise<PublicServiceResponse[]>{
+export async function findAll(organizationUuid:string):Promise<ServiceResponse[]>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -35,13 +35,13 @@ export async function findAll(organizationUuid:string):Promise<PublicServiceResp
         [organizationUuid])).rows;
 }
 
-export async function findById(organizationUuid:string,serviceUuid:string):Promise<PublicServiceResponse>{
+export async function findByUuid(organizationUuid:string,serviceUuid:string):Promise<ServiceResponse>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
          WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
-        [organizationUuid,serviceUuid])).rows[0]
+        [serviceUuid])).rows[0]
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
