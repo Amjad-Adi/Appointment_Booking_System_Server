@@ -10,14 +10,13 @@ import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {RoomResponse,CreateRoom,UpdateRoom,Room} from "../../models/room.model";
-import {isUserAuthorizedToOrganization} from "./user.service";
-export async function getRooms(organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid);
+import {AuthorizeOrganizationUser} from "./user.service";export async function getRooms(organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
+    await AuthorizeOrganizationUser(userUuid,organizationUuid);
     return (await findAll(organizationUuid))
 }
 
 export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:string):Promise<RoomResponse>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid);
+    await AuthorizeOrganizationUser(userUuid,organizationUuid);
     let result:RoomResponse= await findByUuid(organizationUuid,roomUuid)
     if(result===undefined){
         throw new NotFoundError("Room");
@@ -27,7 +26,7 @@ export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:s
 
 
 export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
-    await isUserAuthorizedToOrganization(userUuid,room.organizationUuid)
+    await AuthorizeOrganizationUser(userUuid,room.organizationUuid)
     let organizationId:number= await findIdByUuid(room.organizationUuid)
     if(organizationId===undefined){
         throw new NotFoundError("Organization");
@@ -44,7 +43,7 @@ export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
 }
 
 export async function updateRoom(room:UpdateRoom,organizationUuid:string,userUuid:string):Promise<Room>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid)
+    await AuthorizeOrganizationUser(userUuid,organizationUuid)
     let roomCheck:RoomResponse=await getRoom(organizationUuid,room.uuid,userUuid)//check if that organizaiton have that room
     if(roomCheck===undefined){
         throw new NotFoundError("Room");

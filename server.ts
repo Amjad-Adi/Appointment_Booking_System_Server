@@ -2,7 +2,7 @@ import http from "http";
 import { app } from "./app";
 import {cert, initializeApp as initializeAppServer, type ServiceAccount} from "firebase-admin/app";
 import serviceAccount from "./config/service-account-key.json";
-const PORT = 3000;
+import nodemailer from "nodemailer";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth} from "firebase/auth";
@@ -20,8 +20,19 @@ const firebaseApp = initializeApp(firebaseConfig);
 initializeAppServer({
     credential: cert(serviceAccount as ServiceAccount),
 });
+
+export const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false, // use STARTTLS (upgrade connection to TLS after connecting)
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+    },
+});
+
 const server = http.createServer(app);
-server.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
+server.listen(process.env.SERVER_PORT, () => {
+    console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
 });
 
