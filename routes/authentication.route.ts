@@ -1,7 +1,7 @@
 import express from "express";
 import {login, logOut, refreshToken} from "../controllers/authentication/authentication-management.controller";
 import {validateBody} from "../middlewares/validaiton";
-import {createUserSchema, loginUserSchema} from "../middlewares/schemas/user.schema";
+import {createUserSchema, loginUserSchema} from "../middlewares/zod-schemas/user.schema";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {RATE_LIMIT_FOR_AUTHENTICATION, rateLimit, rateLimiterFactory} from "../middlewares/rate-limiter";
 import {authorize} from "../middlewares/authorization/authorization";

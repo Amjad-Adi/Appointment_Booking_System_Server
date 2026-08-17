@@ -1,6 +1,6 @@
 import {z} from "zod"
 import {ActivationStatus} from "./enums/activation-status";
-import {createServiceSchema,updateServiceSchema} from "../middlewares/schemas/service.schema"
+import {createServiceSchema,updateServiceSchema} from "../middlewares/zod-schemas/service.schema"
 import {RoomResponse} from "./room.model";
 export interface Service{
     uuid:string,
