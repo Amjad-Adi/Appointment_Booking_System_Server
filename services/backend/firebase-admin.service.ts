@@ -1,5 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
 import {mapFirebaseError} from "../../middlewares/map-firebase-error";
+import {inviteEmail} from "./smtp-nodemailer.service";
 export async function createFireBaseUser(email:string,password:string) {
     try{
     return await getAuth().createUser({
@@ -7,14 +8,14 @@ export async function createFireBaseUser(email:string,password:string) {
         emailVerified: true,
         password: password
     })}catch(e) {
-        throw mapFirebaseError(e)
+        mapFirebaseError(e)
     }
 }
 export async function updateFireBaseUser(uid:string,password:string) {
     try {
         return await getAuth().updateUser(uid, {password: password})
     }catch(e) {
-        throw mapFirebaseError(e)
+        mapFirebaseError(e)
     }
 }
 
@@ -22,21 +23,24 @@ export async function revokeUserSessions(uid: string) {
     try {
         return await getAuth().revokeRefreshTokens(uid);
     }catch(e) {
-        throw mapFirebaseError(e)
+        mapFirebaseError(e)
     }
 }
 
-export async function inviteFireBaseUser(email:string,invitationUuid:string) {
+export async function inviteFireBaseUser(invitationUuid:string,organizationName:string,fromEmail:string,toEmail:string) {
+    let link:string
     try{
         const actionCodeSettings={
-            url:process.env.DEVELOPMENT_HOS+"/me/invitations/"+invitationUuid,
+            url:`${process.env.DEVELOPMENT_HOST}/users/me/invitations/${invitationUuid}/?email=${encodeURIComponent(toEmail)}`,
             handleCodeInApp:true
         }
-        return await getAuth().generateSignInWithEmailLink(
-            email,
+        link=await getAuth().generateSignInWithEmailLink(
+            toEmail,
             actionCodeSettings
         )
         }catch(e) {
-        throw mapFirebaseError(e)
-    }
+        console.error(e)
+        mapFirebaseError(e)
+        }
+        await inviteEmail(organizationName,fromEmail,toEmail, link);
 }

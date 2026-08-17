@@ -97,7 +97,7 @@ export async function getUserUidByUuid(uuid:string):Promise<string>{
 }
 
 
-export async function isUserAuthorizedToOrganization(userUuid:string, organizationUuid:string):Promise<boolean>{
+export async function AuthorizeOrganizationUser(userUuid:string, organizationUuid:string):Promise<boolean>{
     if((await getUserOrganization(userUuid))?.uuid!==organizationUuid){
         throw new ForbiddenError()
     }

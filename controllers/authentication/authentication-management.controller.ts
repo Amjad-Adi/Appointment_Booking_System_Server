@@ -1,5 +1,5 @@
 import type {CookieOptions, NextFunction, Request, Response} from "express";
-import {fireBaseLogIn} from "../../services/frontend/firebase-client.service";
+import {fireBaseLogIn, invitationReceive} from "../../services/frontend/firebase-client.service";
 import {getAuth} from "firebase/auth";
 import {UnauthorizedError} from "../../errors/unauthorized.error";
 import {generateToken} from "./jwt.authentication.controller";
@@ -35,6 +35,20 @@ export async function login(req: Request, res: Response, next: NextFunction){
         res.json({
             accessToken:tokens.accessToken,
             user})
+}
+
+export async function invitationLogin(req: Request, res: Response, next: NextFunction){
+    const email=req.query.email as string
+    let uid:string|undefined= "hi"//await invitationReceive(getAuth(),email,signInLink) ;//REQUIRES FRONT END
+    if(uid==undefined){
+        throw new UnauthorizedError()
+    }
+    let user:UserResponse=await getUserByFireBaseUid(uid);
+    const tokens=await generateToken(uid);
+    res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
+    res.json({
+        accessToken:tokens.accessToken,
+        user})
 }
 
 export async function refreshToken(req: Request, res: Response, next: NextFunction){

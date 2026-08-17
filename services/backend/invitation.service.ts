@@ -10,16 +10,16 @@ import {ConflictError} from "../../errors/conflict.error";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from "../../models/invitation.model";
-import {isUserAuthorizedToOrganization, isUserWorkingByEmail, isUserWorkingByUuid} from "./user.service";
+import {AuthorizeOrganizationUser} from "./user.service";
 import {getUserOrganization} from "./organization.service";
-import {ForbiddenError} from "../../errors/forbidden.error";
+import {InvitationStatus} from "../../models/enums/invitation-status";
 export async function getInvitations(organizationUuid:string,userUuid:string):Promise<InvitationResponse[]>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid);
+    await AuthorizeOrganizationUser(userUuid,organizationUuid);
     return (await findAll(organizationUuid))
 }
 
 export async function getInvitation(invitationUuid:string,organizationUuid:string,userUuid:string):Promise<InvitationResponse>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid)
+    await AuthorizeOrganizationUser(userUuid,organizationUuid)
     let result:InvitationResponse= await findByUuid(organizationUuid,invitationUuid)
     if(result===undefined){
         throw new NotFoundError("Invitation");
@@ -28,11 +28,7 @@ export async function getInvitation(invitationUuid:string,organizationUuid:strin
 }
 
 export async function createInvitation(invitation:CreateInvitation,organizationUuid:string,userUuid:string):Promise<Invitation>{
-    const [isAuthorized,isWorking]=await Promise.all([isUserAuthorizedToOrganization(userUuid,organizationUuid),isUserWorkingByEmail(invitation.email)])
-    if(!isAuthorized)
-        throw new ForbiddenError()
-    if(isWorking)
-        throw new ConflictError()
+    await AuthorizeOrganizationUser(userUuid,organizationUuid)
     let result:Invitation= await create(invitation)
     if(result===undefined){
         throw new BadRequestErorr()
@@ -40,9 +36,9 @@ export async function createInvitation(invitation:CreateInvitation,organizationU
     return result;
 }
 
-export async function updateInvitation(invitation:UpdateInvitation,organizationUuid:string,userUuid:string):Promise<Invitation>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid)
-    let result:Invitation= await update(invitation)
+export async function updateInvitation(invitationUuid:string,organizationUuid:string,userUuid:string,invitationStatus:InvitationStatus):Promise<Invitation>{
+    await AuthorizeOrganizationUser(userUuid,organizationUuid)
+    let result:Invitation= await update(invitationStatus,invitationUuid)
     if(result===undefined){
         throw new NotFoundError("Invitation")
     }

@@ -10,7 +10,9 @@ import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
-import {isUserAuthorizedToOrganization} from "./user.service";
+import {AuthorizeOrganizationUser} from "./user.service";
+import {RoomResponse} from "../../models/room.model";
+import {getRoom} from "./room.service";
 export async function getServices(organizationUuid:string):Promise<ServiceResponse[]>{
     return (await findAll(organizationUuid))
 }
@@ -25,7 +27,7 @@ export async function getService(serviceUuid:string,organizationUuid:string):Pro
 
 
 export async function createService(service:CreateService,userUuid:string):Promise<Service>{
-    await isUserAuthorizedToOrganization(userUuid,service.organizationUuid)
+    await AuthorizeOrganizationUser(userUuid,service.organizationUuid)
     let organizationId:number= await findIdByUuid(service.organizationUuid)
     if(organizationId===undefined){
         throw new NotFoundError("Organization");
@@ -42,7 +44,7 @@ export async function createService(service:CreateService,userUuid:string):Promi
 }
 
 export async function updateService(service:UpdateService,organizationUuid:string,userUuid:string):Promise<Service>{
-    await isUserAuthorizedToOrganization(userUuid,organizationUuid)
+    await AuthorizeOrganizationUser(userUuid,organizationUuid)
     let serviceCheck:ServiceResponse=await getService(organizationUuid,service.uuid)//check if that organizaiton have that service
     if(serviceCheck===undefined){
         throw new NotFoundError("Room");

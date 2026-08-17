@@ -219,17 +219,18 @@ CREATE TABLE blacklisted_tokens(
 
 CREATE TABLE invitations(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	sender_id BIGINT,
-	recipient_id BIGINT,
-	title VARCHAR(256) NOT NULL,
-	body VARCHAR(4096) NOT NULL,
+	recipient_email VARCHAR(320),
+	organization_id BIGINT,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	expires_at_utc TIMESTAMPTZ NOT NULL,
 	invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status in('PENDING','REJECTED','ACCEPTED','FAILED','EXPIRED')) DEFAULT 'PENDING',
 	FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (recipient_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
+	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+DROP TABLE invitations;
 
 INSERT INTO locations (name, location_on_map)
 VALUES ('Birzeit University', ST_GeomFromText('POINT(35.2137 31.7683)', 4326));
@@ -249,3 +250,5 @@ SELECT * FROM services;
 SELECT * FROM blacklisted_token;
 SELECT * FROM invitations;
 DELETE FROM users;
+
+SELECT (created_at_utc+(INTERVAL '7 DAYS')) FROM users;
