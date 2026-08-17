@@ -1,11 +1,6 @@
 import {
     create as createRefreshTokenService, findRefreshToken, remove,revoke
 } from "../../repositories/refresh-token.repository"
-import {NotFoundError} from "../../errors/not-found.error";
-import {BadRequestErorr} from "../../errors/bad-request.erorr";
-import {ConflictError} from "../../errors/conflict.error";
-import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
-import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {CreateRefreshToken, RefreshToken} from "../../models/refresh-token.model";
 import {findBlacklistedToken,create as createBlacklistedTokenService} from "../../repositories/blacklisted-token.repository";
 import {BlacklistedToken, CreateBlacklistedToken} from "../../models/blacklisted-token.model";

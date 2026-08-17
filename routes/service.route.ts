@@ -5,7 +5,7 @@ import {handleGetOrganizationService, handleUpdateOrganizationService, handleCre
 import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
 import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions";
 import { validateUuid } from "../middlewares/schemas/parameters.schema";
-import {authorize} from "../middlewares/authoraization/autoraization";
+import {authorize} from "../middlewares/authorization/authorization";
 export let serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
     .get(handleGetOrganizationServices)

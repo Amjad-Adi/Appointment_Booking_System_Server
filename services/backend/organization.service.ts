@@ -1,6 +1,6 @@
 import {
     findAll,
-    findUserOrganization,
+    findUserOrganizationByUuid,
     create,
     update,
     updateByAdmin,
@@ -14,7 +14,7 @@ import {
     CreateOrganization, Organization, OrganizationResponse,
     OrganizationRow, UpdateOrganization, UpdateOrganizationByAdmin,
 } from "../../models/organization.model";
-import {isUserWorking} from "./user.service";
+import {isUserWorkingByUuid} from "./user.service";
 import {ForbiddenError} from "../../errors/forbidden.error";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
     let result:OrganizationRow[]= await findAll()
@@ -64,7 +64,7 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
 
 export async function createOrganization(organization:CreateOrganization):Promise<Organization>{
     const [emailFound,phoneNumberFound,userWorking]=await Promise.all(
-        [await isEmailFound(organization.email),await isPhoneNumberFound(organization.phoneNumber),(await isUserWorking(organization.organizationOwnerUuid))])
+        [await isEmailFound(organization.email),await isPhoneNumberFound(organization.phoneNumber),(await isUserWorkingByUuid(organization.organizationOwnerUuid))])
     if(emailFound||phoneNumberFound||userWorking){
         throw new ConflictError()
     }
@@ -95,7 +95,7 @@ export async function updateOrganizationByAdmin(organization:UpdateOrganizationB
 }
 
 export async function getUserOrganization(userUuid:string):Promise<OrganizationResponse>{
-    let result:OrganizationRow=await findUserOrganization(userUuid)
+    let result:OrganizationRow=await findUserOrganizationByUuid(userUuid)
     if(result===undefined){
         throw new NotFoundError("Organization");
     }
