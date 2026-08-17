@@ -17,6 +17,7 @@ import {
 } from "../permissions/permissions";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
+import {receiveInvitationRouter} from "./receive-invitation.route";
 export let userRouter=express.Router()
 userRouter.route("/")
     .get(authenticateToken,authorize(READ_USERS),handleGetUsers)
@@ -25,6 +26,7 @@ userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)
     .patch(authenticateToken,validateBody(updateUserSchema),handleUpdateCurrentUser)
 
+userRouter.use("/me/invitations", receiveInvitationRouter)
 
 userRouter.route("/:userUuid")
     .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)

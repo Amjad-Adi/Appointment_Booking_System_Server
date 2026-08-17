@@ -17,7 +17,7 @@ import {mapFirebaseError} from "../../middlewares/map-firebase-error";
 import {User, UserResponse} from "../../models/user.model";
 import {getBlackListedToken} from "../../services/backend/jwt-management-service";
 export const JWT_SECRET=process.env.JWT_SECRET as string
-export const expiresInForDevelopment="5m";
+export const expiresInForDevelopment="12h";
 export const expiresInForDeployment="1d";
 
 export async function authenticateToken(req:Request,res:Response,next:NextFunction){

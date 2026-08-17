@@ -22,7 +22,7 @@ import {
     COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS
 }
     from "../databases/contracts/user.contract"
-import {QueryResult} from "pg";
+import {PoolClient, QueryResult} from "pg";
 import {
     TABLE_NAME as ORGANIZATION_TABLE_NAME,
     ALIAS as ORGANIZATION_ALIAS,
@@ -119,12 +119,13 @@ export async function update(user: UpdateUser):Promise<User> {
          [user.firstName, user.lastName, user.profilePicturePath,user.language,user.uuid])).rows[0];
 }
 
-export async function setUserOrganizationId(organizationId: number, userUuid:string):Promise<User> {
-    return (await pool.query(
+export async function setUserOrganizationId(organizationId: number, userUuid:string, client?:PoolClient):Promise<void> {
+    const dbPool=(client)?? pool;
+    (await dbPool.query(
         `UPDATE ${TABLE_NAME}
          SET ${COLUMN_ORGANIZATION_ID}=$1
          WHERE ${COLUMN_UUID} = $2`,
-        [organizationId, userUuid])).rows[0];
+        [organizationId, userUuid]));
 }
 
 export async function updateByAdmin(user: UpdateUserByAdmin):Promise<User> {
