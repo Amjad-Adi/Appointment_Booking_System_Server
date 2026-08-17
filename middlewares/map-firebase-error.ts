@@ -4,7 +4,7 @@ import {NotFoundError} from "../errors/not-found.error";
 import {ForbiddenError} from "../errors/forbidden.error";
 import {UnauthorizedError} from "../errors/unauthorized.error";
 
-export function mapFirebaseError(error: unknown){
+export function mapFirebaseError(error: unknown):never{
     if (!(error instanceof Error) || !("code" in error)) {
         throw error;
     }
@@ -33,7 +33,6 @@ export function mapFirebaseError(error: unknown){
             throw new ForbiddenError();
 
         case "auth/invalid-credential":
-        case "auth/user-not-found":
         case "auth/wrong-password":
         case "auth/invalid-login-credentials":
         case "auth/id-token-expired":

@@ -1,7 +1,11 @@
 import express from "express";
 import {validateBody, validateParameter} from "../middlewares/validaiton";
+<<<<<<< Updated upstream
 import {createServiceSchema, updateServiceSchema} from "../middlewares/schemas/service.schema";
 import {handleCreateOrganizationInvitation, handleGetOrganizationInvitation, handleGetOrganizationInvitations, handleUpdateOrganizationInvitation} from "../controllers/sent-invitation.controller";
+=======
+import {handleCreateOrganizationInvitation, handleGetOrganizationInvitation, handleGetOrganizationInvitations} from "../controllers/invitation.controller";
+>>>>>>> Stashed changes
 import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
 import {
     CREATE_ORGANIZATION_INVITATIONS,

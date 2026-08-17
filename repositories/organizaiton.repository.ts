@@ -100,7 +100,7 @@ export async function create(organization: CreateOrganization):Promise<Organizat
                         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
                         [organization.name, organization.email,organization.phoneNumber,organization.bio,locationId,organization.profilePicturePath]);
         const organizationId=await findIdByUuid(result.rows[0].uuid);
-        await setUserOrganizationId(organizationId,organization.organizationOwnerUuid)
+        await setUserOrganizationId(organizationId,organization.organizationOwnerUuid,client)
         await client.query("COMMIT")
         return result.rows[0];
     } catch (e) {
