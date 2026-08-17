@@ -11,8 +11,6 @@ import {ConflictError} from "../../errors/conflict.error";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {isUserAuthorizedToOrganization} from "./user.service";
-import {RoomResponse} from "../../models/room.model";
-import {getRoom} from "./room.service";
 export async function getServices(organizationUuid:string):Promise<ServiceResponse[]>{
     return (await findAll(organizationUuid))
 }

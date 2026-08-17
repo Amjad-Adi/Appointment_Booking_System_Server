@@ -8,11 +8,9 @@ import {
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {findIdByUuid, isEmailFound, isPhoneNumberFound} from "../../repositories/organizaiton.repository";
+import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {RoomResponse,CreateRoom,UpdateRoom,Room} from "../../models/room.model";
-import {ForbiddenError} from "../../errors/forbidden.error";
-import {getUserOrganization} from "./organization.service";
-import {isUserAuthorizedToOrganization, isUserWorking} from "./user.service";
+import {isUserAuthorizedToOrganization} from "./user.service";
 export async function getRooms(organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
     await isUserAuthorizedToOrganization(userUuid,organizationUuid);
     return (await findAll(organizationUuid))

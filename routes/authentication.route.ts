@@ -4,7 +4,7 @@ import {validateBody} from "../middlewares/validaiton";
 import {createUserSchema, loginUserSchema} from "../middlewares/schemas/user.schema";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {RATE_LIMIT_FOR_AUTHENTICATION, rateLimit, rateLimiterFactory} from "../middlewares/rate-limiter";
-import {authorize} from "../middlewares/authoraization/autoraization";
+import {authorize} from "../middlewares/authorization/authorization";
 import {READ_USERS} from "../permissions/permissions";
 import {userRouter} from "./user.route";
 import { handleCreateUser } from "../controllers/user.controller";
@@ -17,7 +17,7 @@ authenticationRouter.route("/login")
     .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),validateBody(loginUserSchema),login);
 
 authenticationRouter.route("/logout")
-    .post(authenticateToken,logOut);
+    .get(authenticateToken,logOut);
 
 authenticationRouter.route("/refresh")
-    .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);
+    .get(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);

@@ -4,11 +4,10 @@ import {createOrganizationSchema, updateOrganizationByAdminSchema,updateOrganiza
 import {
     handleCreateOrganization,
     handleGetOrganizations,
-    handleUpdateOrganizationByAdmin,
     handleGetOrganization, handleUpdateOrganization
 } from "../controllers/organization.controller";
 import { authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize,authorizeOrganizationUser} from "../middlewares/authoraization/autoraization";
+import {authorize} from "../middlewares/authorization/authorization";
 import {
     CREATE_ORGANIZATION,
     UPDATE_ORGANIZATION,

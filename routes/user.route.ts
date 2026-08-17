@@ -9,7 +9,7 @@ import {
     handleGetUsers,
     handleGetCurrentUser, handleUpdateCurrentUser
 } from "../controllers/user.controller";
-import {authorize} from "../middlewares/authoraization/autoraization";
+import {authorize} from "../middlewares/authorization/authorization";
 import {
     READ_USERS,
     CREATE_USER,

@@ -2,7 +2,7 @@ import express from "express";
 import {validateBody, validateParameter} from "../middlewares/validaiton";
 import {handleGetOrganizationRooms,handleUpdateOrganizationRoom,handleCreateOrganizationRoom,handleGetOrganizationRoom} from "../controllers/room.controller";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize,authorizeOrganizationUser} from "../middlewares/authoraization/autoraization";
+import {authorize} from "../middlewares/authorization/authorization";
 import {CREATE_ROOM, READ_ROOM, UPDATE_ROOM} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/schemas/parameters.schema";
 import {createRoomSchema, updateRoomSchema} from "../middlewares/schemas/room.schema";

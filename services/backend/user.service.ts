@@ -11,7 +11,7 @@ import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User} from "../
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {findUserOrganization} from "../../repositories/organizaiton.repository";
+import {findUserOrganizationByEmail, findUserOrganizationByUuid} from "../../repositories/organizaiton.repository";
 import {ForbiddenError} from "../../errors/forbidden.error";
 import {getUserOrganization} from "./organization.service";
 export async function getUsers():Promise<UserResponse[]>{
@@ -70,10 +70,14 @@ export async function updateUserByAdmin(user:UpdateUserByAdmin):Promise<User>{
 }
 
 
-export async function isUserWorking(userUuid:string):Promise<boolean>{
-    return (await findUserOrganization(userUuid)) !== undefined
+export async function isUserWorkingByUuid(userUuid:string):Promise<boolean>{
+    return (await findUserOrganizationByUuid(userUuid)) !== undefined
 }
 
+
+export async function isUserWorkingByEmail(userEmail:string):Promise<boolean>{
+    return (await findUserOrganizationByEmail(userEmail)) !== undefined
+}
 
 export async function getUserIdByUuid(uuid:string):Promise<number>{
     let result:number= await findIdByUuid(uuid);
