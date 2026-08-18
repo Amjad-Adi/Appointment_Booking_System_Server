@@ -1,11 +1,11 @@
 import {z} from "zod"
 import {ActivationStatus} from "./enums/activation-status";
 import {InvitationStatus} from "./enums/invitation-status";
-import {createServiceSchema,updateServiceSchema} from "../middlewares/schemas/service.schema"
+import {createServiceSchema,updateServiceSchema} from "../middlewares/zod-schemas/service.schema"
 import {
     createInvitationSchema,
     updateInvitationSchema
-} from "../middlewares/schemas/invitations.schema";
+} from "../middlewares/zod-schemas/invitations.schema";
 export interface Invitation{
     uuid:string,
     createdAtUTC:Date,

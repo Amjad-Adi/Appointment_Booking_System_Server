@@ -1,6 +1,6 @@
 import express from "express";
 import {validateBody, validateParameter} from "../middlewares/validaiton";
-import {createServiceSchema, updateServiceSchema} from "../middlewares/schemas/service.schema";
+import {createServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema";
 import {handleCreateOrganizationInvitation, handleGetOrganizationInvitation, handleGetOrganizationInvitations, handleReceiveOrganizationInvitation} from "../controllers/invitation.controller";
 import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
 import {
@@ -9,7 +9,7 @@ import {
     READ_ORGANIZATION_INVITATIONS, UPDATE_ORGANIZATION_INVITATIONS,
     UPDATE_SERVICE
 } from "../permissions/permissions";
-import { validateUuid } from "../middlewares/schemas/parameters.schema";
+import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
 import {authorize} from "../middlewares/authorization/authorization";
 export let sendInvitationRouter=express.Router({mergeParams:true});
 sendInvitationRouter.route("/")

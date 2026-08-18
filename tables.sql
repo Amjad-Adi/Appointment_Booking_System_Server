@@ -54,10 +54,13 @@ CREATE TABLE organizations(
 
 
 CREATE TABLE special_days(
-	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	organization_id BIGINT NOT NULL,
-	name VARCHAR(256),
-	day_date DATE NOT NULL DEFAULT now(),
+	name VARCHAR(256) NOT NULL,
+	day_date DATE NOT NULL,
+	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	description VARCHAR(4096),
 	status VARCHAR(256) NOT NULL CHECK (status in(' ')),
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -90,7 +93,7 @@ CREATE TABLE customer_favourite_service(
 CREATE TABLE rooms(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
-	name VARCHAR(256),
+	name VARCHAR(256) NOT NULL,
 	description VARCHAR(4096),
 	organization_id BIGINT NOT NULL,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -99,7 +102,9 @@ CREATE TABLE rooms(
 	occupancy_status VARCHAR(10) NOT NULL CHECK (occupancy_status in('OCCUPIED','AVAILABLE')) DEFAULT 'AVAILABLE',
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
 DROP TABLE rooms;
+
 CREATE TABLE service_use_slot(
 	slot_id BIGINT NOT NULL,
 	service_id BIGINT NOT NULL,

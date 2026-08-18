@@ -4,8 +4,8 @@ import {handleGetOrganizationRooms,handleUpdateOrganizationRoom,handleCreateOrga
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {authorize} from "../middlewares/authorization/authorization";
 import {CREATE_ROOM, READ_ROOM, UPDATE_ROOM} from "../permissions/permissions";
-import {validateUuid} from "../middlewares/schemas/parameters.schema";
-import {createRoomSchema, updateRoomSchema} from "../middlewares/schemas/room.schema";
+import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
+import {createRoomSchema, updateRoomSchema} from "../middlewares/zod-schemas/room.schema";
 export let roomRouter=express.Router({mergeParams:true});
 roomRouter.route("/")
     .get(authenticateToken,authorize(READ_ROOM),handleGetOrganizationRooms)
