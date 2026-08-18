@@ -1,17 +1,14 @@
 import {drizzleConnection} from "../drizzle-connection";
 import {pgTable, bigint, primaryKey, uuid, varchar, date, timestamp, real, integer, text} from "drizzle-orm/pg-core";
 import {
+    COLUMN_PICTURE_PATH,COLUMN_DURATION_IN_MINUTES,
     COLUMN_CREATED_AT_UTC,
-    COLUMN_DAY_DATE, COLUMN_NAME,
-    COLUMN_UPDATED_AT_UTC,
+    COLUMN_UPDATED_AT_UTC,COLUMN_ORGANIZATION_ID,
     TABLE_NAME
-} from "../contracts/special-days.contract";
-import {activationStatusEnum, occupancyStatusEnum} from "./enums";
-import {COLUMN_ORGANIZATION_ID} from "../contracts/room.contract";
+} from "../contracts/service.contract";
+import {activationStatusEnum} from "./enums";
 import {organizationTable} from "./organizations.db";
 import {ActivationStatus} from "../../models/enums/activation-status";
-import {RoomOccupancyStatus} from "../../models/enums/room-occupancy-status";
-import {COLUMN_PICTURE_PATH,COLUMN_DURATION_IN_MINUTES} from "../contracts/service.contract";
 
 export const serviceTable= pgTable(TABLE_NAME,{
     id:bigint({mode:"number"}).primaryKey().generatedAlwaysAsIdentity(),
