@@ -1,0 +1,9 @@
+export const TABLE_NAME = "time_block";
+export const COLUMN_START_TIME_UTC= "start_time_utc";
+export const COLUMN_END_TIME_UTC= "end_time_utc";
+export const COLUMN_REQUEST_USER_ID= "request_user_id";
+export const COLUMN_RESPOND_USER_ID= "respond_user_id";
+export const COLUMN_REQUESTED_AT_UTC="requested_at_utc";
+export const COLUMN_RESPONDED_AT_UTC="responded_at_utc";
+export const COLUMN_REQUEST_STATUS="request_status";
+export const COLUMN_ORGANIZATION_ID="organization_id";
