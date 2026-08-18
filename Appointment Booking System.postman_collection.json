@@ -768,165 +768,6 @@
           ]
         },
         {
-          "name": "POST User",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\r\n    \"firstName\":\"ahmad\",\r\n    \"lastName\":\"adi\",\r\n    \"email\":\"ahamdadi@gmail.com\",\r\n    \"password\":\"12345678\",\r\n    \"confirmPassword\":\"12345678\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/users/register",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "users",
-                "register"
-              ]
-            }
-          },
-          "response": [
-            {
-              "name": "POST User",
-              "originalRequest": {
-                "method": "POST",
-                "header": [],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\r\n    \"firstName\":\"qasem\",\r\n    \"lastName\":\"mohammad\",\r\n    \"email\":\"qasemmohammad@gmail.com\",\r\n    \"password\":\"12334567\",\r\n    \"confirmPassword\":\"12334567\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                },
-                "url": {
-                  "raw": "http://localhost:3000/api/users/register",
-                  "protocol": "http",
-                  "host": [
-                    "localhost"
-                  ],
-                  "port": "3000",
-                  "path": [
-                    "api",
-                    "users",
-                    "register"
-                  ]
-                }
-              },
-              "status": "Created",
-              "code": 201,
-              "_postman_previewlanguage": "Text",
-              "header": [
-                {
-                  "key": "Content-Security-Policy",
-                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
-                },
-                {
-                  "key": "Cross-Origin-Opener-Policy",
-                  "value": "same-origin"
-                },
-                {
-                  "key": "Cross-Origin-Resource-Policy",
-                  "value": "same-origin"
-                },
-                {
-                  "key": "Origin-Agent-Cluster",
-                  "value": "?1"
-                },
-                {
-                  "key": "Referrer-Policy",
-                  "value": "no-referrer"
-                },
-                {
-                  "key": "Strict-Transport-Security",
-                  "value": "max-age=31536000; includeSubDomains"
-                },
-                {
-                  "key": "X-Content-Type-Options",
-                  "value": "nosniff"
-                },
-                {
-                  "key": "X-DNS-Prefetch-Control",
-                  "value": "off"
-                },
-                {
-                  "key": "X-Download-Options",
-                  "value": "noopen"
-                },
-                {
-                  "key": "X-Frame-Options",
-                  "value": "SAMEORIGIN"
-                },
-                {
-                  "key": "X-Permitted-Cross-Domain-Policies",
-                  "value": "none"
-                },
-                {
-                  "key": "X-XSS-Protection",
-                  "value": "0"
-                },
-                {
-                  "key": "Access-Control-Allow-Origin",
-                  "value": "http://localhost:3000"
-                },
-                {
-                  "key": "Vary",
-                  "value": "Origin"
-                },
-                {
-                  "key": "X-RateLimit-Limit",
-                  "value": "100"
-                },
-                {
-                  "key": "X-RateLimit-Remaining",
-                  "value": "98"
-                },
-                {
-                  "key": "Date",
-                  "value": "Tue, 11 Aug 2026 08:26:49 GMT"
-                },
-                {
-                  "key": "X-RateLimit-Reset",
-                  "value": "1786436861"
-                },
-                {
-                  "key": "Content-Type",
-                  "value": "application/json; charset=utf-8"
-                },
-                {
-                  "key": "Content-Length",
-                  "value": "304"
-                },
-                {
-                  "key": "ETag",
-                  "value": "W/\"130-CZRCEZ+idUnQXyK5/7wgQ80f5jQ\""
-                },
-                {
-                  "key": "Connection",
-                  "value": "keep-alive"
-                },
-                {
-                  "key": "Keep-Alive",
-                  "value": "timeout=5"
-                }
-              ],
-              "cookie": [],
-              "body": "{\n    \"uuid\": \"26e58855-81ed-46dd-b9c5-c6590427a72a\",\n    \"firstName\": \"qasem\",\n    \"last_name\": \"mohammad\",\n    \"email\": \"qasemmohammad@gmail.com\",\n    \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n    \"createdAtUTC\": \"2026-08-11T08:26:51.931Z\",\n    \"updatedAtUTC\": \"2026-08-11T08:26:51.931Z\",\n    \"language\": \"en\",\n    \"role\": \"CUSTOMER\",\n    \"status\": \"ACTIVE\"\n}"
-            }
-          ]
-        },
-        {
           "name": "GET User Forbidden",
           "request": {
             "auth": {
@@ -1423,11 +1264,21 @@
         {
           "name": "POST Organization",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{owner_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n    \"name\":\"Karim\"\r\n}",
+              "raw": "{\r\n  \"name\": \"Luna Beauty Center\",\r\n  \"email\": \"luna.beauty@gmail.com\",\r\n  \"phoneNumber\": \"+970599734821\",\r\n  \"bio\": \"Professional beauty and wellness services for women.\",\r\n  \"location\": {\r\n    \"name\": \"Luna Main Branch\",\r\n    \"locationOnMap\": [\r\n      31.9038,\r\n      35.2034\r\n    ]\r\n  }\r\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1435,14 +1286,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:3000/roles",
+              "raw": "http://localhost:3000/api/organizations",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "3000",
               "path": [
-                "roles"
+                "api",
+                "organizations"
               ]
             }
           },
@@ -3590,10 +3442,30 @@
         {
           "name": "POST Service",
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"name\":\"Eat Mansaf\",\r\n    \"price\":50,\r\n    \"durationInMinutes\":20\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
-              "raw": ""
+              "raw": "http://localhost:3000/api/organizations/c81fda35-4768-4aa5-8a08-471fe25c5840/services",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "organizations",
+                "c81fda35-4768-4aa5-8a08-471fe25c5840",
+                "services"
+              ]
             }
           },
           "response": [
@@ -4023,8 +3895,31 @@
         {
           "name": "Log Out",
           "request": {
-            "method": "GET",
-            "header": []
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/auth/logout",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            }
           },
           "response": [
             {
@@ -4147,8 +4042,31 @@
         {
           "name": "Refresh",
           "request": {
-            "method": "GET",
-            "header": []
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/auth/refresh",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            }
           },
           "response": [
             {
@@ -4269,6 +4187,165 @@
               ],
               "cookie": [],
               "body": "{\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJteWNGVjhkRTczWENCYTZUbTR1WnFhMTVtcWYyIiwiaWF0IjoxNzg2NjIxODQ1LCJleHAiOjE3ODY2MjE4NzUsImF1ZCI6ImFwcG9pbnRtZW50LWJvb2tpbmctYXBpIiwiaXNzIjoiYXBwb2ludG1lbnQtYm9va2luZy1zZXJ2ZXIiLCJqdGkiOiJhYjg1MzM5NC02NWY3LTQ4YzItYjNhYS02MTY1YzQ0NDI1MTQifQ.W1GZK8u18nlt8QYHM9RxGDTUEWF-BnBxvlrQ_sgv2II\",\n    \"user\": {\n        \"uuid\": \"575bc946-7097-48e2-825a-d71f9c319b16\",\n        \"firstName\": \"amjad\",\n        \"last_name\": \"adi\",\n        \"email\": \"adminamjad123@gmail.com\",\n        \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n        \"organizationUuid\": null,\n        \"createdAtUTC\": \"2026-08-10T12:52:42.019Z\",\n        \"updatedAtUTC\": \"2026-08-11T08:34:20.111Z\",\n        \"language\": \"en\",\n        \"role\": \"SUPER ADMIN\",\n        \"status\": \"ACTIVE\"\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"firstName\": \"Omar\",\r\n  \"lastName\": \"Khalil\",\r\n  \"email\": \"omar.khalil@gmail.com\",\r\n  \"password\": \"SecurePass123!\",\r\n  \"confirmPassword\": \"SecurePass123!\",\r\n  \"role\": \"OWNER\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "register"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "POST User",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"firstName\":\"qasem\",\r\n    \"lastName\":\"mohammad\",\r\n    \"email\":\"qasemmohammad@gmail.com\",\r\n    \"password\":\"12334567\",\r\n    \"confirmPassword\":\"12334567\",\r\n    \"role\":\"CUSTOMER\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3000/api/users/register",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "users",
+                    "register"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "Text",
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "X-RateLimit-Limit",
+                  "value": "100"
+                },
+                {
+                  "key": "X-RateLimit-Remaining",
+                  "value": "98"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 11 Aug 2026 08:26:49 GMT"
+                },
+                {
+                  "key": "X-RateLimit-Reset",
+                  "value": "1786436861"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "304"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"130-CZRCEZ+idUnQXyK5/7wgQ80f5jQ\""
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"uuid\": \"26e58855-81ed-46dd-b9c5-c6590427a72a\",\n    \"firstName\": \"qasem\",\n    \"last_name\": \"mohammad\",\n    \"email\": \"qasemmohammad@gmail.com\",\n    \"profilePicturePath\": \"DEFAULT_PICTURE_PATH\",\n    \"createdAtUTC\": \"2026-08-11T08:26:51.931Z\",\n    \"updatedAtUTC\": \"2026-08-11T08:26:51.931Z\",\n    \"language\": \"en\",\n    \"role\": \"CUSTOMER\",\n    \"status\": \"ACTIVE\"\n}"
             }
           ]
         }
@@ -5198,6 +5275,396 @@
       ]
     },
     {
+      "name": "Invitaton",
+      "item": [
+        {
+          "name": "GET Organization Invitations",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": [
+            {
+              "name": "GET Organization Invitations",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/organizations/ee7ef879-afae-49d1-82bf-41a6770d8432/invitations",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "organizations",
+                    "ee7ef879-afae-49d1-82bf-41a6770d8432",
+                    "invitations"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "100;w=60"
+                },
+                {
+                  "key": "RateLimit",
+                  "value": "limit=100, remaining=99, reset=60"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "7057"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"1b91-3bWn4+i7MeFcElRaT6hc+mjUwlI\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 17 Aug 2026 09:34:23 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "[\n    {\n        \"uuid\": \"dd3871b3-5853-48cd-a834-00c80610ead7\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T06:53:01.902Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"09613207-af3c-4794-a9bf-eb735f8db1f2\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T06:53:33.886Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"4a15881c-fd90-40a1-830b-0096c03e49c3\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T06:54:44.493Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"e5b37c86-331f-4caa-baa0-93153bc94866\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T06:55:24.327Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"76c6772b-3bf9-408d-8349-af01d3dd56a5\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T07:00:00.605Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"c27b92aa-e742-4f47-9538-3bf83c62f37e\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T07:12:12.111Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"6329fb3f-f7d2-499a-8c28-1c44f2c43d4a\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:31:04.882Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"c090cb46-f22b-45cb-8963-031560949403\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:35:29.449Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"5aa43e06-9bdb-43b7-b935-8f6e8c61df88\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:44:00.981Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"4b24f5e2-dafc-422c-845f-d8bca9492411\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:49:27.817Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"59756269-bbf3-43d3-8e1a-970b54b9110c\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:52:06.646Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    },\n    {\n        \"uuid\": \"9be7a870-c2d0-4c30-a353-41458e51cdda\",\n        \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n        \"senderFirstName\": \"Omar\",\n        \"senderLastName\": \"Khalil\",\n        \"senderEmail\": \"omar.khalil@gmail.com\",\n        \"senderProfilePicturePath\": null,\n        \"recipientUuid\": null,\n        \"recipientFirstName\": null,\n        \"recipientLastName\": null,\n        \"recipientEmail\": null,\n        \"recipientProfilePicturePath\": null,\n        \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n        \"organizationName\": \"Luna Beauty Center\",\n        \"profilePicturePath\": null,\n        \"createdAtUTC\": \"2026-08-17T08:54:41.218Z\",\n        \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n        \"invitation_status\": \"PENDING\"\n    }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Invitation",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": [
+            {
+              "name": "Create Invitation",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"expiresAtUTC\":\"2026-08-24 09:17:07.331962+03\",\r\n    \"firstName\":\"Qader\",\r\n    \"lastName\":\"Abbas\",\r\n    \"email\":\"amjadqaher55@gmail.com\",\r\n    \"role\":\"CRM\"\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:3000/api/organizations/ee7ef879-afae-49d1-82bf-41a6770d8432/invitations",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "organizations",
+                    "ee7ef879-afae-49d1-82bf-41a6770d8432",
+                    "invitations"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "100;w=60"
+                },
+                {
+                  "key": "RateLimit",
+                  "value": "limit=100, remaining=97, reset=43"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "165"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"a5-4eSpEsvsvUidIIt9jSyWgkmnEFI\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 17 Aug 2026 10:02:49 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"uuid\": \"395bbf02-99a2-474b-99de-9dce678cddb7\",\n    \"created_at_utc\": \"2026-08-17T10:02:44.071Z\",\n    \"expires_at_utc\": \"2026-08-24T06:17:07.331Z\",\n    \"invitation_status\": \"PENDING\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET Organization Invitation",
+          "request": {
+            "method": "GET",
+            "header": []
+          },
+          "response": [
+            {
+              "name": "GET Organization Invitation",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://localhost:3000/api/organizations/ee7ef879-afae-49d1-82bf-41a6770d8432/invitations/4a15881c-fd90-40a1-830b-0096c03e49c3",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "3000",
+                  "path": [
+                    "api",
+                    "organizations",
+                    "ee7ef879-afae-49d1-82bf-41a6770d8432",
+                    "invitations",
+                    "4a15881c-fd90-40a1-830b-0096c03e49c3"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": null,
+              "header": [
+                {
+                  "key": "Content-Security-Policy",
+                  "value": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests"
+                },
+                {
+                  "key": "Cross-Origin-Opener-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Cross-Origin-Resource-Policy",
+                  "value": "same-origin"
+                },
+                {
+                  "key": "Origin-Agent-Cluster",
+                  "value": "?1"
+                },
+                {
+                  "key": "Referrer-Policy",
+                  "value": "no-referrer"
+                },
+                {
+                  "key": "Strict-Transport-Security",
+                  "value": "max-age=31536000; includeSubDomains"
+                },
+                {
+                  "key": "X-Content-Type-Options",
+                  "value": "nosniff"
+                },
+                {
+                  "key": "X-DNS-Prefetch-Control",
+                  "value": "off"
+                },
+                {
+                  "key": "X-Download-Options",
+                  "value": "noopen"
+                },
+                {
+                  "key": "X-Frame-Options",
+                  "value": "SAMEORIGIN"
+                },
+                {
+                  "key": "X-Permitted-Cross-Domain-Policies",
+                  "value": "none"
+                },
+                {
+                  "key": "X-XSS-Protection",
+                  "value": "0"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "http://localhost:3000"
+                },
+                {
+                  "key": "Vary",
+                  "value": "Origin"
+                },
+                {
+                  "key": "RateLimit-Policy",
+                  "value": "100;w=60"
+                },
+                {
+                  "key": "RateLimit",
+                  "value": "limit=100, remaining=99, reset=60"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json; charset=utf-8"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "587"
+                },
+                {
+                  "key": "ETag",
+                  "value": "W/\"24b-Q9PaBpS5Jn+2UoNoUQFTSKX/zqY\""
+                },
+                {
+                  "key": "Date",
+                  "value": "Mon, 17 Aug 2026 11:19:55 GMT"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Keep-Alive",
+                  "value": "timeout=5"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n    \"uuid\": \"4a15881c-fd90-40a1-830b-0096c03e49c3\",\n    \"senderUuid\": \"dae5b346-360c-468d-a011-6cf195412ca1\",\n    \"senderFirstName\": \"Omar\",\n    \"senderLastName\": \"Khalil\",\n    \"senderEmail\": \"omar.khalil@gmail.com\",\n    \"senderProfilePicturePath\": null,\n    \"recipientUuid\": null,\n    \"recipientFirstName\": null,\n    \"recipientLastName\": null,\n    \"recipientEmail\": null,\n    \"recipientProfilePicturePath\": null,\n    \"organizationUuid\": \"ee7ef879-afae-49d1-82bf-41a6770d8432\",\n    \"organizationName\": \"Luna Beauty Center\",\n    \"profilePicturePath\": null,\n    \"createdAtUTC\": \"2026-08-17T06:54:44.493Z\",\n    \"expiresAtUTC\": \"2026-08-24T06:17:07.331Z\",\n    \"invitation_status\": \"PENDING\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Wrong JSON Request",
       "request": {
         "auth": {
@@ -5382,10 +5849,6 @@
   "variable": [
     {
       "key": "admin_token",
-      "secret": true
-    },
-    {
-      "key": "customer_token",
       "secret": true
     },
     {

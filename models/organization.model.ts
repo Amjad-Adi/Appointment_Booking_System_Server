@@ -1,8 +1,8 @@
 import {Role} from "./enums/roles";
 import {z} from "zod"
 import {ActivationStatus} from "./enums/activation-status";
-import {createOrganizationSchema,updateOrganizationSchema,updateOrganizationByAdminSchema} from "../middlewares/schemas/organization.schema"
-import {createLocationSchema} from "../middlewares/schemas/location.schema";
+import {createOrganizationSchema,updateOrganizationSchema,updateOrganizationByAdminSchema} from "../middlewares/zod-schemas/organization.schema"
+import {createLocationSchema} from "../middlewares/zod-schemas/location.schema";
 import {LocationResponse} from "./location.model";
 export interface Organization {
     uuid:string,

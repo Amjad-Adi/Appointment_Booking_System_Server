@@ -6,7 +6,7 @@ import {
     inviteUserSchema,
     updateUserByAdminSchema,
     updateUserSchema
-} from "../middlewares/schemas/user.schema"
+} from "../middlewares/zod-schemas/user.schema"
 
 export interface User{
     uuid:string,

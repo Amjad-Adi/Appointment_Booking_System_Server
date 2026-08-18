@@ -1,6 +1,6 @@
 import express from "express";
 import {validateBody, validateBodyByRole, validateParameter} from "../middlewares/validaiton";
-import {createOrganizationSchema, updateOrganizationByAdminSchema,updateOrganizationSchema} from "../middlewares/schemas/organization.schema"
+import {createOrganizationSchema, updateOrganizationByAdminSchema,updateOrganizationSchema} from "../middlewares/zod-schemas/organization.schema"
 import {
     handleCreateOrganization,
     handleGetOrganizations,
@@ -13,7 +13,7 @@ import {
     UPDATE_ORGANIZATION,
 } from "../permissions/permissions";
 import {serviceRouter} from "./service.route";
-import {validateUuid} from "../middlewares/schemas/parameters.schema";
+import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
 import {sendInvitationRouter} from "./sent-invitation.route";
 import { Role } from "../models/enums/roles";
 import {z, ZodType} from "zod";
