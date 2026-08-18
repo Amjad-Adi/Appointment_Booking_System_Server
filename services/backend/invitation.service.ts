@@ -13,6 +13,8 @@ import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from
 import {AuthorizeOrganizationUser} from "./user.service";
 import {getUserOrganization} from "./organization.service";
 import {InvitationStatus} from "../../models/enums/invitation-status";
+import {RoomResponse} from "../../models/room.model";
+import {getRoom} from "./room.service";
 export async function getInvitations(organizationUuid:string,userUuid:string):Promise<InvitationResponse[]>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid);
     return (await findAll(organizationUuid))
@@ -38,6 +40,10 @@ export async function createInvitation(invitation:CreateInvitation,organizationU
 
 export async function updateInvitation(invitationUuid:string,organizationUuid:string,userUuid:string,invitationStatus:InvitationStatus):Promise<Invitation>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid)
+    let invitationCheck:InvitationResponse=await getInvitation(organizationUuid,invitationUuid,userUuid)//check if that organizaiton have that invitation
+    if(invitationCheck===undefined){
+        throw new NotFoundError("Invitation");
+    }
     let result:Invitation= await update(invitationStatus,invitationUuid)
     if(result===undefined){
         throw new NotFoundError("Invitation")
