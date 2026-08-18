@@ -2,12 +2,11 @@ import {drizzleConnection} from "../drizzle-connection";
 import {pgTable, bigint, primaryKey, uuid, varchar, date, timestamp} from "drizzle-orm/pg-core";
 import {
     COLUMN_CREATED_AT_UTC,
-    COLUMN_DAY_DATE, COLUMN_NAME,
-    COLUMN_UPDATED_AT_UTC,
+    COLUMN_DAY_DATE,
+    COLUMN_UPDATED_AT_UTC,COLUMN_ORGANIZATION_ID,
     TABLE_NAME
 } from "../contracts/special-days.contract";
 import {activationStatusEnum} from "./enums";
-import {COLUMN_ORGANIZATION_ID} from "../contracts/room.contract";
 import {organizationTable} from "./organizations.db";
 import {ActivationStatus} from "../../models/enums/activation-status";
 
