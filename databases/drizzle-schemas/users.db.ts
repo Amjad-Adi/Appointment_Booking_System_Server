@@ -11,8 +11,9 @@ import {COLUMN_ORGANIZATION_ID} from "../contracts/room.contract";
 import {organizationTable} from "./organizations.db";
 import {COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_UID} from "../contracts/user.contract";
 import {COLUMN_PROFILE_PICTURE_PATH} from "../contracts/organization.contract";
+import {ActivationStatus} from "../../models/enums/activation-status";
 
-export const specialDaysTable= pgTable(TABLE_NAME,{
+export const usersTable= pgTable(TABLE_NAME,{
     id:bigint({mode:"number"}).primaryKey().generatedAlwaysAsIdentity(),
     uuid:uuid().defaultRandom().unique().notNull(),
     firstName:varchar(COLUMN_FIRST_NAME,{length:64}).notNull(),
@@ -25,5 +26,5 @@ export const specialDaysTable= pgTable(TABLE_NAME,{
     organizationId:bigint(COLUMN_ORGANIZATION_ID,{mode:"number"}).notNull().references(()=>organizationTable.id),
     language:date(COLUMN_DAY_DATE).notNull().default("en"),
     role:roleEnum().notNull(),
-    status:activationStatusEnum().default("ACTIVE").notNull(),
+    status:activationStatusEnum().default(ActivationStatus.ACTIVE).notNull(),
 })
