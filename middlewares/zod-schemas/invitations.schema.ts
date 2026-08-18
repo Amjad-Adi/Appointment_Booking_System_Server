@@ -6,7 +6,7 @@ import {InvitationStatus} from "../../models/enums/invitation-status";
 import {inviteUserSchema} from "./user.schema";
 import {CreateInvitation} from "../../models/invitation.model";
 export const createInvitationSchema=inviteUserSchema.extend({
-    expiresAtUTC:z.coerce.date().min(new Date()),
+    expiresAtUTC:z.iso.datetime({offset:true}),
 }).strict()
 
 export const updateInvitationSchema=z.object({
