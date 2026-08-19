@@ -67,7 +67,13 @@ export async function update(room: UpdateRoom):Promise<Room> {
              ${COLUMN_STATUS}=COALESCE($3,${COLUMN_STATUS}),
              ${COLUMN_OCCUPANCY_STATUS}=COALESCE($4,${COLUMN_OCCUPANCY_STATUS}),
              ${COLUMN_UPDATED_AT_UTC}=now()
-         WHERE ${COLUMN_UUID} = $5
+         WHERE ${COLUMN_UUID} = $5 AND
+             ${COLUMN_ORGANIZATION_ID}=
+             (SELECT id
+              FROM TABLE ${ORGANIZATION_TABLE_NAME}
+              WHERE ${ORGANIZATION_COLUMN_UUID}=$6)
+               
+             
          RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}, ${COLUMN_OCCUPANCY_STATUS} AS ${ALIAS_COLUMN_OCCUPANCY_STATUS}`,
-        [room.name, room.description, room.status,room.occupancyStatus,room.uuid])).rows[0];
+        [room.name, room.description, room.status,room.occupancyStatus,room.uuid,room.organizationUuid])).rows[0];
 }

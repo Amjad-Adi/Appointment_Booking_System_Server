@@ -1,14 +1,12 @@
 import {drizzleConnection} from "../drizzle-connection";
 import {pgTable, bigint, primaryKey, uuid, varchar, date, timestamp,text} from "drizzle-orm/pg-core";
 import {
+    COLUMN_PHONE_NUMBER, COLUMN_PROFILE_PICTURE_PATH,
     COLUMN_CREATED_AT_UTC,
-    COLUMN_DAY_DATE, COLUMN_NAME,
     COLUMN_UPDATED_AT_UTC,
     TABLE_NAME
-} from "../contracts/special-days.contract";
+} from "../contracts/organization.contract";
 import {activationStatusEnum} from "./enums";
-import {COLUMN_ORGANIZATION_ID} from "../contracts/room.contract";
-import {COLUMN_PHONE_NUMBER, COLUMN_PROFILE_PICTURE_PATH} from "../contracts/organization.contract";
 
 export const organizationTable= pgTable(TABLE_NAME,{
     id:bigint({mode:"number"}).primaryKey().generatedAlwaysAsIdentity(),
