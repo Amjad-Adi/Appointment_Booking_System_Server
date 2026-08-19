@@ -26,5 +26,5 @@ export interface TimeBlockResponse extends TimeBlock {
     respondUserProfilePicturePath:string|null,
 }
 
-export type CreateTimeBlock= z.infer<typeof createTimeBlockSchema> & {requestUserUuid:string,requestUserId:number};
-export type UpdateTimeBlock= z.infer<typeof updateTimeBlockSchema>& {uuid:string,respondUserUuid:string,respondUserId:number,};
+export type CreateTimeBlock= z.infer<typeof createTimeBlockSchema> & {requestUserUuid:string,requestUserId:number,organizationUuid:string};
+export type UpdateTimeBlock= z.infer<typeof updateTimeBlockSchema>& {uuid:string,respondUserUuid:string,respondUserId:number,organizationUuid:string};
