@@ -75,11 +75,11 @@ export async function create(invitation: CreateInvitation):Promise<Invitation> {
         [invitation.senderId, invitation.email,invitation.expiresAtUTC])).rows[0];
 }
 
-export async function update(invitationStatus:InvitationStatus,uuid:string):Promise<Invitation> {
+export async function update(invitation:UpdateInvitation):Promise<Invitation> {
     return (await pool.query(
         `UPDATE ${TABLE_NAME}
          SET ${COLUMN_INVITATION_STATUS}=$1
          WHERE ${COLUMN_UUID} = $2
          RETURNING ${COLUMN_UUID},${COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC},${COLUMN_INVITATION_STATUS}`,
-        [invitationStatus,uuid])).rows[0];
+        [invitation.status,invitation.uuid])).rows[0];
 }

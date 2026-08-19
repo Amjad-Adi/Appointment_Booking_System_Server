@@ -17,4 +17,4 @@ export interface RoomResponse extends Room{
     organizationName:string,
 }
 export type CreateRoom= z.infer<typeof createRoomSchema> & {organizationUuid:string,organizationId:number;};
-export type UpdateRoom= z.infer<typeof updateRoomSchema> & {uuid:string};
+export type UpdateRoom= z.infer<typeof updateRoomSchema> & {uuid:string,organizationUuid:string,userUuid:string};

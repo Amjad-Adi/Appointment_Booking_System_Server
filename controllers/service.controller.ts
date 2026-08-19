@@ -33,8 +33,8 @@ export async function handleCreateOrganizationService(req:Request,res:Response){
 export async function handleUpdateOrganizationService(req:Request,res:Response){
     let service:UpdateService=(req.body)
     service.uuid=req.params.serviceUuid as string
-    let userUuid:string=req.user.uuid as string;
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    const result:Service=await updateService(service,organizationUuid,userUuid)
+    service.userUuid=req.user.uuid as string;
+    service.organizationUuid=req.params.organizationUuid  as string;
+    const result:Service=await updateService(service)
     return res.status(200).json(result)
 }
