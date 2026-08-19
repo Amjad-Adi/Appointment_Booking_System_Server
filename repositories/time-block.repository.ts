@@ -18,8 +18,24 @@ export async function findAll(organizationUuid:string):Promise<TimeBlockResponse
         .innerJoin(requestUsersTable,eq(requestUsersTable.id,timeBlockTable.requestUserId))
         .leftJoin(organizationTable,eq(organizationTable.id,requestUsersTable.organizationId))
         .leftJoin(respondUsersTable,eq(respondUsersTable.id,timeBlockTable.respondUserId))
-        .where(eq(organizationTable.uuid,organizationUuid)))
+        .where(eq(organizationTable.uuid,organizationUuid))
+        .groupBy(timeBlockTable.requestStatus)
+        .orderBy())
 }
+
+//
+// export async function findAll(organizationUuid:string):Promise<TimeBlockResponse[]>{
+//     const requestUsersTable=alias(usersTable,ALIAS);
+//     const respondUsersTable=alias(usersTable,SECONDARY_ALIAS);
+//     return (await drizzleConnection
+//         .select({uuid:timeBlockTable.uuid,reason:timeBlockTable.reason,startTimeUTC:timeBlockTable.startTimeUTC,endTimeUTC:timeBlockTable.endTimeUTC,requestedAtUTC:timeBlockTable.requestedAtUTC,respondedAtUTC:timeBlockTable.respondedAtUTC,requestUserUuid:requestUsersTable.uuid,requestUserFirstName:requestUsersTable.firstName,requestUserLastName:requestUsersTable.lastName,requestUserProfilePicturePath:requestUsersTable.profilePicturePath,respondUserUuid:respondUsersTable.uuid,respondUserFirstName:respondUsersTable.firstName,respondUserLastName:respondUsersTable.lastName,respondUserProfilePicturePath:respondUsersTable.profilePicturePath,requestStatus:timeBlockTable.requestStatus})
+//         .from(timeBlockTable)
+//         .innerJoin(requestUsersTable,eq(requestUsersTable.id,timeBlockTable.requestUserId))
+//         .leftJoin(organizationTable,eq(organizationTable.id,requestUsersTable.organizationId))
+//         .leftJoin(respondUsersTable,eq(respondUsersTable.id,timeBlockTable.respondUserId))
+//         .where(eq(organizationTable.uuid,organizationUuid)))
+// }
+
 
 export async function findByUuid(organizationUuid:string,timeBlockUuid:string):Promise<TimeBlockResponse>{
     const requestUsersTable=alias(usersTable,ALIAS);
