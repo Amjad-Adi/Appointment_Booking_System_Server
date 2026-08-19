@@ -5,7 +5,7 @@ import {
     updateSpecialDay, isTodaySpecialDay,
 } from "../services/backend/special-days.service"
 import { type Request, type Response } from "express";
-import {} from "../utils/UserRequest"
+import {} from "../utils/Request"
 import {CreateSpecialDay, SpecialDay, UpdateSpecialDay} from "../models/special-days.model";
 import {findIdByUuid} from "../repositories/user.repository";
 import {getOrganizationIdByUuid} from "../services/backend/organization.service";

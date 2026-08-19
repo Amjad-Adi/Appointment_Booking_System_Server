@@ -1,4 +1,11 @@
-import {CreateUser, UpdateUser, UpdateUserByAdmin, User, UserResponse} from "../models/user.model"
+import {
+    CreateUser,
+    QueryUser,
+    UpdateUser,
+    UpdateUserByAdmin,
+    User,
+    UserResponse,
+} from "../models/user.model"
 import {pool} from "../databases/postgre-connection"
 import {
     COLUMN_UUID,
@@ -19,7 +26,7 @@ import {
     ALIAS_COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_UPDATED_AT_UTC,
     ALIAS_COLUMN_PROFILE_PICTURE_PATH,//Without alias names not compatible with JSON
-    COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS
+    COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS, ALIAS_TOTAL_NUMBER_OF_USERS
 }
     from "../databases/contracts/user.contract"
 import {PoolClient, QueryResult} from "pg";
@@ -33,13 +40,44 @@ import {
     COLUMN_UUID as ORGANIZATION_COLUMN_UUID,
     ALIAS_COLUMN_ORGANIZATION_UUID as ORGANIZATION_ALIAS_COLUMN_UUID
 } from "../databases/contracts/organization.contract"
-export async function findAll():Promise<UserResponse[]>{
+import {Query} from "../models/query.model";
+export async function findAll(query:QueryUser):Promise<UserResponse[]>{
+    const search=query.search?`%${query.search}%`: null
+    const sortColumnsDefinition={
+        name:`${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME}`,
+        createdAtUTC:`${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+        updatedAtUTC:`${ALIAS}.${COLUMN_UPDATED_AT_UTC}`,
+    }
+    const sortColumn=sortColumnsDefinition[query.sortBy?? "name"];
+    const sortOrder = query.order === "desc" ? "DESC" : "ASC";
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${ALIAS}.${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_LANGUAGE},${ALIAS}.${COLUMN_ROLE}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
-         ON ${ALIAS}.${COLUMN_ORGANIZATION_ID} = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}`)).rows
+         ON ${ALIAS}.${COLUMN_ORGANIZATION_ID} = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+         WHERE 
+         ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1)
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_ROLE}=$2)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+         ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
+         LIMIT $4
+         OFFSET $5`,
+       [search, query.filter?.role?.toUpperCase(),query.filter?.status?.toUpperCase(),query.limit,query.offset])).rows
 }
+
+
+export async function countAll(query:QueryUser):Promise<number>{
+    const search=query.search?`%${query.search}%`: null
+    return Number((await pool.query(
+        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_USERS}
+         FROM ${TABLE_NAME} ${ALIAS}
+         WHERE
+         ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1)
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_ROLE}=$2)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)`,
+        [search, query.filter?.role?.toUpperCase(),query.filter?.status?.toUpperCase()])).rows[0].totalNumberOfUsers)
+}
+
 
 export async function findByUid(uid:string):Promise<UserResponse>{
     return (await pool.query(
