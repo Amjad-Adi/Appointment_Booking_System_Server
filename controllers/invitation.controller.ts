@@ -8,7 +8,7 @@ import { type Request, type Response } from "express";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../models/service.model";
 import {getOrganization, getOrganizationIdByUuid, getUserOrganization} from "../services/backend/organization.service";
 import {findIdByUuid} from "../repositories/organizaiton.repository";
-import {} from "../utils/UserRequest"
+import {} from "../utils/Request"
 import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from "../models/invitation.model";
 import {InviteUser, UserResponse} from "../models/user.model";
 import {inviteFireBaseUser} from "../services/backend/firebase-admin.service";

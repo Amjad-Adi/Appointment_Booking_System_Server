@@ -1,5 +1,5 @@
 import {type NextFunction, type Request, type Response} from "express";
-import type {} from "../../utils/UserRequest";
+import type {} from "../../utils/Request";
 import {UnauthorizedError} from "../../errors/unauthorized.error";
 import {getAuth} from "firebase-admin/auth"
 import {ForbiddenError} from "../../errors/forbidden.error";

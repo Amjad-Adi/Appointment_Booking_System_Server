@@ -20,3 +20,7 @@ export const ALIAS_COLUMN_PROFILE_PICTURE_PATH = `"profilePicturePath"`;
 export const ALIAS_COLUMN_CREATED_AT_UTC = `"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
 export const ALIAS_COLUMN_ORGANIZATION_ID = `"organizationId"`;
+export const ALIAS_TOTAL_NUMBER_OF_USERS = `"totalNumberOfUsers"`;
+export const QUERY_NAME = "name";
+export const QUERY_CREATED_AT_UTC = "createdAtUTC";
+export const QUERY_UPDATED_AT_UTC = "updatedAtUTC";

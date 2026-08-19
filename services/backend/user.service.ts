@@ -5,17 +5,21 @@ import {
     update,
     updateByAdmin,
     isEmailFound,
-    findByUid, findIdByUuid, findUidByUuid, findById
+    findByUid, findIdByUuid, findUidByUuid, findById, countAll
 } from "../../repositories/user.repository"
-import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User} from "../../models/user.model";
+import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User, QueryUser} from "../../models/user.model";
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {findUserOrganizationByEmail, findUserOrganizationByUuid} from "../../repositories/organizaiton.repository";
 import {ForbiddenError} from "../../errors/forbidden.error";
 import {getUserOrganization} from "./organization.service";
-export async function getUsers():Promise<UserResponse[]>{
-    return (await findAll())
+export async function getUsers(query:QueryUser):Promise<UserResponse[]>{
+    return (await findAll(query))
+}
+
+export async function getNumberOfUsers(query:QueryUser):Promise<number>{
+    return (await countAll(query))
 }
 
 export async function getUser(uuid:string):Promise<UserResponse>{
