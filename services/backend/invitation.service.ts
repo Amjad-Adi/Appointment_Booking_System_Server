@@ -9,6 +9,8 @@ import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from "../../models/invitation.model";
 import {AuthorizeOrganizationUser} from "./user.service";
 import {InvitationStatus} from "../../models/enums/invitation-status";
+import {RoomResponse} from "../../models/room.model";
+import {getRoom} from "./room.service";
 export async function getInvitations(organizationUuid:string,userUuid:string):Promise<InvitationResponse[]>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid);
     return (await findAll(organizationUuid))

@@ -11,13 +11,18 @@ CREATE TABLE users(
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	organization_id BIGINT,
-	language CHAR(2) DEFAULT 'en',
-	role VARCHAR(16) NOT NULL CHECK (role in('WORKER','OWNER','MANAGER','SUPER ADMIN', 'CRM', 'CUSTOMER')),
-	status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
+	language CHAR(2) NOT NULL DEFAULT 'en',
+	role VARCHAR(16) NOT NULL CHECK (role IN('WORKER','OWNER','MANAGER','SUPER ADMIN', 'CRM', 'CUSTOMER')),
+	status VARCHAR(8) NOT NULL CHECK (status IN('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 DROP TABLE users;
+
 ALTER TABLE users ALTER COLUMN role CHECK (role in('SUPER ADMIN','WORKER','MANAGER', 'CRM', 'CUSTOMER')),
+ALTER TABLE users ALTER COLUMN language SET NOT NULL; 
+UPDATE users
+set language='en';
+
 CREATE TABLE locations(
 	id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	name varchar(1024) NOT NULL,
@@ -31,8 +36,8 @@ CREATE TABLE locations(
 CREATE TABLE system_messages(
 	uuid UUID DEFAULT gen_random_uuid() UNIQUE PRIMARY KEY,
 	message TEXT NOT NULL,
-	type VARCHAR(256) NOT NULL CHECK (type in ('CRITICAL','IMPORTANT','WARNING','SUCCESS','INFO','REMINDER','ANNOUNCEMENT')),
-	status VARCHAR(256) NOT NULL CHECK (status in('ACTIVE,INACTIVE')),
+	type VARCHAR(256) NOT NULL CHECK (type IN ('CRITICAL','IMPORTANT','WARNING','SUCCESS','INFO','REMINDER','ANNOUNCEMENT')),
+	status VARCHAR(256) NOT NULL CHECK (status IN('ACTIVE,INACTIVE')),
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	read_at_utc DATE,
 );
@@ -113,18 +118,22 @@ CREATE TABLE service_use_slot(
 	FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE slot_blocks(
+CREATE TABLE time_block(
  	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	reason VARCHAR(4096),
-	start_time TIMESTAMPTZ NOT NUll,
-	end_time TIMESTAMPTZ NOT NUll,
-	organization_employee_id BIGINT,
-	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-	status VARCHAR(256) NOT NULL CHECK (status in(' ')),
-	FOREIGN KEY (organization_employee_id) REFERENCES organization_employees(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+	start_time_utc TIMETZ NOT NUll,
+	end_time_utc TIMETZ NOT NUll,
+	request_user_id BIGINT NOT NULL,
+	respond_user_id BIGINT,
+	requested_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+	responded_at_utc TIMESTAMPTZ,
+	request_status VARCHAR(256) NOT NULL CHECK (request_status IN ('APPROVED', 'PENDING', 'REJECTED','DELETED')) DEFAULT 'PENDING',
+	FOREIGN KEY (request_user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+	FOREIGN KEY (respond_user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+DROP TABLE time_block;
 
 CREATE TABLE appointments(
 	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -163,8 +172,8 @@ CREATE TABLE notifications(
 	user_id BIGINT NOT NULL,
 	appointment_id BIGINT NOT NULL,
 	message TEXT NOT NULL,
-	receiver_type VARCHAR(64) NOT NULL CHECK (receiver_type in(' ')),
-	status  VARCHAR(256) NOT NULL CHECK (status in(' ')),
+	receiver_type VARCHAR(64) NOT NULL CHECK (receiver_type IN(' ')),
+	status  VARCHAR(256) NOT NULL CHECK (status IN(' ')),
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	read_at_utc DATE,
 	FOREIGN KEY (user_id) REFERENCES users(person_id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -181,7 +190,7 @@ CREATE TABLE appointment_histories(
 	start_time TIMESTAMPTZ NOT NUll,
 	end_time TIMESTAMPTZ NOT NUll,
 	colour CHAR(7) NOT NULL,
-	action VARCHAR(256) NOT NULL CHECK (action in(' ')),
+	action VARCHAR(256) NOT NULL CHECK (action IN(' ')),
 	payment_method_name VARCHAR(256) NOT NULL CHECK (payment_method_name in(' ')),
 	paid_at_utc TIMESTAMPTZ,
 	FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -227,15 +236,26 @@ CREATE TABLE invitations(
 	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 	sender_id BIGINT,
 	recipient_email VARCHAR(320),
-	organization_id BIGINT,
 	created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 	expires_at_utc TIMESTAMPTZ NOT NULL,
-	invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status in('PENDING','REJECTED','ACCEPTED','FAILED','EXPIRED')) DEFAULT 'PENDING',
-	FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE,
-	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
+	invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status IN('PENDING','REJECTED','ACCEPTED','FAILED','EXPIRED')) DEFAULT 'PENDING',
+	FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
 );
 
 DROP TABLE invitations;
+
+CREATE TABLE working_hours(
+	id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+	uuid UUID DEFAULT gen_random_uuid() UNIQUE,
+	organization_id BIGINT,
+	day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('FRIDAY','SATURDAY','SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY')),
+	start_time_utc TIMETZ,
+	end_time_utc TIMETZ, 
+	UNIQUE(organization_id,day_of_week)
+	FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+DROP TABLE working_hours;
 
 INSERT INTO locations (name, location_on_map)
 VALUES ('Birzeit University', ST_GeomFromText('POINT(35.2137 31.7683)', 4326));
@@ -257,3 +277,32 @@ SELECT * FROM invitations;
 DELETE FROM users;
 
 SELECT (created_at_utc+(INTERVAL '7 DAYS')) FROM users;
+
+--check if today is not a special day for organizaiton
+--check if working hours is good time for organizaiton by using todays day of week
+--$1 service uuid
+--$2 start time from user
+SELECT u.uuid,r.uuid
+FROM services s
+LEFT JOIN services_rooms sr ON s.id=sr.service_id
+INNER JOIN rooms r ON r.id=sr.room_id
+LEFT JOIN appointments a ON a.room_id=r.id
+LEFT JOIN users_services us ON s.id=us.s_id
+LEFT JOIN users u on us.user_id=u.id
+WHERE
+AND u.id NOT IN(
+	SELECT u1.id
+	FROM users u1
+	LEFT JOIN users_services us ON u.id=us.user_id
+	LEFT JOIN services s ON s.id=us.service_id
+	JOIN time_block t ON t.request_user_id=u.id
+	JOIN appointments a ON u.id=a.emp_id
+	WHERE s.uuid=$1 AND t.start_time<$2+s.duration_in_minutes AND t.end_time>$2 AND t.request_status='APPROVED'
+	AND a.start_time<$2+s.duration_in_minutes AND a.end_time>$2
+)
+AND r.id NOT IN(
+ 	SELECT r.id
+	FROM appointments a
+	JOIN rooms r on a.room_id=r.id
+	WHERE a.start_time<$2+s.duration_in_minutes AND a.end_time>$2
+)
