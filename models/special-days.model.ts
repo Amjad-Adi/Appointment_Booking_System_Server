@@ -12,5 +12,5 @@ export interface SpecialDay {
     status:ActivationStatus
 }
 
-export type CreateSpecialDay= z.infer<typeof createSpecialDaysSchema> & {organizationUuid:string,organizationId:number};
-export type UpdateSpecialDay= z.infer<typeof updateSpecialDaysSchema> & {uuid:string};
+export type CreateSpecialDay= z.infer<typeof createSpecialDaysSchema> & {organizationUuid:string,organizationId:number,userUuid:string};
+export type UpdateSpecialDay= z.infer<typeof updateSpecialDaysSchema> & {uuid:string,organizationUuid:string,userUuid:string};

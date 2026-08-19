@@ -42,6 +42,9 @@ import {create as createLocation, updateLocation} from "./location.repository"
 import {Location, UpdateLocation} from "../models/location.model"
 import {CreateOrganization, UpdateOrganization, UpdateOrganizationByAdmin, OrganizationRow, Organization} from "../models/organization.model";
 import {setUserOrganizationId} from "./user.repository";
+import {drizzleConnection} from "../databases/drizzle-connection";
+import {organizationTable} from "../databases/drizzle-schemas/organizations.db";
+import {eq} from "drizzle-orm";
 export async function findAll():Promise<OrganizationRow[]>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
@@ -172,4 +175,12 @@ export async function isPhoneNumberFound(phoneNumber: string): Promise<boolean> 
          FROM ${TABLE_NAME}
          WHERE ${COLUMN_PHONE_NUMBER} = $1`,
         [phoneNumber])).rowCount!=0
+}
+
+
+export function drizzleFindIdByUuid(uuid:string){
+    return drizzleConnection
+        .select({id:organizationTable.id})
+        .from(organizationTable)
+        .where(eq(organizationTable.uuid,uuid))
 }
