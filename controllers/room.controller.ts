@@ -32,8 +32,8 @@ export async function handleCreateOrganizationRoom(req:Request,res:Response){
 export async function handleUpdateOrganizationRoom(req:Request,res:Response){
     let room:UpdateRoom=(req.body)
     room.uuid=req.params.roomUuid as string
-    let userUuid:string=req.user.uuid as string;
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    const result:Room=await updateRoom(room,organizationUuid,userUuid)
+    room.userUuid=req.user.uuid as string;
+    room.organizationUuid=req.params.organizationUuid  as string;
+    const result:Room=await updateRoom(room)
     return res.status(200).json(result)
 }

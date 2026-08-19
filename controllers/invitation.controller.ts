@@ -49,7 +49,11 @@ export async function handleCreateOrganizationInvitation(req:Request,res:Respons
 }
 
 export async function handleReceiveOrganizationInvitation(req:Request,res:Response){
-    const invitationUuid=req.params.invitaitonUuid as string
-    let userUuid:string=req.user.uuid as string;
-    let organizationUuid:string=req.params.organizationUuid  as string;
-  await updateInvitation(invitationUuid,organizationUuid,userUuid,InvitationStatus.ACCEPTED)}
+    let invitation:UpdateInvitation=req.body
+    invitation.uuid=req.params.invitationUuid as string;
+    invitation.userUuid=req.user.uuid as string;
+    invitation.organizationUuid=req.params.organizationUuid  as string;
+    invitation.status=InvitationStatus.ACCEPTED
+    let result:Invitation=await updateInvitation(invitation)
+    return res.status(200).json(result)
+}

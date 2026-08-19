@@ -30,4 +30,4 @@ export interface InvitationResponse extends Invitation{
 }
 
 export type CreateInvitation= z.infer<typeof createInvitationSchema> & {organizationId:number,senderId:number};
-export type UpdateInvitation= z.infer<typeof updateInvitationSchema> & {uuid:string}
+export type UpdateInvitation= z.infer<typeof updateInvitationSchema> & {uuid:string,organizationUuid:string,userUuid:string};

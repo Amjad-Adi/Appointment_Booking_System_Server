@@ -43,12 +43,8 @@ export async function createService(service:CreateService,userUuid:string):Promi
     return result;
 }
 
-export async function updateService(service:UpdateService,organizationUuid:string,userUuid:string):Promise<Service>{
-    await AuthorizeOrganizationUser(userUuid,organizationUuid)
-    let serviceCheck:ServiceResponse=await getService(organizationUuid,service.uuid)//check if that organizaiton have that service
-    if(serviceCheck===undefined){
-        throw new NotFoundError("Room");
-    }
+export async function updateService(service:UpdateService):Promise<Service>{
+    await AuthorizeOrganizationUser(service.userUuid,service.organizationUuid)
     let result:Service= await update(service)
     if(result===undefined){
         throw new NotFoundError("Service")

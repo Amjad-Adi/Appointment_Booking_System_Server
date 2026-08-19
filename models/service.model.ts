@@ -22,4 +22,4 @@ export interface ServiceResponse extends Service{
 
 export type OrganizationServiceResponseService=Service;
 export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,organizationId:number;};
-export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string};
+export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string;};
