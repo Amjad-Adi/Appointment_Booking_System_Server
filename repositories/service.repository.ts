@@ -71,7 +71,11 @@ export async function update(service: UpdateService):Promise<Service> {
              ${COLUMN_PICTURE_PATH}=COALESCE($5,${COLUMN_PICTURE_PATH}),
              ${COLUMN_STATUS}=COALESCE($6,${COLUMN_STATUS}),
              ${COLUMN_UPDATED_AT_UTC}=now()
-         WHERE ${COLUMN_UUID} = $7
+         WHERE ${COLUMN_UUID} = $7 AND 
+               ${COLUMN_ORGANIZATION_ID}=
+               (SELECT id
+                FROM TABLE ${ORGANIZATION_TABLE_NAME}
+                WHERE ${ORGANIZATION_COLUMN_UUID}=$8)
         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-        [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid])).rows[0];
+        [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid,service.organizationUuid])).rows[0];
 }
