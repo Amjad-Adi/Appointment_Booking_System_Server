@@ -15,6 +15,7 @@ import bodyParserErrorHandler from "express-body-parser-error-handler";
 import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "./middlewares/rate-limiter";
 const logger = pino();
 export let app = express();
+app.set("query parser", "extended");
 const corsOptions = {
     origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:3000",
 };

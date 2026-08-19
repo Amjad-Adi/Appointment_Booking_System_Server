@@ -1,7 +1,7 @@
 import { type Request, type Response, type NextFunction, type RequestHandler } from "express";
 import {ipKeyGenerator, rateLimit as expressRateLimit} from "express-rate-limit";
 import { TooManyRequests } from "../errors/too-many-requests";
-import {} from "../utils/UserRequest";
+import {} from "../utils/Request";
 const DURATION = 60;
 const GLOBAL_AUTHENTICATION_POINTS = 1000;
 const GLOBAL_GENERAL_POINTS = 10000;
