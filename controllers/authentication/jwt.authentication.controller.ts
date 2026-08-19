@@ -17,8 +17,8 @@ import {mapFirebaseError} from "../../middlewares/map-firebase-error";
 import {User, UserResponse} from "../../models/user.model";
 import {getBlackListedToken} from "../../services/backend/jwt-management-service";
 export const JWT_SECRET=process.env.JWT_SECRET as string
-export const expiresInForDevelopment="12h";
-export const expiresInForDeployment="1d";
+export const ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT="12h";
+export const ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT="1d";
 
 export async function authenticateToken(req:Request,res:Response,next:NextFunction){
     const authorizationHeader: string | undefined = req.headers.authorization
@@ -66,7 +66,7 @@ export async function generateToken(userUid:string){
         sub: userUid
     };
     const signOptions:SignOptions={
-        expiresIn: process.env.NODE_ENV=="development"?expiresInForDevelopment:expiresInForDeployment,
+        expiresIn: process.env.NODE_ENV=="development"?ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT:ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT,
         issuer:"appointment-booking-server",
         audience:"appointment-booking-api",
         jwtid:crypto.randomUUID()
