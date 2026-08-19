@@ -10,11 +10,11 @@ import {CreateSpecialDay, SpecialDay, UpdateSpecialDay} from "../../models/speci
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {AuthorizeOrganizationUser} from "./user.service";
 
-export async function getSpecialDays(organizationUuid:string,userUuid:string):Promise<SpecialDay[]>{
+export async function getSpecialDays(organizationUuid:string):Promise<SpecialDay[]>{
     return (await findAll(organizationUuid))
 }
 
-export async function getSpecialDay(specialDayUuid:string,organizationUuid:string,userUuid:string):Promise<SpecialDay>{
+export async function getSpecialDay(specialDayUuid:string,organizationUuid:string):Promise<SpecialDay>{
     let result:SpecialDay= await findByUuid(organizationUuid,specialDayUuid)
     if(result===undefined){
         throw new NotFoundError("Special Day");

@@ -1,7 +1,12 @@
 import express from "express";
-import type {} from "../utils/UserRequest";
-import {validateBody, validateParameter} from "../middlewares/validaiton";
-import {createUserSchema, updateUserSchema,updateUserByAdminSchema} from "../middlewares/zod-schemas/user.schema"
+import type {} from "../utils/Request";
+import {validateBody, validateParameter, validateQuery} from "../middlewares/validaiton";
+import {
+    createUserSchema,
+    updateUserSchema,
+    updateUserByAdminSchema,
+    queryUserSchema
+} from "../middlewares/zod-schemas/user.schema"
 import {
     handleGetUser,
     handleCreateUser,
@@ -20,7 +25,7 @@ import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
 import {receiveInvitationRouter} from "./receive-invitation.route";
 export let userRouter=express.Router()
 userRouter.route("/")
-    .get(authenticateToken,authorize(READ_USERS),handleGetUsers)
+    .get(authenticateToken,authorize(READ_USERS),validateQuery(queryUserSchema),handleGetUsers)
 
 userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)

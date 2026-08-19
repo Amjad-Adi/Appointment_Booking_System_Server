@@ -1,6 +1,15 @@
-import { z} from "zod"
+import {z} from "zod"
 import {ActivationStatus} from "../../models/enums/activation-status"
 import {Role} from "../../models/enums/roles"
+import {
+    ALIAS_COLUMN_UPDATED_AT_UTC,
+    QUERY_CREATED_AT_UTC,
+    QUERY_NAME,
+    QUERY_UPDATED_AT_UTC
+} from "../../databases/contracts/user.contract";
+import {Order} from "../../models/enums/order";
+import {querySchema} from "./query.schema";
+export const DEFAULT_LANGUAGE = "en";
 export const createUserSchema=z.object({
     firstName:z.string().trim().nonempty().max(64),
     lastName:z.string().trim().nonempty().max(64),
@@ -25,7 +34,7 @@ export const updateUserSchema=z.object({
     password:z.string().trim().nonempty().max(64).optional(),
     confirmPassword:z.string().trim().nonempty().max(64).optional(),
     profilePicturePath:z.string().trim().nonempty().optional(),
-    language:z.string().trim().length(2).optional(),
+    language:z.string().trim().length(2).default(DEFAULT_LANGUAGE),
 }).strict().refine((data)=>data.password===data.confirmPassword);
 
 export const loginUserSchema=z.object({
@@ -36,4 +45,14 @@ export const loginUserSchema=z.object({
 export const updateUserByAdminSchema=z.object({
     role:z.enum(Role).optional(),
     status:z.enum(ActivationStatus).optional()
+}).strict();
+export const userFilterSchema = z.object({
+    role: z.enum(Role).optional(),
+    status: z.enum(ActivationStatus).optional(),
+}).strict();
+
+export const queryUserSchema = querySchema.extend({
+    search: z.string().trim().min(1).max(320).optional(),
+    filter: userFilterSchema.optional(),
+    sortBy: z.enum([QUERY_NAME, QUERY_CREATED_AT_UTC, QUERY_UPDATED_AT_UTC]).optional(),
 }).strict();

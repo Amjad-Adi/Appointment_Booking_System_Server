@@ -72,8 +72,6 @@ export async function update(room: UpdateRoom):Promise<Room> {
              (SELECT id
               FROM TABLE ${ORGANIZATION_TABLE_NAME}
               WHERE ${ORGANIZATION_COLUMN_UUID}=$6)
-               
-             
          RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}, ${COLUMN_OCCUPANCY_STATUS} AS ${ALIAS_COLUMN_OCCUPANCY_STATUS}`,
         [room.name, room.description, room.status,room.occupancyStatus,room.uuid,room.organizationUuid])).rows[0];
 }

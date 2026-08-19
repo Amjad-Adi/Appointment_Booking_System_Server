@@ -5,7 +5,7 @@ import { type Request, type Response } from "express";
 import {CreateRoom, Room, UpdateRoom, RoomResponse} from "../models/room.model";
 import {findIdByUuid} from "../repositories/organizaiton.repository";
 import {getOrganizationIdByUuid} from "../services/backend/organization.service";
-import {} from "../utils/UserRequest"
+import {} from "../utils/Request"
 export async function handleGetOrganizationRooms(req:Request,res:Response){
     let organizationUuid:string=req.params.organizationUuid  as string;
     let userUuid:string=req.user.uuid as string;

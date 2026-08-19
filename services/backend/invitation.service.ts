@@ -25,13 +25,14 @@ export async function getInvitation(invitationUuid:string,organizationUuid:strin
     return result
 }
 
-export async function createInvitation(invitation:CreateInvitation,organizationUuid:string,userUuid:string):Promise<Invitation>{
-    await AuthorizeOrganizationUser(userUuid,organizationUuid)
-    let result:Invitation= await create(invitation)
-    if(result===undefined){
+export async function createInvitation(invitation:CreateInvitation,organizationUuid:string,userUuid:string):Promise<Invitation> {
+    await AuthorizeOrganizationUser(userUuid, organizationUuid)
+    let result: Invitation = await create(invitation)
+    if (result === undefined) {
         throw new BadRequestErorr()
     }
     return result;
+}
 
 export async function updateInvitation(invitation:UpdateInvitation):Promise<Invitation>{
     let result:Invitation= await update(invitation)

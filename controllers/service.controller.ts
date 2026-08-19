@@ -8,7 +8,7 @@ import { type Request, type Response } from "express";
 import {CreateService, Service, ServiceResponse, UpdateService} from "../models/service.model";
 import {getOrganizationIdByUuid, getUserOrganization} from "../services/backend/organization.service";
 import {findIdByUuid} from "../repositories/organizaiton.repository";
-import {} from "../utils/UserRequest"
+import {} from "../utils/Request"
 export async function handleGetOrganizationServices(req:Request,res:Response){
     let organizationUuid:string=req.params.organizationUuid  as string;
     const result:ServiceResponse[]=await getServices(organizationUuid)
