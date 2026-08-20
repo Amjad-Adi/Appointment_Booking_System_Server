@@ -1,7 +1,12 @@
 import { z} from "zod"
 import {ActivationStatus} from "../../models/enums/activation-status"
-import {Role} from "../../models/enums/roles"
-import {CreateLocation} from "../../models/location.model";
+import {querySchema} from "./query.schema";
+import {
+    QUERY_CREATED_AT_UTC,
+    QUERY_NAME,
+    QUERY_PRICE,
+    QUERY_DURATION_IN_MINUTES
+} from "../../databases/contracts/service.contract";
 export const createServiceSchema=z.object({
     name:z.string().trim().nonempty().max(256),
     description:z.string().trim().max(4096).nonempty().optional(),
@@ -14,3 +19,17 @@ export const createServiceSchema=z.object({
 export const updateServiceSchema=createServiceSchema.partial().extend({
     status:z.enum(ActivationStatus).optional()
 }).strict()
+
+
+export const serviceFilterSchema = z.object({
+    minPrice: z.coerce.number().positive().optional(),
+    maxPrice: z.coerce.number().positive().optional(),
+    maxDurationInMinutes:z.coerce.number().positive().optional(),
+    status:z.enum(ActivationStatus).optional(),
+}).strict();
+
+export const queryServiceSchema = querySchema.extend({
+    search: z.string().trim().nonempty().max(256).optional(),
+    filter: serviceFilterSchema.optional(),
+    sortBy: z.enum([QUERY_NAME, QUERY_PRICE,QUERY_DURATION_IN_MINUTES, QUERY_CREATED_AT_UTC]).optional(),
+}).strict();

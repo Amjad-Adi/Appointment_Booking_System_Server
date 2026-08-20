@@ -15,3 +15,6 @@ export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
 export const ALIAS_COLUMN_PICTURE_PATH = `"servicePicturePath"`;
 export const ALIAS_COLUMN_ORGANIZATION_ID=`"organization_Id"`;
+export const ALIAS_TOTAL_NUMBER_OF_ROOMS = `"totalNumberOfRooms"`;
+export const QUERY_NAME = "name";
+export const QUERY_CREATED_AT_UTC = "createdAtUTC";

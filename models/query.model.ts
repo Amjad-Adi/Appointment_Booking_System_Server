@@ -17,7 +17,7 @@ export class QueryResponse{
     data: DataResponses[]
     pagination:Pagination;
     links:Links;
-    constructor(data:DataResponses[],totalQueryItems:number,baseUrl:string,page?:number,limit?:number){
+    constructor(data:DataResponses[],totalNumberOfItems:number,baseUrl:string,page?:number,limit?:number){
         if(limit===undefined){
             limit=DEFAULT_LIMIT;
         }
@@ -26,8 +26,8 @@ export class QueryResponse{
         }
         this.data = data;
         this.pagination={
-            totalItems:totalQueryItems,
-            totalPages: Math.ceil(totalQueryItems/limit),
+            totalItems:totalNumberOfItems,
+            totalPages: Math.ceil(totalNumberOfItems/limit),
             currentPage:page,
         }
         this.links={

@@ -5,7 +5,7 @@ import {
     createUserSchema,
     inviteUserSchema, queryUserSchema,
     updateUserByAdminSchema,
-    updateUserSchema
+    updateUserSchema, userFilterSchema
 } from "../middlewares/zod-schemas/user.schema"
 import {DataResponses, Filter} from "./query.model";
 import {Order} from "./enums/order";
@@ -25,11 +25,6 @@ export interface User{
 
 export interface UserResponse extends User,DataResponses {
     organizationUuid:string
-}
-
-export interface UserFilter extends Filter{
-    role:Role
-    status:ActivationStatus
 }
 
 export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};

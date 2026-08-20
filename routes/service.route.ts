@@ -1,14 +1,15 @@
 import express from "express";
-import {validateBody, validateParameter} from "../middlewares/validaiton";
-import {createServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema";
+import {validateBody, validateParameter, validateQuery} from "../middlewares/validaiton";
+import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema";
 import {handleGetOrganizationService, handleUpdateOrganizationService, handleCreateOrganizationService, handleGetOrganizationServices} from "../controllers/service.controller";
 import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
 import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions";
 import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
 import {authorize} from "../middlewares/authorization/authorization";
+import {queryUserSchema} from "../middlewares/zod-schemas/user.schema";
 export let serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
-    .get(handleGetOrganizationServices)
+    .get(validateQuery(queryServiceSchema),handleGetOrganizationServices)
     .post(authenticateToken,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)
 
 serviceRouter.route("/:serviceUuid")

@@ -2,17 +2,20 @@ import {
     getService,
     getServices,
     createService,
-    updateService,
+    updateService,getNumberOfServices
 } from "../services/backend/service.service"
 import { type Request, type Response } from "express";
-import {CreateService, Service, ServiceResponse, UpdateService} from "../models/service.model";
-import {getOrganizationIdByUuid, getUserOrganization} from "../services/backend/organization.service";
-import {findIdByUuid} from "../repositories/organizaiton.repository";
+import {CreateService, QueryService, Service, ServiceResponse, UpdateService} from "../models/service.model";
 import {} from "../utils/Request"
+import {QueryResponse} from "../models/query.model";
 export async function handleGetOrganizationServices(req:Request,res:Response){
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    const result:ServiceResponse[]=await getServices(organizationUuid)
-    return res.status(200).json(result)
+    const organizationUuid:string=req.params.organizationUuid  as string;
+    const query:QueryService= req.validatedQuery as unknown as QueryService;
+    const [services,totalNumberOfServices]=await Promise.all([getServices(query,organizationUuid),getNumberOfServices(query,organizationUuid)])
+    query.offset=(query.page-1)*query.limit
+    const baseUrl=req.originalUrl?.split("?")[0]
+    const responseResult:QueryResponse=new QueryResponse(services,totalNumberOfServices,baseUrl,query?.page,query?.limit)
+    return res.status(200).json(responseResult)
 }
 
 export async function handleGetOrganizationService(req:Request,res:Response){

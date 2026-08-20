@@ -1,4 +1,4 @@
-import {RoomResponse, Room, UpdateRoom,CreateRoom} from "../models/room.model"
+import {RoomResponse, Room, UpdateRoom, CreateRoom, QueryRoom} from "../models/room.model"
 import {pool} from "../databases/postgre-connection"
 import {
     COLUMN_UUID,
@@ -10,8 +10,14 @@ import {
     COLUMN_STATUS,
     COLUMN_OCCUPANCY_STATUS,
     TABLE_NAME,
-    ALIAS, ALIAS_COLUMN_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,ALIAS_COLUMN_OCCUPANCY_STATUS,ALIAS_COLUMN_ORGANIZATION_ID,
-    ALIAS_COLUMN_UPDATED_AT_UTC
+    ALIAS,
+    ALIAS_COLUMN_PICTURE_PATH,
+    ALIAS_COLUMN_CREATED_AT_UTC,
+    ALIAS_COLUMN_OCCUPANCY_STATUS,
+    ALIAS_COLUMN_ORGANIZATION_ID,
+    ALIAS_COLUMN_UPDATED_AT_UTC,
+    QUERY_NAME,
+    ALIAS_TOTAL_NUMBER_OF_ROOMS
 } from "../databases/contracts/room.contract"
 import {
     TABLE_NAME as ORGANIZATION_TABLE_NAME,
@@ -23,14 +29,43 @@ import {
     ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH,
     COLUMN_UUID as ORGANIZATION_COLUMN_UUID, COLUMN_PROFILE_PICTURE_PATH, ALIAS_COLUMN_ORGANIZATION_UUID,
 } from "../databases/contracts/organization.contract"
-import {QueryResult} from "pg";
-export async function findAll(organizationUuid:string):Promise<RoomResponse[]>{
+import {QueryService} from "../models/service.model";
+import {ALIAS_TOTAL_NUMBER_OF_SERVICES, COLUMN_PRICE} from "../databases/contracts/service.contract";
+
+export async function findAll(query:QueryRoom,organizationUuid:string):Promise<RoomResponse[]>{
+    const search=query.search?`%${query.search}%`: null
+    const sortColumnsDefinition={
+        name:`${ALIAS}.${COLUMN_NAME}`,
+        createdAtUTC:`${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+    }
+    const sortColumn=sortColumnsDefinition[query.sortBy?? QUERY_NAME];
+    const sortOrder = query.order?.toUpperCase() as string;
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}, ${ALIAS}.${COLUMN_OCCUPANCY_STATUS} as ${ALIAS_COLUMN_OCCUPANCY_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1`,
-        [organizationUuid])).rows;
+         WHERE
+         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_OCCUPANCY_STATUS}=$4)
+         ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
+         LIMIT $5
+         OFFSET $6`,
+        [organizationUuid,search, query.filter?.status,query.filter?.occupancyStatus,query.limit,query.offset])).rows
+}
+
+export async function countAll(query:QueryRoom,organizationUuid:string):Promise<number>{
+    const search=query.search?`%${query.search}%`: null
+    return Number((await pool.query(
+        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_ROOMS}
+         FROM ${TABLE_NAME} ${ALIAS}
+         WHERE 
+         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_OCCUPANCY_STATUS}=$4)`,
+        [organizationUuid,search, query.filter?.status,query.filter?.occupancyStatus])).rows[0].totalNumberOfRooms)
 }
 
 export async function findByUuid(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{

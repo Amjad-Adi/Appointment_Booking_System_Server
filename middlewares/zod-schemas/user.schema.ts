@@ -5,7 +5,6 @@ import {
     ALIAS_COLUMN_UPDATED_AT_UTC,
     QUERY_CREATED_AT_UTC,
     QUERY_NAME,
-    QUERY_UPDATED_AT_UTC
 } from "../../databases/contracts/user.contract";
 import {Order} from "../../models/enums/order";
 import {querySchema} from "./query.schema";
@@ -46,13 +45,14 @@ export const updateUserByAdminSchema=z.object({
     role:z.enum(Role).optional(),
     status:z.enum(ActivationStatus).optional()
 }).strict();
+
 export const userFilterSchema = z.object({
     role: z.enum(Role).optional(),
     status: z.enum(ActivationStatus).optional(),
 }).strict();
 
 export const queryUserSchema = querySchema.extend({
-    search: z.string().trim().min(1).max(320).optional(),
+    search: z.string().trim().nonempty().max(320).optional(),
     filter: userFilterSchema.optional(),
-    sortBy: z.enum([QUERY_NAME, QUERY_CREATED_AT_UTC, QUERY_UPDATED_AT_UTC]).optional(),
+    sortBy: z.enum([QUERY_NAME, QUERY_CREATED_AT_UTC]).optional(),
 }).strict();

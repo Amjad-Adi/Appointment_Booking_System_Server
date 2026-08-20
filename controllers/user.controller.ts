@@ -3,8 +3,7 @@ import {
     getUser,
     updateUser,
     updateUserByAdmin,
-    createUser,
-    getUserByFireBaseUid, getNumberOfUsers
+    createUser, getNumberOfUsers
 } from "../services/backend/user.service"
 import { type Request, type Response } from "express";
 import {createFireBaseUser, updateFireBaseUser} from "../services/backend/firebase-admin.service"
@@ -12,17 +11,13 @@ import {} from "../utils/Request"
 import {UserRecord} from "firebase-admin/auth";
 import {BadRequestErorr} from "../errors/bad-request.erorr";
 import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/user.model";
-import firebase from "firebase/compat/app";
-import {ActivationStatus} from "../models/enums/activation-status";
-import {Role} from "../models/enums/roles";
 import {QueryResponse} from "../models/query.model";
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
-    const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
-    const offset:number=(query.page-1)*query.limit
-    query.offset=offset
+    const [users,totalNumberOfUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
+    query.offset=(query.page-1)*query.limit
     const baseUrl=req.originalUrl?.split("?")[0]
-    const responseResult:QueryResponse=new QueryResponse(users,totalUsers,baseUrl,query?.page,query?.limit)
+    const responseResult:QueryResponse=new QueryResponse(users,totalNumberOfUsers,baseUrl,query?.page,query?.limit)
     return res.status(200).json(responseResult)
 }
 

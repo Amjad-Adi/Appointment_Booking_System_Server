@@ -3,18 +3,20 @@ import {
     findByUuid,
     create,
     update,
-    isNameFound
+    isNameFound, countAll
 } from "../../repositories/service.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
-import {CreateService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
+import {CreateService, QueryService, Service, ServiceResponse, UpdateService} from "../../models/service.model";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
 import {AuthorizeOrganizationUser} from "./user.service";
-import {RoomResponse} from "../../models/room.model";
-import {getRoom} from "./room.service";
-export async function getServices(organizationUuid:string):Promise<ServiceResponse[]>{
-    return (await findAll(organizationUuid))
+export async function getServices(query:QueryService,organizationUuid:string):Promise<ServiceResponse[]>{
+    return (await findAll(query,organizationUuid))
+}
+
+export async function getNumberOfServices(query:QueryService,organizationUuid:string):Promise<number>{
+    return (await countAll(query,organizationUuid))
 }
 
 export async function getService(serviceUuid:string,organizationUuid:string):Promise<ServiceResponse>{

@@ -3,16 +3,22 @@ import {
     findByUuid,
     create,
     update,
-    isNameFound
+    isNameFound,countAll
 } from "../../repositories/room.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
 import {ConflictError} from "../../errors/conflict.error";
 import {findIdByUuid} from "../../repositories/organizaiton.repository";
-import {RoomResponse,CreateRoom,UpdateRoom,Room} from "../../models/room.model";
-import {AuthorizeOrganizationUser} from "./user.service";export async function getRooms(organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
+import {RoomResponse, CreateRoom, UpdateRoom, Room, QueryRoom} from "../../models/room.model";
+import {AuthorizeOrganizationUser} from "./user.service";
+
+export async function getRooms(query:QueryRoom,organizationUuid:string,userUuid:string):Promise<RoomResponse[]>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid);
-    return (await findAll(organizationUuid))
+    return (await findAll(query,organizationUuid))
+}
+export async function getNumberOfRooms(query:QueryRoom,organizationUuid:string,userUuid:string):Promise<number>{
+    await AuthorizeOrganizationUser(userUuid,organizationUuid);
+    return (await countAll(query,organizationUuid))
 }
 
 export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:string):Promise<RoomResponse>{
