@@ -13,7 +13,7 @@ import {
     TABLE_NAME,
     ALIAS,
     COLUMN_PICTURE_PATH, ALIAS_COLUMN_DURATION_IN_MINUTES, ALIAS_COLUMN_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,
-    ALIAS_COLUMN_UPDATED_AT_UTC, ALIAS_TOTAL_NUMBER_OF_SERVICES, QUERY_NAME
+    ALIAS_COLUMN_UPDATED_AT_UTC, ALIAS_TOTAL_NUMBER_OF_SERVICES, SORT_BY_NAME
 } from "../databases/contracts/service.contract"
 import {
     TABLE_NAME as ORGANIZATION_TABLE_NAME,
@@ -35,7 +35,7 @@ export async function findAll(query:QueryService,organizationUuid:string):Promis
         price:`${ALIAS}.${COLUMN_PRICE}`,
         durationInMinutes:`${ALIAS}.${COLUMN_DURATION_IN_MINUTES}`
     }
-    const sortColumn=sortColumnsDefinition[query.sortBy?? QUERY_NAME];
+    const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
     const sortOrder = query.order?.toUpperCase() as string;
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
@@ -68,7 +68,7 @@ export async function countAll(query:QueryService,organizationUuid:string):Promi
         [organizationUuid,search, query.filter?.maxPrice,query.filter?.minPrice,query.filter?.status?.toUpperCase()])).rows[0].totalNumberOfServices)
 }
 
-export async function findByUuid(organizationUuid:string,serviceUuid:string):Promise<ServiceResponse>{
+export async function findByUuid(serviceUuid:string):Promise<ServiceResponse>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -104,8 +104,8 @@ export async function update(service: UpdateService):Promise<Service> {
              ${COLUMN_PICTURE_PATH}=COALESCE($5,${COLUMN_PICTURE_PATH}),
              ${COLUMN_STATUS}=COALESCE($6,${COLUMN_STATUS}),
              ${COLUMN_UPDATED_AT_UTC}=now()
-         WHERE ${COLUMN_UUID} = $7 AND 
-               ${COLUMN_ORGANIZATION_ID}=
+         WHERE ${COLUMN_UUID} = $7 
+         AND ${COLUMN_ORGANIZATION_ID}=
                (SELECT id
                 FROM TABLE ${ORGANIZATION_TABLE_NAME}
                 WHERE ${ORGANIZATION_COLUMN_UUID}=$8)

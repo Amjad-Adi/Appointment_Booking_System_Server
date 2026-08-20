@@ -3,8 +3,8 @@ import {ActivationStatus} from "../../models/enums/activation-status"
 import {Role} from "../../models/enums/roles"
 import {
     ALIAS_COLUMN_UPDATED_AT_UTC,
-    QUERY_CREATED_AT_UTC,
-    QUERY_NAME,
+    SORT_BY_CREATED_AT_UTC,
+    SORT_BY_NAME,
 } from "../../databases/contracts/user.contract";
 import {Order} from "../../models/enums/order";
 import {querySchema} from "./query.schema";
@@ -54,5 +54,5 @@ export const userFilterSchema = z.object({
 export const queryUserSchema = querySchema.extend({
     search: z.string().trim().nonempty().max(320).optional(),
     filter: userFilterSchema.optional(),
-    sortBy: z.enum([QUERY_NAME, QUERY_CREATED_AT_UTC]).optional(),
+    sortBy: z.enum([SORT_BY_NAME, SORT_BY_CREATED_AT_UTC]).optional(),
 }).strict();

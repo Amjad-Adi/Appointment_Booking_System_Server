@@ -8,6 +8,7 @@ import {getOrganizationIdByUuid} from "../services/backend/organization.service"
 import {} from "../utils/Request"
 import {QueryService} from "../models/service.model";
 import {QueryResponse} from "../models/query.model";
+import {getUserIdByUuid} from "../services/backend/user.service";
 export async function handleGetOrganizationRooms(req:Request,res:Response) {
     const organizationUuid: string = req.params.organizationUuid as string;
     const query: QueryRoom = req.validatedQuery as unknown as QueryRoom;
@@ -39,6 +40,7 @@ export async function handleUpdateOrganizationRoom(req:Request,res:Response){
     const room:UpdateRoom=(req.body)
     room.uuid=req.params.roomUuid as string
     room.userUuid=req.user.uuid as string;
+    room.assignedUserId=await getUserIdByUuid(room.uuid)
     room.organizationUuid=req.params.organizationUuid  as string;
     const result:Room=await updateRoom(room)
     return res.status(200).json(result)

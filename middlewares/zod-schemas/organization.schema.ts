@@ -7,7 +7,7 @@ export const createOrganizationSchema=z.object({
     name:z.string().trim().nonempty().max(256),
     email:z.email(),
     phoneNumber:z.e164(),
-    bio:z.string().trim().max(4096).nonempty().optional(),
+    bio:z.string().trim().nonempty().max(4096).optional(),
     location:createLocationSchema,
     profilePicturePath:z.string().trim().nonempty().optional()
 }).strict()

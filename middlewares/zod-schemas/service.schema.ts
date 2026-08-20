@@ -2,14 +2,14 @@ import { z} from "zod"
 import {ActivationStatus} from "../../models/enums/activation-status"
 import {querySchema} from "./query.schema";
 import {
-    QUERY_CREATED_AT_UTC,
-    QUERY_NAME,
-    QUERY_PRICE,
-    QUERY_DURATION_IN_MINUTES
+    SORT_BY_CREATED_AT_UTC,
+    SORT_BY_NAME,
+    SORT_BY_PRICE,
+    SORT_BY_DURATION_IN_MINUTES
 } from "../../databases/contracts/service.contract";
 export const createServiceSchema=z.object({
     name:z.string().trim().nonempty().max(256),
-    description:z.string().trim().max(4096).nonempty().optional(),
+    description:z.string().trim().nonempty().max(4096).optional(),
     price:z.number(),
     durationInMinutes:z.number().int().positive(),
     profilePicturePath:z.string().trim().nonempty().optional()
@@ -31,5 +31,5 @@ export const serviceFilterSchema = z.object({
 export const queryServiceSchema = querySchema.extend({
     search: z.string().trim().nonempty().max(256).optional(),
     filter: serviceFilterSchema.optional(),
-    sortBy: z.enum([QUERY_NAME, QUERY_PRICE,QUERY_DURATION_IN_MINUTES, QUERY_CREATED_AT_UTC]).optional(),
+    sortBy: z.enum([SORT_BY_NAME, SORT_BY_PRICE,SORT_BY_DURATION_IN_MINUTES, SORT_BY_CREATED_AT_UTC]).optional(),
 }).strict();
