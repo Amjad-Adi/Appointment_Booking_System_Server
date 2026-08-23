@@ -1,7 +1,7 @@
 import {z} from "zod"
 import {ActivationStatus} from "./enums/activation-status";
-import {createServiceSchema,updateServiceSchema} from "../middlewares/zod-schemas/service.schema"
-import {RoomResponse} from "./room.model";
+import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema"
+import {DataResponses} from "./query.model";
 export interface Service{
     uuid:string,
     name:string
@@ -14,12 +14,12 @@ export interface Service{
     status:ActivationStatus
 }
 
-export interface ServiceResponse extends Service{
+export interface ServiceResponse extends Service,DataResponses{
     organizationUuid:string,
     organizationName:string,
     profilePicturePath:string,
 }
 
-export type OrganizationServiceResponseService=Service;
 export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,organizationId:number;};
 export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string;};
+export type QueryService=z.infer<typeof queryServiceSchema>&{offset:number};

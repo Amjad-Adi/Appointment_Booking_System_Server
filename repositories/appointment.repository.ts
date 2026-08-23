@@ -4,7 +4,7 @@ import {
     AppointmentOrganizationResponse,
     AppointmentUserResponse,
     CreateAppointmentByOrganization, CreateAppointmentByUser, OrganizationAppointment, QueryAppointmentByOrganization,
-    QueryAppointmentByUser, UpdateAppointmentByUser, UserAppointment
+    QueryAppointmentByUser, UpdateAppointmentByOrganization, UpdateAppointmentByUser, UserAppointment
 } from "../models/appointment.model";
 
 import {
@@ -48,15 +48,7 @@ export async function findAllByUser(query:QueryAppointmentByUser,userUuid:string
     }
     const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_TITLE];
     const sortOrder = query.order?.toUpperCase() as string;
-    const fromDate=query.filter?.fromDate
-    const toDate=query.filter?.toDate
-    const serviceUuid=query.filter?.serviceUuid;
-    const roomUuid=query.filter?.roomUuid;
-    const employeeUuid=query.filter?.employeeUuid;
-    const paymentMethod=query.filter?.paymentMethod;
-    const paymentStatus=query.filter?.paymentStatus;
-    const appointmentStatus=query.filter?.appointmentStatus;
-    const organizationUuid=query.filter?.organizationUuid;
+    const {fromDate,toDate,serviceUuid,roomUuid,employeeUuid,paymentMethod,paymentStatus,appointmentStatus,organizationUuid}=query.filter??{}
     return (await drizzleConnection
         .select({uuid: appointmentTable.uuid, userTitle: appointmentTable.userTitle, userNote: appointmentTable.userNote, createdAtUTC: appointmentTable.createdAtUTC, rejectionReason: appointmentTable.rejectionReason, scheduledStartAtUTC: appointmentTable.scheduledStartAtUTC, scheduledEndAtUTC: appointmentTable.scheduledEndAtUTC, actualStartAtUTC: appointmentTable.actualStartAtUTC, actualEndAtUTC: appointmentTable.actualEndAtUTC, userColour: appointmentTable.userColour, paymentMethod: appointmentTable.paymentMethod, paidAtUTC: appointmentTable.paidAtUTC, appointmentStatus: appointmentTable.appointmentStatus, organizationUuid: organizationTable.uuid, organizationName: organizationTable.name, organizationEmail: organizationTable.email, organizationPhoneNumber: organizationTable.phoneNumber, userUuid: userTable.uuid, userFirstName: userTable.firstName, userLastName: userTable.lastName, userEmail: userTable.email, userProfilePicturePath: userTable.profilePicturePath, employeeUuid: employeeTable.uuid, employeeFirstName: employeeTable.firstName, employeeLastName: employeeTable.lastName, employeeEmail: employeeTable.email, employeeProfilePicturePath: employeeTable.profilePicturePath, roomUuid: roomTable.uuid, roomName: roomTable.name, serviceUuid: serviceTable.uuid, serviceName: serviceTable.name, servicePrice: serviceTable.price, serviceDurationInMinutes:serviceTable.durationInMinutes,})
         .from(appointmentTable)
@@ -86,15 +78,7 @@ export async function findAllByUser(query:QueryAppointmentByUser,userUuid:string
 }
 export async function countAllByUser(query:QueryAppointmentByUser,userUuid:string):Promise<number>{
     const search=query.search?`%${query.search}%`: undefined
-    const fromDate=query.filter?.fromDate
-    const toDate=query.filter?.toDate
-    const serviceUuid=query.filter?.serviceUuid;
-    const roomUuid=query.filter?.roomUuid;
-    const employeeUuid=query.filter?.employeeUuid;
-    const paymentMethod=query.filter?.paymentMethod;
-    const paymentStatus=query.filter?.paymentStatus;
-    const appointmentStatus=query.filter?.appointmentStatus;
-    const organizationUuid=query.filter?.organizationUuid;
+    const {fromDate,toDate,serviceUuid,roomUuid,employeeUuid,paymentMethod,paymentStatus,appointmentStatus,organizationUuid}=query.filter??{}
     return (await drizzleConnection
         .select({count:count(appointmentTable.id)})
         .from(appointmentTable)
@@ -251,18 +235,26 @@ export async function createByOrganization(appointment: CreateAppointmentByOrgan
 
 export async function updateByUser(appointment: UpdateAppointmentByUser):Promise<UserAppointment> {
     return (await drizzleConnection
-        .update(specialDaysTable)
+        .update(appointmentTable)
         .set({userTitle:appointment.userTitle,userNote:appointment.userNote,userColour:appointment.userColour,paymentMethod:appointment.paymentMethod})
         .where(and(eq(appointmentTable.uuid,appointment.uuid),eq(appointmentTable.userId,
             drizzleConnection.select({userId:userTable.id})
                 .from(userTable).where(eq(usersTable.uuid,appointment.userUuid)))))
-        .returning({uuid:specialDaysTable.uuid,name:specialDaysTable.name,dayDate:specialDaysTable.dayDate,description:specialDaysTable.description,createdAtUTC:specialDaysTable.createdAtUTC,updatedAtUTC:specialDaysTable.updatedAtUTC,status:specialDaysTable.status}))[0]
+        .returning({uuid:appointmentTable.uuid,userTitle:appointmentTable.userTitle,userNote:appointmentTable.userNote,userColour:appointmentTable.userColour,createdAtUTC:appointmentTable.createdAtUTC,scheduledStartAtUTC:appointmentTable.scheduledStartAtUTC,scheduledEndAtUTC:appointmentTable.scheduledEndAtUTC,actualStartAtUTC:appointmentTable.actualStartAtUTC,actualEndAtUTC:appointmentTable.actualEndAtUTC,rejectionReason:appointmentTable.rejectionReason,paymentMethod:appointmentTable.paymentMethod,paidAtUTC:appointmentTable.paidAtUTC,appointmentStatus:appointmentTable.appointmentStatus}))[0]
 }
 
-export async function isTodayFound(organizationUuid:string,date:string){
+export async function updateByOrganization(appointment: UpdateAppointmentByOrganization):Promise<OrganizationAppointment> {
     return (await drizzleConnection
-        .select({uuid:specialDaysTable.uuid,name:specialDaysTable.name,dayDate:specialDaysTable.dayDate,description:specialDaysTable.description,createdAtUTC:specialDaysTable.createdAtUTC,updatedAtUTC:specialDaysTable.updatedAtUTC,status:specialDaysTable.status})
-        .from(specialDaysTable)
-        .innerJoin(organizationTable,eq(specialDaysTable.organizationId,organizationTable.id))
-        .where(and(eq(organizationTable.uuid,organizationUuid),eq(specialDaysTable.dayDate,date))))[0]
+        .update(appointmentTable)
+        .set({organizationTitle:appointment.organizationTitle,organizationNote:appointment.organizationNote,organizationColour:appointment.organizationColour,paymentMethod:appointment.paymentMethod,appointmentStatus:appointment.appointmentStatus,rejectionReason:appointment.rejectionReason})
+        .where(and(eq(appointmentTable.uuid,appointment.uuid),eq(appointmentTable.roomId,
+            drizzleConnection.select({roomId:roomTable.id})
+                .from(roomTable)
+                .innerJoin(organizationTable,eq(roomTable.organizationId,organizationTable.id))
+                .where(eq(organizationTable.uuid,appointment.organizationUuid)))))
+        .returning({uuid:appointmentTable.uuid,organizationTitle:appointmentTable.organizationTitle,organizationNote:appointmentTable.organizationNote,organizationColour:appointmentTable.organizationColour,createdAtUTC:appointmentTable.createdAtUTC,scheduledStartAtUTC:appointmentTable.scheduledStartAtUTC,scheduledEndAtUTC:appointmentTable.scheduledEndAtUTC,actualStartAtUTC:appointmentTable.actualStartAtUTC,actualEndAtUTC:appointmentTable.actualEndAtUTC,rejectionReason:appointmentTable.rejectionReason,paymentMethod:appointmentTable.paymentMethod,paidAtUTC:appointmentTable.paidAtUTC,appointmentStatus:appointmentTable.appointmentStatus}))[0]
+}
+
+export async function scheduleAppointmentByTime(fromDateTime:,toDateTime:){
+
 }

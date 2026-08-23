@@ -39,7 +39,7 @@ export const updateAppointmentSchemaByUser=z.object({
     userNote:z.string().trim().nonempty().max(4096).optional(),
     userColour:z.string().regex(/^#[a-f0-9]{6}$/i,
         {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
-    paymentMethod: z.enum(PaymentMethod),
+    paymentMethod: z.enum(PaymentMethod).optional(),
 }).strict()
 
 export const updateAppointmentSchemaByOrganization=z.object({
@@ -48,8 +48,8 @@ export const updateAppointmentSchemaByOrganization=z.object({
     organizationColour:z.string().regex(/^#[a-f0-9]{6}$/i,
         {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
     rejectionReason:z.string().trim().nonempty().max(4096),
-    paymentMethod: z.enum(PaymentMethod),
-    appointmentStatus:z.enum(AppointmentStatus)
+    paymentMethod: z.enum(PaymentMethod).optional(),
+    appointmentStatus:z.enum(AppointmentStatus).optional()
 }).strict()
 
 export const appointmentFilterSchema = z.object({

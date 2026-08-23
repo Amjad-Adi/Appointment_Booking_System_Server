@@ -3,18 +3,13 @@ import {AppointmentStatus} from "./enums/appointment-status";
 export const DEFAULT_COLOUR="#2563EB"
 import {DataResponses} from "./query.model";
 import {PaymentMethod} from "./enums/payment-method";
-import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema";
 import {
-    confirmAppointmentSchema,
     createAppointmentSchemaByOrganizatiton,
     createAppointmentSchemaByUser,
-    payAppointmentSchema,
     queryAppointmentSchemaByOrganization,
     queryAppointmentSchemaByUser,
-    rejectAppointmentSchemaBy,
     updateAppointmentSchemaByOrganization,
     updateAppointmentSchemaByUser,
-    updateAppointmentSchemaStatus
 } from "../middlewares/zod-schemas/appointment.schema";
 import {z} from "zod";
 export interface Appointment{
@@ -109,10 +104,6 @@ export interface AppointmentOrganizationResponse extends AppointmentResponse,Org
 export type CreateAppointmentByUser= z.infer<typeof createAppointmentSchemaByUser> & {userUuid:string,userId:number,serviceUuid:string,serviceId:number,roomUuid:string,roomId:number};
 export type CreateAppointmentByOrganization= z.infer<typeof createAppointmentSchemaByOrganizatiton> & {userEmail:string,userId:number,serviceUuid:string,serviceId:number,roomUuid:string,roomId:number,approvalUserId:number,approvalUserUuid:string,};
 export type UpdateAppointmentByUser =z.infer<typeof updateAppointmentSchemaByUser> & {uuid:string,userUuid:string;};
-export type UpdateAppointmentByOrganization= z.infer<typeof updateAppointmentSchemaByOrganization> & {uuid:string,userUuid:string,organizationUuid:string};
-export type UpdateAppointmentStatus= z.infer<typeof updateAppointmentSchemaStatus> & {uuid:string,organizationUuid:string,userUuid:string;};
-export type ConfirmAppointment= z.infer<typeof confirmAppointmentSchema> & {uuid:string,organizationUuid:string,approvalUserUuid:string;};
-export type RejectAppointment= z.infer<typeof rejectAppointmentSchemaBy> & {uuid:string,organizationUuid:string,approvalUserUuid:string;};
-export type PayAppointment= z.infer<typeof payAppointmentSchema> & {uuid:string,organizationUuid:string,userUuid:string;};
+export type UpdateAppointmentByOrganization =z.infer<typeof updateAppointmentSchemaByOrganization> & {uuid:string,organizationUuid:string;};
 export type QueryAppointmentByUser=z.infer<typeof queryAppointmentSchemaByUser>&{offset:number};
 export type QueryAppointmentByOrganization=z.infer<typeof queryAppointmentSchemaByOrganization>&{offset:number};
