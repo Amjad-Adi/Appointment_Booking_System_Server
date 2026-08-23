@@ -5,72 +5,84 @@ import {AppointmentStatus} from "../../models/enums/appointment-status";
 import {ActivationStatus} from "../../models/enums/activation-status";
 import {querySchema} from "./query.schema";
 import {
-    SORT_BY_NAME,
     SORT_BY_PAID_AT_UTC,
-    SORT_BY_SCHEDULED_END_AT_UTC, SORT_BY_SCHEDULED_START_AT_UTC
+    SORT_BY_SCHEDULED_END_AT_UTC, SORT_BY_SCHEDULED_START_AT_UTC, SORT_BY_TITLE
 } from "../../databases/contracts/appointment.contract";
-import {AppointmentTimeType} from "../../models/enums/appointment-time-type";
 import {PaymentStatus} from "../../models/enums/payment-status";
 
-export const createAppointmentSchema=z.object({
+const dateTimeSchema=z.iso.datetime({offset:true}).transform((dateTime)=>new Date(dateTime))
+
+export const createAppointmentSchemaByUser=z.object({
+    userTitle:z.string().trim().nonempty().max(256),
     userNote:z.string().trim().max(4096).nonempty().optional(),
-    scheduledStartTimeUTC:z.iso.datetime({offset:true}),
-    scheduledEndTimeUTC:z.iso.datetime({offset:true}),
+    scheduledStartAtUTC:dateTimeSchema,
+    scheduledEndAtUTC:dateTimeSchema,
     userColour:z.string().regex(/^#[a-f0-9]{6}$/i,
         {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
     //checks user colour against hex format, i flag used for insensitivity
     paymentMethod:z.enum(PaymentMethod),
 }).strict()
 
+export const createAppointmentSchemaByOrganizatiton=z.object({
+    organizationTitle:z.string().trim().nonempty().max(256),
+    organizationNote:z.string().trim().max(4096).nonempty().optional(),
+    scheduledStartAtUTC:dateTimeSchema,
+    scheduledEndAtUTC:dateTimeSchema,
+    organizationColour:z.string().regex(/^#[a-f0-9]{6}$/i,
+        {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
+    //checks user colour against hex format, i flag used for insensitivity
+    paymentMethod:z.enum(PaymentMethod),
+}).strict()
+
 export const updateAppointmentSchemaByUser=z.object({
+    userTitle:z.string().trim().nonempty().max(256).optional(),
     userNote:z.string().trim().nonempty().max(4096).optional(),
     userColour:z.string().regex(/^#[a-f0-9]{6}$/i,
         {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
-}).strict()
-
-export const updateAppointmentSchemaByOrganization=z.object({
-    organizationNote:z.string().trim().nonempty().max(4096).optional(),
-    organizationColour:z.string().regex(/^#[a-f0-9]{6}$/i,
-        {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
-}).strict()
-
-export const confirmAppointmentSchema=z.object({
-    name:z.string().trim().nonempty().max(256),
-    organizationColour:z.string().regex(/^#[a-f0-9]{6}$/i,
-        {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
-    organizationNote:z.string().trim().nonempty().max(4096).optional()
-}).strict()
-
-export const rejectAppointmentSchemaBy=z.object({
-    rejectionReason:z.string().trim().nonempty().max(4096),
-}).strict()
-
-export const updateAppointmentSchemaStatus=z.object({
-    appointmentStatus:z.enum(AppointmentStatus).refine((status)=>(status!=AppointmentStatus.PENDING&&status!=AppointmentStatus.REJECTED)),
-}).strict()
-
-export const payAppointmentSchema=z.object({
     paymentMethod: z.enum(PaymentMethod),
 }).strict()
 
+export const updateAppointmentSchemaByOrganization=z.object({
+    organizationTitle:z.string().trim().nonempty().max(256).optional(),
+    organizationNote:z.string().trim().nonempty().max(4096).optional(),
+    organizationColour:z.string().regex(/^#[a-f0-9]{6}$/i,
+        {message: 'Invalid color format. Must be a 7-character hex code (e.g., #RRGGBB).'}).default(DEFAULT_COLOUR),
+    rejectionReason:z.string().trim().nonempty().max(4096),
+    paymentMethod: z.enum(PaymentMethod),
+    appointmentStatus:z.enum(AppointmentStatus)
+}).strict()
 
 export const appointmentFilterSchema = z.object({
-    appointmentStatus:z.enum(ActivationStatus).optional(),
-    appointmentDate:z.iso.date().optional(),
-    appointmentTimeType:z.enum(AppointmentTimeType).optional(),
-    fromDate:z.iso.date().optional(),
-    toDate:z.iso.date().optional(),
-    userUuid:z.uuid().optional(),
-    approvalUserUuid:z.uuid().optional(),
+    appointmentStatus:z.enum(AppointmentStatus).optional(),
+    fromDate:dateTimeSchema.optional(),
+    toDate:dateTimeSchema.optional(),
     employeeUuid:z.uuid().optional(),
     serviceUuid:z.uuid().optional(),
     roomUuid:z.uuid().optional(),
-    paymentMethod:z.enum(PaymentMethod),
-    paymentStatus:z.enum(PaymentStatus),
+    paymentMethod:z.enum(PaymentMethod).optional(),
+    paymentStatus:z.enum(PaymentStatus).optional(),
 }).strict();
 
-export const queryAppointmentSchema = querySchema.extend({
+
+export const appointmentFilterSchemaByUser =appointmentFilterSchema.extend({
+    organizationUuid:z.uuid().optional(),
+}).strict();
+
+
+export const appointmentFilterSchemaByOrganization =appointmentFilterSchema.extend({
+    userUuid:z.uuid().optional(),
+    approvalUserUuid:z.uuid().optional(),
+}).strict();
+
+export const queryAppointmentSchemaByUser = querySchema.extend({
     search: z.string().trim().nonempty().max(256).optional(),
-    filter: appointmentFilterSchema.optional(),
-    sortBy: z.enum([SORT_BY_NAME, SORT_BY_SCHEDULED_START_AT_UTC,SORT_BY_SCHEDULED_END_AT_UTC,SORT_BY_PAID_AT_UTC]).optional(),
+    filter: appointmentFilterSchemaByUser.optional(),
+    sortBy: z.enum([SORT_BY_TITLE, SORT_BY_SCHEDULED_START_AT_UTC,SORT_BY_SCHEDULED_END_AT_UTC,SORT_BY_PAID_AT_UTC]).optional(),
+}).strict();
+
+
+export const queryAppointmentSchemaByOrganization = querySchema.extend({
+    search: z.string().trim().nonempty().max(256).optional(),
+    filter: appointmentFilterSchemaByOrganization.optional(),
+    sortBy: z.enum([SORT_BY_TITLE, SORT_BY_SCHEDULED_START_AT_UTC,SORT_BY_SCHEDULED_END_AT_UTC,SORT_BY_PAID_AT_UTC]).optional(),
 }).strict();

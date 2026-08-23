@@ -1,4 +1,4 @@
-import {ServiceResponse, Service, UpdateService,CreateService} from "../models/service.model"
+import {ServiceResponse, Service, UpdateService, CreateService, QueryService} from "../models/service.model"
 import {pool} from "../databases/postgre-connection"
 import {
     COLUMN_UUID,
@@ -13,7 +13,7 @@ import {
     TABLE_NAME,
     ALIAS,
     COLUMN_PICTURE_PATH, ALIAS_COLUMN_DURATION_IN_MINUTES, ALIAS_COLUMN_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,
-    ALIAS_COLUMN_UPDATED_AT_UTC
+    ALIAS_COLUMN_UPDATED_AT_UTC, ALIAS_TOTAL_NUMBER_OF_SERVICES, SORT_BY_NAME
 } from "../databases/contracts/service.contract"
 import {
     TABLE_NAME as ORGANIZATION_TABLE_NAME,
@@ -25,17 +25,50 @@ import {
     ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH,
     COLUMN_UUID as ORGANIZATION_COLUMN_UUID, COLUMN_PROFILE_PICTURE_PATH, ALIAS_COLUMN_ORGANIZATION_UUID,
 } from "../databases/contracts/organization.contract"
-import {QueryResult} from "pg";
-export async function findAll(organizationUuid:string):Promise<ServiceResponse[]>{
+import {QueryUser} from "../models/user.model";
+
+export async function findAll(query:QueryService,organizationUuid:string):Promise<ServiceResponse[]>{
+    const search=query.search?`%${query.search}%`: null
+    const sortColumnsDefinition={
+        name:`${ALIAS}.${COLUMN_NAME}`,
+        createdAtUTC:`${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+        price:`${ALIAS}.${COLUMN_PRICE}`,
+        durationInMinutes:`${ALIAS}.${COLUMN_DURATION_IN_MINUTES}`
+    }
+    const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
+    const sortOrder = query.order?.toUpperCase() as string;
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1`,
-        [organizationUuid])).rows;
+         WHERE
+         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $1)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}<=$2)
+         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}>=$3)
+         AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$4)
+         ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
+         LIMIT $6
+         OFFSET $7`,
+       [organizationUuid,search, query.filter?.maxPrice,query.filter?.minPrice,query.filter?.status?.toUpperCase(),query.limit,query.offset])).rows
 }
 
-export async function findByUuid(organizationUuid:string,serviceUuid:string):Promise<ServiceResponse>{
+export async function countAll(query:QueryService,organizationUuid:string):Promise<number>{
+    const search=query.search?`%${query.search}%`: null
+    return Number((await pool.query(
+        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_SERVICES}
+         FROM ${TABLE_NAME} ${ALIAS}
+         WHERE 
+         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
+         AND
+         ($2::TEXT IS NULL OR  ${ALIAS}.${COLUMN_NAME} ILIKE $1)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}<=$2)
+         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}>=$3)
+         AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$4)`,
+        [organizationUuid,search, query.filter?.maxPrice,query.filter?.minPrice,query.filter?.status?.toUpperCase()])).rows[0].totalNumberOfServices)
+}
+
+export async function findByUuid(serviceUuid:string):Promise<ServiceResponse>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -71,8 +104,8 @@ export async function update(service: UpdateService):Promise<Service> {
              ${COLUMN_PICTURE_PATH}=COALESCE($5,${COLUMN_PICTURE_PATH}),
              ${COLUMN_STATUS}=COALESCE($6,${COLUMN_STATUS}),
              ${COLUMN_UPDATED_AT_UTC}=now()
-         WHERE ${COLUMN_UUID} = $7 AND 
-               ${COLUMN_ORGANIZATION_ID}=
+         WHERE ${COLUMN_UUID} = $7 
+         AND ${COLUMN_ORGANIZATION_ID}=
                (SELECT id
                 FROM TABLE ${ORGANIZATION_TABLE_NAME}
                 WHERE ${ORGANIZATION_COLUMN_UUID}=$8)

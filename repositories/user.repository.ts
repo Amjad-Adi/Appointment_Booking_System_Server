@@ -26,7 +26,7 @@ import {
     ALIAS_COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_UPDATED_AT_UTC,
     ALIAS_COLUMN_PROFILE_PICTURE_PATH,//Without alias names not compatible with JSON
-    COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS, ALIAS_TOTAL_NUMBER_OF_USERS
+    COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS, ALIAS_TOTAL_NUMBER_OF_USERS, SORT_BY_NAME
 }
     from "../databases/contracts/user.contract"
 import {PoolClient, QueryResult} from "pg";
@@ -46,10 +46,9 @@ export async function findAll(query:QueryUser):Promise<UserResponse[]>{
     const sortColumnsDefinition={
         name:`${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME}`,
         createdAtUTC:`${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
-        updatedAtUTC:`${ALIAS}.${COLUMN_UPDATED_AT_UTC}`,
     }
-    const sortColumn=sortColumnsDefinition[query.sortBy?? "name"];
-    const sortOrder = query.order === "desc" ? "DESC" : "ASC";
+    const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
+    const sortOrder =query.order?.toUpperCase() as string;
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${ALIAS}.${COLUMN_LAST_NAME} AS ${COLUMN_LAST_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_LANGUAGE},${ALIAS}.${COLUMN_ROLE}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -62,7 +61,7 @@ export async function findAll(query:QueryUser):Promise<UserResponse[]>{
          ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
          LIMIT $4
          OFFSET $5`,
-       [search, query.filter?.role?.toUpperCase(),query.filter?.status?.toUpperCase(),query.limit,query.offset])).rows
+       [search, query.filter?.role?.toUpperCase(),query.filter?.status,query.limit,query.offset])).rows
 }
 
 

@@ -72,22 +72,22 @@ export async function countAll(query:QueryRoom,organizationUuid:string):Promise<
     return Number((await pool.query(
         `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_ROOMS}
          FROM ${TABLE_NAME} ${ALIAS}
-         WHERE
-             ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
-           AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
-           AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
-           AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_OCCUPANCY_STATUS}=$4)`,
+         WHERE 
+         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
+         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_OCCUPANCY_STATUS}=$4)`,
         [organizationUuid,search, query.filter?.status,query.filter?.occupancyStatus])).rows[0].totalNumberOfRooms)
 }
 
-export async function findByUuid(roomUuid:string):Promise<RoomResponse>{
+export async function findByUuid(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH} ,${USER_ALIAS}.${USER_COLUMN_UUID} as ${USER_ALIAS_COLUMN_USER_UUID},${USER_ALIAS}.${USER_COLUMN_FIRST_NAME} as ${USER_ALIAS_COLUMN_FIRST_NAME},${USER_ALIAS}.${USER_COLUMN_LAST_NAME} as ${USER_ALIAS_COLUMN_LAST_NAME},${USER_ALIAS}.${USER_COLUMN_PROFILE_PICTURE_PATH} as ${USER_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}, ${ALIAS}.${COLUMN_OCCUPANCY_STATUS} as ${ALIAS_COLUMN_OCCUPANCY_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
          LEFT JOIN ${USER_TABLE_NAME} ${USER_ALIAS}.${USER_COLUMN_ID}=${ALIAS}.${COLUMN_USER_ID}
-         WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-        [roomUuid])).rows[0]
+         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID} = $1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
+        [organizationUuid,roomUuid])).rows[0]
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
@@ -104,7 +104,7 @@ export async function create(room: CreateRoom):Promise<Room> {
         `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_ORGANIZATION_ID})
                     VALUES ($1,$2,$3)
                     RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}, ${COLUMN_OCCUPANCY_STATUS} AS ${ALIAS_COLUMN_OCCUPANCY_STATUS}`,
-        [room.name, room.description,room.organizationId])).rows[0];
+                    [room.name, room.description,room.organizationId])).rows[0];
 }
 
 export async function update(room: UpdateRoom):Promise<Room> {

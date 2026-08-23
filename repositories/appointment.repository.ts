@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream
-=======
 import {pool} from "../databases/postgre-connection"
 import {
     Appointment,
@@ -70,18 +68,18 @@ export async function findAllByUser(query:QueryAppointmentByUser,userUuid:string
         .innerJoin(employeeTable,eq(employeeTable.id,roomTable.userId))
         .where(
             and(
-                eq(userTable.uuid,userUuid)
-                ,search ? ilike(appointmentTable.userTitle,search):undefined
-                ,fromDate ? gte(appointmentTable.scheduledStartAtUTC,fromDate):undefined
-                ,toDate ? lte(appointmentTable.scheduledStartAtUTC,toDate):undefined
-                ,organizationUuid ? eq(organizationTable.uuid,organizationUuid):undefined
-                ,serviceUuid ? eq(serviceTable.uuid,serviceUuid):undefined
-                ,roomUuid ? eq(roomTable.uuid,roomUuid):undefined
-                ,employeeUuid ? eq(employeeTable.uuid,employeeUuid):undefined
-                ,paymentMethod ? eq(appointmentTable.paymentMethod,paymentMethod):undefined
-                ,paymentStatus===PaymentStatus.PAID? isNotNull(appointmentTable.paidAtUTC):
-                    paymentStatus===PaymentStatus.UNPAID?isNull(appointmentTable.paidAtUTC):undefined
-                ,appointmentStatus? eq(appointmentTable.appointmentStatus,appointmentStatus):undefined))
+             eq(userTable.uuid,userUuid)
+            ,search ? ilike(appointmentTable.userTitle,search):undefined
+            ,fromDate ? gte(appointmentTable.scheduledStartAtUTC,fromDate):undefined
+            ,toDate ? lte(appointmentTable.scheduledStartAtUTC,toDate):undefined
+            ,organizationUuid ? eq(organizationTable.uuid,organizationUuid):undefined
+            ,serviceUuid ? eq(serviceTable.uuid,serviceUuid):undefined
+            ,roomUuid ? eq(roomTable.uuid,roomUuid):undefined
+            ,employeeUuid ? eq(employeeTable.uuid,employeeUuid):undefined
+            ,paymentMethod ? eq(appointmentTable.paymentMethod,paymentMethod):undefined
+            ,paymentStatus===PaymentStatus.PAID? isNotNull(appointmentTable.paidAtUTC):
+             paymentStatus===PaymentStatus.UNPAID?isNull(appointmentTable.paidAtUTC):undefined
+            ,appointmentStatus? eq(appointmentTable.appointmentStatus,appointmentStatus):undefined))
         .orderBy(sortOrder===Order.ASC?asc(sortColumn):desc(sortColumn))
         .limit(query.limit)
         .offset(query.offset))
@@ -268,4 +266,3 @@ export async function isTodayFound(organizationUuid:string,date:string){
         .innerJoin(organizationTable,eq(specialDaysTable.organizationId,organizationTable.id))
         .where(and(eq(organizationTable.uuid,organizationUuid),eq(specialDaysTable.dayDate,date))))[0]
 }
->>>>>>> Stashed changes

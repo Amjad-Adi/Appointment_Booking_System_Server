@@ -4,7 +4,7 @@ CREATE TABLE users(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 first_name VARCHAR(64) NOT NULL,
-last_name VARCHAR(64) NOT NULL,
+  last_name VARCHAR(64) NOT NULL,
 email VARCHAR(320) UNIQUE NOT NULL,
 firebase_uid VARCHAR(128) NOT NULL,
 profile_picture_path TEXT DEFAULT 'DEFAULT_PICTURE_PATH',
@@ -20,7 +20,6 @@ DROP TABLE users;
 
 ALTER TABLE users ALTER COLUMN role CHECK (role in('SUPER ADMIN','WORKER','MANAGER', 'CRM', 'CUSTOMER')),
 ALTER TABLE users ALTER COLUMN language SET NOT NULL;
-ALTER TABLE users ALTER COLUMN profile_picture_path SET NOT NULL;
 UPDATE users
 set language='en';
 
@@ -141,8 +140,7 @@ DROP TABLE time_block;
 CREATE TABLE appointments(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
-user_title VARCHAR(256),
-organizaiton_title VARCHAR(256),
+name VARCHAR(256),
 user_note VARCHAR(4096),
 organizaiton_note VARCHAR(4096),
 rejection_reason VARCHAR(4096),
@@ -151,17 +149,17 @@ scheduled_start_at_utc TIMESTAMPTZ NOT NUll,
 sceduled_end_at_utc TIMESTAMPTZ NOT NUll,
 actual_start_at_utc TIMESTAMPTZ,
 actual_end_at_utc TIMESTAMPTZ,
-user_colour CHAR(7) NOT NULL DEFAULT '#2563EB',
+user_colour CHAR(7) NOT NULL,
 organization_colour CHAR(7) NOT NULL DEFAULT '#2563EB',
 payment_method VARCHAR(10) NOT NULL CHECK (payment_method in('CASH','VISA')),
 paid_at_utc TIMESTAMPTZ,
 appointment_status VARCHAR(16) NOT NULL CHECK (appointment_status in('PENDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED','REJECTED','NO_SHOW')) DEFAULT 'PENDING',
 user_id BIGINT NOT NULL,
-room_id BIGINT,
+room_id BIGINT NOT NULL,
 service_id BIGINT NOT NULL,
 approval_user_id BIGINT,
 FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-FOREIGN KEY (approval_user_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+FOREIGN KEY (approval_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
 FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT ON UPDATE CASCADE
 
