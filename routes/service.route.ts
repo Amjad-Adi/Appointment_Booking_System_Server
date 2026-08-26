@@ -6,7 +6,7 @@ import { authenticateToken } from "../controllers/authentication/jwt.authenticat
 import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions";
 import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
 import {authorize} from "../middlewares/authorization/authorization";
-export let serviceRouter=express.Router({mergeParams:true});
+export const serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
     .get(handleGetOrganizationServices)
     .post(authenticateToken,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)

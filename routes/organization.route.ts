@@ -22,7 +22,7 @@ const roleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
 };
-export let organizationRouter=express.Router()
+export const organizationRouter=express.Router()
 organizationRouter.route("/")
     .get(handleGetOrganizations)
     .post(authenticateToken,authorize(CREATE_ORGANIZATION),validateBody(createOrganizationSchema),handleCreateOrganization)

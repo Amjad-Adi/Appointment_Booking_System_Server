@@ -3,9 +3,7 @@ import {ActivationStatus} from "../../models/enums/activation-status"
 import {Role} from "../../models/enums/roles"
 import {
     ALIAS_COLUMN_UPDATED_AT_UTC,
-    QUERY_CREATED_AT_UTC,
-    QUERY_NAME,
-    QUERY_UPDATED_AT_UTC, SORT_BY_CREATED_AT_UTC, SORT_BY_NAME
+    SORT_BY_CREATED_AT_UTC, SORT_BY_NAME
 } from "../../databases/contracts/user.contract";
 import {Order} from "../../models/enums/order";
 import {querySchema} from "./query.schema";

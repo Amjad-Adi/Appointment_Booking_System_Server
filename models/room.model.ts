@@ -1,9 +1,7 @@
-import {Role} from "./enums/roles";
 import {z} from "zod"
 import {ActivationStatus} from "./enums/activation-status";
 import {createRoomSchema, queryRoomSchema, updateRoomSchema} from "../middlewares/zod-schemas/room.schema"
 import {RoomOccupancyStatus} from "./enums/room-occupancy-status";
-import {queryServiceSchema} from "../middlewares/zod-schemas/service.schema";
 import {DataResponses} from "./query.model";
 export interface Room{
     uuid:string,

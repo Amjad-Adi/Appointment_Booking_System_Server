@@ -6,7 +6,7 @@ import {authorize} from "../middlewares/authorization/authorization";
 import {CREATE_ROOM, READ_ROOM, UPDATE_ROOM} from "../permissions/permissions";
 import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
 import {createRoomSchema, updateRoomSchema} from "../middlewares/zod-schemas/room.schema";
-export let roomRouter=express.Router({mergeParams:true});
+export const roomRouter=express.Router({mergeParams:true});
 roomRouter.route("/")
     .get(authenticateToken,authorize(READ_ROOM),handleGetOrganizationRooms)
     .post(authenticateToken,authorize(CREATE_ROOM),validateBody(createRoomSchema),handleCreateOrganizationRoom)

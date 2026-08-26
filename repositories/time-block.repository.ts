@@ -52,8 +52,8 @@ export async function findByUuid(organizationUuid:string,timeBlockUuid:string):P
 export async function create(timeBlock: CreateTimeBlock):Promise<TimeBlock> {
     return (await drizzleConnection
         .insert(timeBlockTable)
-        .values({reason:timeBlock.reason,startAtUTC:timeBlock.startAtUTC,endAtUTC:timeBlock.endAtUTC,requestUserId:timeBlock.requestUserId,})
-        .returning({uuid:timeBlockTable.uuid,reason:timeBlockTable.reason,startAt:timeBlockTable.startAtUTC,endAt:timeBlockTable.endAtUTC,requestedAtUTC:timeBlockTable.requestedAtUTC,respondedAtUTC:timeBlockTable.respondedAtUTC,requestStatus:timeBlockTable.requestStatus}))[0]
+        .values({reason:timeBlock.reason,startAtUTC:timeBlock.startTimeUTC,endAtUTC:timeBlock.endTimeUTC,requestUserId:timeBlock.requestUserId,})
+        .returning({uuid:timeBlockTable.uuid,reason:timeBlockTable.reason,startAtUTC:timeBlockTable.startAtUTC,endAtUTC:timeBlockTable.endAtUTC,requestedAtUTC:timeBlockTable.requestedAtUTC,respondedAtUTC:timeBlockTable.respondedAtUTC,requestStatus:timeBlockTable.requestStatus}))[0]
 }
 
 export async function update(timeBlock: UpdateTimeBlock):Promise<TimeBlock> {
@@ -61,5 +61,5 @@ export async function update(timeBlock: UpdateTimeBlock):Promise<TimeBlock> {
         .update(timeBlockTable)
         .set({respondUserId:timeBlock.respondUserId,respondedAtUTC:new Date(),requestStatus:timeBlock.requestStatus})
         .where(eq(timeBlockTable.uuid,timeBlock.uuid))
-        .returning({uuid:timeBlockTable.uuid,reason:timeBlockTable.reason,startAt:timeBlockTable.startAtUTC,endAt:timeBlockTable.endAtUTC,requestedAtUTC:timeBlockTable.requestedAtUTC,respondedAtUTC:timeBlockTable.respondedAtUTC,requestStatus:timeBlockTable.requestStatus}))[0]
+        .returning({uuid:timeBlockTable.uuid,reason:timeBlockTable.reason,startAtUTC:timeBlockTable.startAtUTC,endAtUTC:timeBlockTable.endAtUTC,requestedAtUTC:timeBlockTable.requestedAtUTC,respondedAtUTC:timeBlockTable.respondedAtUTC,requestStatus:timeBlockTable.requestStatus}))[0]
 }

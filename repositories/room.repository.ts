@@ -51,6 +51,7 @@ export async function findAll(query:QueryRoom,organizationUuid:string):Promise<R
     }
     const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
     const sortOrder = query.order?.toUpperCase() as string;
+    const {status,occupancyStatus}=query.filter??{}
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH} ,${USER_ALIAS}.${USER_COLUMN_UUID} as ${USER_ALIAS_COLUMN_USER_UUID},${USER_ALIAS}.${USER_COLUMN_FIRST_NAME} as ${USER_ALIAS_COLUMN_FIRST_NAME},${USER_ALIAS}.${USER_COLUMN_LAST_NAME} as ${USER_ALIAS_COLUMN_LAST_NAME},${USER_ALIAS}.${USER_COLUMN_PROFILE_PICTURE_PATH} as ${USER_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}, ${ALIAS}.${COLUMN_OCCUPANCY_STATUS} as ${ALIAS_COLUMN_OCCUPANCY_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -64,11 +65,12 @@ export async function findAll(query:QueryRoom,organizationUuid:string):Promise<R
          ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
          LIMIT $5
          OFFSET $6`,
-        [organizationUuid,search, query.filter?.status,query.filter?.occupancyStatus,query.limit,query.offset])).rows
+        [organizationUuid,search, status,occupancyStatus,query.limit,query.offset])).rows
 }
 
 export async function countAll(query:QueryRoom,organizationUuid:string):Promise<number>{
     const search=query.search?`%${query.search}%`: null
+    const {status,occupancyStatus}=query.filter??{}
     return Number((await pool.query(
         `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_ROOMS}
          FROM ${TABLE_NAME} ${ALIAS}
@@ -77,7 +79,7 @@ export async function countAll(query:QueryRoom,organizationUuid:string):Promise<
          AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
          AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
          AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_OCCUPANCY_STATUS}=$4)`,
-        [organizationUuid,search, query.filter?.status,query.filter?.occupancyStatus])).rows[0].totalNumberOfRooms)
+        [organizationUuid,search, status,occupancyStatus])).rows[0].totalNumberOfRooms)
 }
 
 export async function findByUuid(organizationUuid:string,roomUuid:string):Promise<RoomResponse>{

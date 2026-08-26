@@ -9,7 +9,7 @@ import {QueryUser} from "../models/user.model";
 import { Request, Response, NextFunction } from "express";
 export function validateBody(schema:z.ZodSchema) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
-        let result = schema.safeParse(req.body);
+        const result = schema.safeParse(req.body);
         if (!result.success) {
             throw new BadRequestErorr();
         }
@@ -20,7 +20,7 @@ export function validateBody(schema:z.ZodSchema) {
 
 export function validateParameter(schema:z.ZodSchema,parameterName:string) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
-        let result = schema.safeParse(req.params[parameterName]);
+        const result = schema.safeParse(req.params[parameterName]);
         if (!result.success) {
             throw new NotFoundError();
         }
@@ -42,7 +42,7 @@ export function validateQuery(schema: z.ZodSchema) {
 export function validateBodyByRole(roleToSchema:Partial<Record<Role,z.ZodType>>) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
         const schema= roleToSchema[req.user.role as Role] as z.ZodType ;
-        let result = schema.safeParse(req.body);
+        const result = schema.safeParse(req.body);
         if (!result.success) {
             throw new BadRequestErorr();
         }

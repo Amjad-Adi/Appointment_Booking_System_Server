@@ -7,8 +7,8 @@ import {Service} from "./service.model";
 export interface TimeBlock {
     uuid:string,
     reason:string|null,
-    startTimeUTC:string,
-    endTimeUTC:string,
+    startAtUTC:string,
+    endAtUTC:string,
     requestedAtUTC:Date,
     respondedAtUTC:Date|null,
     requestStatus:TimeBlockStatus

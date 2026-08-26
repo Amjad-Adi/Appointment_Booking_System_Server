@@ -6,8 +6,6 @@ import {
 } from "../../repositories/time-block.repository"
 import {NotFoundError} from "../../errors/not-found.error";
 import {BadRequestErorr} from "../../errors/bad-request.erorr";
-import {CreateSpecialDay, SpecialDay, UpdateSpecialDay} from "../../models/special-days.model";
-import {findIdByUuid, findUserOrganizationByUuid} from "../../repositories/organizaiton.repository";
 import {AuthorizeOrganizationUser, getUserById, getUserIdByUuid} from "./user.service";
 import {CreateTimeBlock, TimeBlock, UpdateTimeBlock} from "../../models/time-block";
 

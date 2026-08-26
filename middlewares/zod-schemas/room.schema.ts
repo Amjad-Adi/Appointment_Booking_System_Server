@@ -3,7 +3,7 @@ import {ActivationStatus} from "../../models/enums/activation-status"
 import {RoomOccupancyStatus} from "../../models/enums/room-occupancy-status";
 import {querySchema} from "./query.schema";
 import {
-    SORT_BY_NAME, QUERY_CREATED_AT_UTC, SORT_BY_CREATED_AT_UTC
+    SORT_BY_NAME, SORT_BY_CREATED_AT_UTC
 } from "../../databases/contracts/room.contract";
 export const createRoomSchema=z.object({
     name:z.string().trim().nonempty().max(256),

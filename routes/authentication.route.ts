@@ -8,7 +8,7 @@ import {authorize} from "../middlewares/authorization/authorization";
 import {READ_USERS} from "../permissions/permissions";
 import {userRouter} from "./user.route";
 import { handleCreateUser } from "../controllers/user.controller";
-export let authenticationRouter=express.Router()
+export const authenticationRouter=express.Router()
 
 userRouter.route("/register")
     .post(validateBody(createUserSchema),handleCreateUser)

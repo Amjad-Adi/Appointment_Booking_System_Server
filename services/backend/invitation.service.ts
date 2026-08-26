@@ -18,7 +18,7 @@ export async function getInvitations(organizationUuid:string,userUuid:string):Pr
 
 export async function getInvitation(invitationUuid:string,organizationUuid:string,userUuid:string):Promise<InvitationResponse>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid)
-    let result:InvitationResponse= await findByUuid(organizationUuid,invitationUuid)
+    const result:InvitationResponse= await findByUuid(organizationUuid,invitationUuid)
     if(result===undefined){
         throw new NotFoundError("Invitation");
     }
@@ -27,7 +27,7 @@ export async function getInvitation(invitationUuid:string,organizationUuid:strin
 
 export async function createInvitation(invitation:CreateInvitation,organizationUuid:string,userUuid:string):Promise<Invitation> {
     await AuthorizeOrganizationUser(userUuid, organizationUuid)
-    let result: Invitation = await create(invitation)
+    const result: Invitation = await create(invitation)
     if (result === undefined) {
         throw new BadRequestErorr()
     }
@@ -35,7 +35,7 @@ export async function createInvitation(invitation:CreateInvitation,organizationU
 }
 
 export async function updateInvitation(invitation:UpdateInvitation):Promise<Invitation>{
-    let result:Invitation= await update(invitation)
+    const result:Invitation= await update(invitation)
     if(result===undefined){
         throw new NotFoundError("Invitation")
     }

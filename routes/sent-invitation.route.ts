@@ -11,7 +11,7 @@ import {
 } from "../permissions/permissions";
 import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
 import {authorize} from "../middlewares/authorization/authorization";
-export let sendInvitationRouter=express.Router({mergeParams:true});
+export const sendInvitationRouter=express.Router({mergeParams:true});
 sendInvitationRouter.route("/")
     .get(authenticateToken,authorize(READ_ORGANIZATION_INVITATIONS),handleGetOrganizationInvitations)
     .post(authenticateToken,authorize(CREATE_ORGANIZATION_INVITATIONS),validateBody(createServiceSchema),handleCreateOrganizationInvitation)

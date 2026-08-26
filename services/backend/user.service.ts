@@ -23,7 +23,7 @@ export async function getNumberOfUsers(query:QueryUser):Promise<number>{
 }
 
 export async function getUser(uuid:string):Promise<UserResponse>{
-    let result:UserResponse= await findByUuid(uuid)
+    const result:UserResponse= await findByUuid(uuid)
     if(result===undefined){
         throw new NotFoundError("User");
     }
@@ -31,7 +31,7 @@ export async function getUser(uuid:string):Promise<UserResponse>{
 }
 
 export async function getUserByFireBaseUid(uid:string):Promise<UserResponse>{
-    let result:UserResponse= await findByUid(uid)
+    const result:UserResponse= await findByUid(uid)
     if(result===undefined){
         throw new NotFoundError("User");
     }
@@ -39,7 +39,7 @@ export async function getUserByFireBaseUid(uid:string):Promise<UserResponse>{
 }
 
 export async function getUserById(id:number):Promise<UserResponse>{
-    let result:UserResponse= await findById(id)
+    const result:UserResponse= await findById(id)
     if(result===undefined){
         throw new NotFoundError("User");
     }
@@ -50,7 +50,7 @@ export async function createUser(user:CreateUser):Promise<User>{
     if(await isEmailFound(user.email)===true) {
         throw new ConflictError()
     }
-    let result:User= await create(user)
+    const result:User= await create(user)
     if(result===undefined){
         throw new BadRequestErorr()
     }
@@ -58,7 +58,7 @@ export async function createUser(user:CreateUser):Promise<User>{
 }
 
 export async function updateUser(user:UpdateUser):Promise<User>{
-    let result:User= await update(user)
+    const result:User= await update(user)
     if(result===undefined){
         throw new NotFoundError("user")
     }
@@ -66,7 +66,7 @@ export async function updateUser(user:UpdateUser):Promise<User>{
 }
 
 export async function updateUserByAdmin(user:UpdateUserByAdmin):Promise<User>{
-    let result:User= await updateByAdmin(user)
+    const result:User= await updateByAdmin(user)
     if(result===undefined){
         throw new NotFoundError("user")
     }

@@ -20,7 +20,7 @@ export async function getNumberOfServices(query:QueryService,organizationUuid:st
 }
 
 export async function getService(serviceUuid:string,organizationUuid:string):Promise<ServiceResponse>{
-    let result:ServiceResponse= await findByUuid(organizationUuid,serviceUuid)
+    const result:ServiceResponse= await findByUuid(organizationUuid,serviceUuid)
     if(result===undefined){
         throw new NotFoundError("Service");
     }
@@ -30,7 +30,7 @@ export async function getService(serviceUuid:string,organizationUuid:string):Pro
 
 export async function createService(service:CreateService,userUuid:string):Promise<Service>{
     await AuthorizeOrganizationUser(userUuid,service.organizationUuid)
-    let organizationId:number= await findIdByUuid(service.organizationUuid)
+    const organizationId:number= await findIdByUuid(service.organizationUuid)
     if(organizationId===undefined){
         throw new NotFoundError("Organization");
     }
@@ -38,7 +38,7 @@ export async function createService(service:CreateService,userUuid:string):Promi
     if(await isNameFound(service.organizationUuid,service.name)===true) {
         throw new ConflictError()
     }
-    let result:Service= await create(service)
+    const result:Service= await create(service)
     if(result===undefined){
         throw new BadRequestErorr()
     }
@@ -47,7 +47,7 @@ export async function createService(service:CreateService,userUuid:string):Promi
 
 export async function updateService(service:UpdateService):Promise<Service>{
     await AuthorizeOrganizationUser(service.userUuid,service.organizationUuid)
-    let result:Service= await update(service)
+    const result:Service= await update(service)
     if(result===undefined){
         throw new NotFoundError("Service")
     }
