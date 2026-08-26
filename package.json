@@ -4,8 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsx databases/postgre-connection.ts",
-    "start": "tsx server.ts"
+    "build": "tsx server/databases/postgre-connection.ts",
+    "start": "tsx server/server.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

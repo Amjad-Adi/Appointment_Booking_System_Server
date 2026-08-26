@@ -1,11 +1,11 @@
 import {pgEnum} from "drizzle-orm/pg-core";
-import {ActivationStatus} from "../../models/enums/activation-status";
-import {Role} from "../../models/enums/roles";
-import {RoomOccupancyStatus} from "../../models/enums/room-occupancy-status";
-import {TimeBlockStatus} from "../../models/enums/time-block-status";
-import {DayOfWeek} from "../../models/enums/day-of-week";
-import {PaymentMethod} from "../../models/enums/payment-method";
-import {AppointmentStatus} from "../../models/enums/appointment-status";
+import {ActivationStatus} from "../../server/models/enums/activation-status";
+import {Role} from "../../server/models/enums/roles";
+import {RoomOccupancyStatus} from "../../server/models/enums/room-occupancy-status";
+import {TimeBlockStatus} from "../../server/models/enums/time-block-status.js";
+import {DayOfWeek} from "../../server/models/enums/day-of-week";
+import {PaymentMethod} from "../../server/models/enums/payment-method.js";
+import {AppointmentStatus} from "../../server/models/enums/appointment-status";
 export const activationStatusEnum=pgEnum("status",Object.values(ActivationStatus) as [ActivationStatus, ...ActivationStatus[]]);
 export const roleEnum=pgEnum("role",Object.values(Role) as [Role, ...Role[]])
 export const occupancyStatusEnum=pgEnum("occupancy_status",Object.values(RoomOccupancyStatus) as [RoomOccupancyStatus, ...RoomOccupancyStatus[]])
