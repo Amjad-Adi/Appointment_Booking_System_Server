@@ -8,6 +8,7 @@ import {
 import { type Request, type Response } from "express";
 import {createFireBaseUser, updateFireBaseUser} from "../services/firebase-admin.service.js"
 import {} from "../utils/Request.js"
+import {BadRequestError} from "../errors/bad-request.error.js";
 import {UserRecord} from "firebase-admin/auth";
 import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/user.model.js";
 import {QueryResponse} from "../models/query.model.js";
@@ -36,7 +37,7 @@ export async function handleCreateUser(req:Request,res:Response){
     try {
         userRecord = await createFireBaseUser(user.email, user.password)
     }catch(err){
-        throw new BadRequestErorr()
+        throw new BadRequestError()
     }
     user.uid = (userRecord as UserRecord).uid
     const result: User = await createUser(user)
@@ -57,7 +58,7 @@ export async function handleUpdateCurrentUser(req:Request,res:Response){
         try {
             await updateFireBaseUser(user.uid, user.password)
         }catch(err){
-            throw new BadRequestErorr()
+            throw new BadRequestError()
         }
     }
     const result:User=await updateUser(user)
