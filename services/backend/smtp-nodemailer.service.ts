@@ -1,4 +1,4 @@
-import {transporter} from "../../server";
+import {transporter} from "../../server.js";
 
 export async function inviteEmail(organizationName:string,fromEmail:String, toEmail: string,inviteLink:string): Promise<void> {
     try{

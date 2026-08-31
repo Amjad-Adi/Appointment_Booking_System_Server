@@ -1,7 +1,7 @@
 import http from "http";
 import { app } from "./app";
 import {cert, initializeApp as initializeAppServer, type ServiceAccount} from "firebase-admin/app";
-import serviceAccount from "./config/service-account-key.json";
+import serviceAccount from "./config/service-account-key.json"
 import nodemailer from "nodemailer";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
