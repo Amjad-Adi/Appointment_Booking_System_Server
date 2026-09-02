@@ -20,8 +20,14 @@ const cookieOptions:CookieOptions = {
     httpOnly:true,
     secure:true,
     sameSite:'strict',
-    maxAge:30*24*60*60*1000,
 }
+<<<<<<< Updated upstream:controllers/authentication/authentication-management.controller.ts
+=======
+const accessCookieOptions:CookieOptions=cookieOptions&& {maxAge:30*60*1000,}
+
+const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:365*24*60*60*1000,}
+
+>>>>>>> Stashed changes:src/controllers/authentication/authentication-management.controller.ts
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
     const password=req.body.password
@@ -31,12 +37,27 @@ export async function login(req: Request, res: Response, next: NextFunction){
         }
         let user:UserResponse=await getUserByFireBaseUid(uid);
         const tokens=await generateToken(uid);
-        res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
-        res.json({
-            accessToken:tokens.accessToken,
-            user})
+        res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+        res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+        res.status(200).json({user});
 }
 
+<<<<<<< Updated upstream:controllers/authentication/authentication-management.controller.ts
+=======
+export async function invitationLogin(req: Request, res: Response, next: NextFunction){
+    const email=req.query.email as string
+    let uid:string|undefined= "hi"//await invitationReceive(getAuth(),email,signInLink) ;//REQUIRES FRONT END
+    if(uid==undefined){
+        throw new UnauthorizedError()
+    }
+    let user:UserResponse=await getUserByFireBaseUid(uid);
+    const tokens=await generateToken(uid);
+    res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+    res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+    res.status(200).json({user});
+}
+
+>>>>>>> Stashed changes:src/controllers/authentication/authentication-management.controller.ts
 export async function refreshToken(req: Request, res: Response, next: NextFunction){
     const refreshTokenString=req.cookies.refreshToken as string;
     if(refreshTokenString===undefined){
@@ -57,10 +78,9 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
     const uid = await getUidByUuid(user.uuid);
     const tokens=await generateToken(uid);
     await removeToken(refreshTokenString)
-    res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
-    res.json({
-            accessToken:tokens.accessToken,
-            user})
+    res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+    res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+    res.status(200).json({user});
 }
 
 export async function logOut(req: Request, res: Response, next: NextFunction){

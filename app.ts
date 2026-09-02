@@ -16,7 +16,12 @@ import bodyParserErrorHandler from "express-body-parser-error-handler";
 const logger = pino();
 export let app = express();
 const corsOptions = {
+<<<<<<< Updated upstream
     origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:3000",
+=======
+    origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:8080",
+    credentials: true
+>>>>>>> Stashed changes
 };
 app.use((req, res, next) => {
     console.log(`request received ${req.method} ${req.url}`);
@@ -30,7 +35,7 @@ app.use(pinoHttp({logger}));
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.json({limit: "100kb"}));
+app.use(express.json({limit: "10mb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
 app.use(rateLimit({ windowMs: 60000, max: 100 }));
 app.use("/api",mainRouter)

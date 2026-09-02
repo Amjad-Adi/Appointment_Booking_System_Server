@@ -21,7 +21,13 @@ initializeAppServer({
     credential: cert(serviceAccount as ServiceAccount),
 });
 const server = http.createServer(app);
+<<<<<<< Updated upstream
 server.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
+=======
+server.setTimeout(30000)
+server.listen(process.env.SERVER_PORT, () => {
+    console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
+>>>>>>> Stashed changes
 });
 
