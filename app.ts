@@ -1,20 +1,22 @@
 import express from "express";
-import {ErrorHandler} from "./middlewares/error-handler";
-import {NotFoundError} from "./errors/not-found.error";
+import {ErrorHandler} from "./src/middlewares/error-handler.js";
+import {NotFoundError} from "./src/errors/not-found.error.js";
 import { ErrorRequestHandler } from "express"
-import {mainRouter} from "./routes/main-router.route";
+import {mainRouter} from "./src/routes/main-router.route.js";
 import { randomUUID } from "crypto";
 import helmet from "helmet";
 import cors from "cors";
-import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
-import RateLimiterMemory from "rate-limiter-flexible";
+import RateLimiterMemory from "rate-limiter-flexible";//Redis is better tan memory because it handles multi servers
 import pino from "pino";
 import {pinoHttp} from "pino-http";
-import {BadRequestErorr} from "./errors/bad-request.erorr";
+import {BadRequestError} from "./src/errors/bad-request.error.js";
 import bodyParserErrorHandler from "express-body-parser-error-handler";
+import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "./src/middlewares/rate-limiter.js";
+
 const logger = pino();
-export let app = express();
+export const app = express();
+app.set("query parser", "extended");
 const corsOptions = {
     origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:8080",
     credentials: true
@@ -33,7 +35,7 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({limit: "10mb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
-app.use(rateLimit({ windowMs: 60000, max: 100 }));
+//Rate Limiter
 app.use("/api",mainRouter)
 app.use((req,res)=>
     {throw new NotFoundError("Resource")})
