@@ -12,8 +12,8 @@ import pino from "pino";
 import {pinoHttp} from "pino-http";
 import {BadRequestError} from "./src/errors/bad-request.error.js";
 import bodyParserErrorHandler from "express-body-parser-error-handler";
-import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "./src/middlewares/rate-limiter.js";
-
+import {RATE_LIMIT_FOR_GENERAL, rateLimit, RateLimiter, rateLimiterFactory} from "./src/middlewares/rate-limiter.js";
+const rateLimiter:RateLimiter=rateLimiterFactory(RATE_LIMIT_FOR_GENERAL)
 const logger = pino();
 export const app = express();
 app.set("query parser", "extended");
@@ -35,8 +35,8 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({limit: "10mb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
-//Rate Limiter
+app.use(rateLimit(rateLimiter))
 app.use("/api",mainRouter)
 app.use((req,res)=>
-    {throw new NotFoundError("Resource")})
+{throw new NotFoundError("Resource")})
 app.use(ErrorHandler);
