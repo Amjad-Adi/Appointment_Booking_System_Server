@@ -21,13 +21,10 @@ const cookieOptions:CookieOptions = {
     secure:true,
     sameSite:'strict',
 }
-<<<<<<< Updated upstream:controllers/authentication/authentication-management.controller.ts
-=======
 const accessCookieOptions:CookieOptions=cookieOptions&& {maxAge:30*60*1000,}
 
 const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:365*24*60*60*1000,}
 
->>>>>>> Stashed changes:src/controllers/authentication/authentication-management.controller.ts
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
     const password=req.body.password
@@ -42,8 +39,6 @@ export async function login(req: Request, res: Response, next: NextFunction){
         res.status(200).json({user});
 }
 
-<<<<<<< Updated upstream:controllers/authentication/authentication-management.controller.ts
-=======
 export async function invitationLogin(req: Request, res: Response, next: NextFunction){
     const email=req.query.email as string
     let uid:string|undefined= "hi"//await invitationReceive(getAuth(),email,signInLink) ;//REQUIRES FRONT END
@@ -57,7 +52,6 @@ export async function invitationLogin(req: Request, res: Response, next: NextFun
     res.status(200).json({user});
 }
 
->>>>>>> Stashed changes:src/controllers/authentication/authentication-management.controller.ts
 export async function refreshToken(req: Request, res: Response, next: NextFunction){
     const refreshTokenString=req.cookies.refreshToken as string;
     if(refreshTokenString===undefined){

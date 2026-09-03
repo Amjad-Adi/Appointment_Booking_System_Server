@@ -8,7 +8,7 @@ import {
     handleGetOrganization, handleUpdateOrganization
 } from "../controllers/organization.controller";
 import { authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../authoraization/autoraization";
+import {authorize, authorizeOrganizationUser, rejectWorkingUsers} from "../middlewares/authoraization/autoraization";
 import {
     CREATE_ORGANIZATION,
     WRITE_ORGANIZATION, WRITE_ORGANIZATION_AS_ADMIN,

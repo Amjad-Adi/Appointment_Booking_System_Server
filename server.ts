@@ -1,7 +1,7 @@
 import http from "http";
 import { app } from "./app";
 import {cert, initializeApp as initializeAppServer, type ServiceAccount} from "firebase-admin/app";
-import serviceAccount from "./config/serviceAccountKey.json";
+import serviceAccount from "./config/service-account-key.json";
 const PORT = 3000;
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -21,13 +21,8 @@ initializeAppServer({
     credential: cert(serviceAccount as ServiceAccount),
 });
 const server = http.createServer(app);
-<<<<<<< Updated upstream
-server.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-=======
 server.setTimeout(30000)
 server.listen(process.env.SERVER_PORT, () => {
     console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
->>>>>>> Stashed changes
 });
 

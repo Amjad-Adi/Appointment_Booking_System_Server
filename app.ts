@@ -16,12 +16,8 @@ import bodyParserErrorHandler from "express-body-parser-error-handler";
 const logger = pino();
 export let app = express();
 const corsOptions = {
-<<<<<<< Updated upstream
-    origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:3000",
-=======
     origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:8080",
     credentials: true
->>>>>>> Stashed changes
 };
 app.use((req, res, next) => {
     console.log(`request received ${req.method} ${req.url}`);
