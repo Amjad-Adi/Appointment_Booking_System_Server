@@ -21,8 +21,10 @@ const cookieOptions:CookieOptions = {
     httpOnly:true,
     secure:true,
     sameSite:'strict',
-    maxAge:30*24*60*60*1000,
 }
+const accessCookieOptions:CookieOptions=cookieOptions&& {maxAge:30*60*1000,}
+
+const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:365*24*60*60*1000,}
 
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
@@ -33,10 +35,9 @@ export async function login(req: Request, res: Response, next: NextFunction){
         }
         let user:UserResponse=await getUserByFireBaseUid(uid);
         const tokens=await generateToken(uid);
-        res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
-        res.json({
-            accessToken:tokens.accessToken,
-            user})
+        res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+        res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+        res.status(200).json({user});
 }
 
 export async function invitationLogin(req: Request, res: Response, next: NextFunction){
@@ -47,10 +48,9 @@ export async function invitationLogin(req: Request, res: Response, next: NextFun
     }
     let user:UserResponse=await getUserByFireBaseUid(uid);
     const tokens=await generateToken(uid);
-    res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
-    res.json({
-        accessToken:tokens.accessToken,
-        user})
+    res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+    res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+    res.status(200).json({user});
 }
 
 export async function refreshToken(req: Request, res: Response, next: NextFunction){
@@ -73,10 +73,9 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
     const uid = await getUserUidByUuid(user.uuid);
     const tokens=await generateToken(uid);
     await removeToken(refreshTokenString)
-    res.cookie('refreshToken',tokens.refreshToken,cookieOptions);
-    res.json({
-            accessToken:tokens.accessToken,
-            user})
+    res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
+    res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
+    res.status(200).json({user});
 }
 
 export async function logOut(req: Request, res: Response, next: NextFunction){
