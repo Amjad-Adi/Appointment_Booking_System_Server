@@ -23,7 +23,7 @@ export async function getNumberOfRooms(query:QueryRoom,organizationUuid:string,u
 
 export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:string):Promise<RoomResponse>{
     await AuthorizeOrganizationUser(userUuid,organizationUuid);
-    let result:RoomResponse= await findByUuid(organizationUuid,roomUuid)
+    const result:RoomResponse= await findByUuid(organizationUuid,roomUuid)
     if(result===undefined){
         throw new NotFoundError("Room");
     }
@@ -33,7 +33,7 @@ export async function getRoom(roomUuid:string,organizationUuid:string,userUuid:s
 
 export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
     await AuthorizeOrganizationUser(userUuid,room.organizationUuid)
-    let organizationId:number= await findIdByUuid(room.organizationUuid)
+    const organizationId:number= await findIdByUuid(room.organizationUuid)
     if(organizationId===undefined){
         throw new NotFoundError("Organization");
     }
@@ -41,7 +41,7 @@ export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
     if(await isNameFound(room.organizationUuid,room.name)===true) {
         throw new ConflictError()
     }
-    let result:Room= await create(room)
+    const result:Room= await create(room)
     if(result===undefined){
         throw new BadRequestError()
     }
@@ -50,7 +50,7 @@ export async function createRoom(room:CreateRoom,userUuid:string):Promise<Room>{
 
 export async function updateRoom(room:UpdateRoom):Promise<Room>{
     await AuthorizeOrganizationUser(room.userUuid,room.organizationUuid)
-    let result:Room= await update(room)
+    const result:Room= await update(room)
     if(result===undefined){
         throw new NotFoundError("Room")
     }
