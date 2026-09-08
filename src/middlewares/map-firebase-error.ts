@@ -39,7 +39,7 @@ export function mapFirebaseError(error: unknown):never{
         case "auth/id-token-revoked":
         case "auth/invalid-id-token":
         case "auth/argument-error":
-            throw new UnauthorizedError();
+            throw new UnauthorizedError("Invalid email or password");
 
         default:
             throw error;
