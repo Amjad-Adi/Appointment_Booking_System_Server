@@ -13,7 +13,7 @@ export const RATE_LIMIT_FOR_AUTHENTICATION = "AUTHENTICATION";
 export const RATE_LIMIT_FOR_GENERAL = "GENERAL";
 export const RATE_LIMIT_FOR_EXPENSIVE = "EXPENSIVE";
 
-class RateLimiter {
+export class RateLimiter {
     globalLimiter: RequestHandler;
     localLimiter: RequestHandler;
 

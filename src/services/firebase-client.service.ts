@@ -6,13 +6,8 @@ import {
     createUserWithEmailAndPassword,
     getAuth,isSignInWithEmailLink, signInWithEmailLink
 } from "firebase/auth";
-import {mapFirebaseError} from "../../server/middlewares/map-firebase-error";
-import {CreateUser} from "../../server/models/user.model";
-import {UserRecord} from "firebase-admin/auth";
-import {mainRouter} from "../../server/routes/main-router.route";
+import {mapFirebaseError} from "../middlewares/map-firebase-error";
 import firebase from "firebase/compat/app";
-import UserCredential = firebase.auth.UserCredential;
-import {string} from "zod";
 
 export async function createUserByFireBase( email: string, password: string){
     const result=await createUserWithEmailAndPassword(getAuth(),email, password);
