@@ -1,7 +1,7 @@
 import http from "http";
-import { app } from "../app.js";
+import { app } from "./app";
 import {cert, initializeApp as initializeAppServer, type ServiceAccount} from "firebase-admin/app";
-import serviceAccount from "../config/service-account-key.json" with { type: "json" };
+import serviceAccount from "./config/service-account-key.json"
 import nodemailer from "nodemailer";
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -32,6 +32,7 @@ export const transporter = nodemailer.createTransport({
 });
 
 const server = http.createServer(app);
+server.setTimeout(30000)
 server.listen(process.env.SERVER_PORT, () => {
     console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
 });
