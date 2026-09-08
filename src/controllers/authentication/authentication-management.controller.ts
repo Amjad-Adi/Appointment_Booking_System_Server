@@ -29,11 +29,11 @@ const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:365*24*60*60*10
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
     const password=req.body.password
-       let uid= await fireBaseLogIn(getAuth(), email, password) as string;
+    const uid= await fireBaseLogIn(getAuth(), email, password) as string;
         if(uid==undefined){
             throw new UnauthorizedError()
         }
-        let user:UserResponse=await getUserByFireBaseUid(uid);
+        const user:UserResponse=await getUserByFireBaseUid(uid);
         const tokens=await generateToken(uid);
         res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
         res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
@@ -42,11 +42,11 @@ export async function login(req: Request, res: Response, next: NextFunction){
 
 export async function invitationLogin(req: Request, res: Response, next: NextFunction){
     const email=req.query.email as string
-    let uid:string|undefined= "hi"//await invitationReceive(getAuth(),email,signInLink) ;//REQUIRES FRONT END
+    const uid:string|undefined= "hi"//await invitationReceive(getAuth(),email,signInLink) ;//REQUIRES FRONT END
     if(uid==undefined){
         throw new UnauthorizedError()
     }
-    let user:UserResponse=await getUserByFireBaseUid(uid);
+    const user:UserResponse=await getUserByFireBaseUid(uid);
     const tokens=await generateToken(uid);
     res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
     res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);

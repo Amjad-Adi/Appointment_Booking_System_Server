@@ -13,16 +13,16 @@ import {getUserByFireBaseUid, getUserById, getUserIdByUuid} from "../services/us
 import {OrganizationResponse} from "../models/organization.model.js";
 import {InvitationStatus} from "../models/enums/invitation-status.js";
 export async function handleGetOrganizationInvitations(req:Request,res:Response){
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    let userUuid:string=req.user.uuid as string;
+    const organizationUuid:string=req.params.organizationUuid  as string;
+    const userUuid:string=req.user.uuid as string;
     const result:InvitationResponse[]=await getInvitations(organizationUuid,userUuid)
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganizationInvitation(req:Request,res:Response){
-    let invitationUuid:string=req.params.invitationUuid as string;
-    let userUuid:string=req.user.uuid as string;
-    let organizationUuid:string=req.params.organizationUuid  as string;
+    const invitationUuid:string=req.params.invitationUuid as string;
+    const userUuid:string=req.user.uuid as string;
+    const organizationUuid:string=req.params.organizationUuid  as string;
     const result:InvitationResponse=await getInvitation(invitationUuid,organizationUuid,userUuid)
     return res.status(200).json(result)
 }
@@ -40,11 +40,11 @@ export async function handleCreateOrganizationInvitation(req:Request,res:Respons
 }
 
 export async function handleReceiveOrganizationInvitation(req:Request,res:Response){
-    let invitation:UpdateInvitation=req.body
+    const invitation:UpdateInvitation=req.body
     invitation.uuid=req.params.invitationUuid as string;
     invitation.userUuid=req.user.uuid as string;
     invitation.organizationUuid=req.params.organizationUuid  as string;
     invitation.status=InvitationStatus.ACCEPTED
-    let result:Invitation=await updateInvitation(invitation)
+    const result:Invitation=await updateInvitation(invitation)
     return res.status(200).json(result)
 }

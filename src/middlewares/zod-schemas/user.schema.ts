@@ -3,11 +3,10 @@ import {ActivationStatus} from "../../models/enums/activation-status.js"
 import {Role} from "../../models/enums/roles.js"
 import {
     ALIAS_COLUMN_UPDATED_AT_UTC,
-    SORT_BY_CREATED_AT_UTC,
-    SORT_BY_NAME,
-} from "../../databases/contracts/user.contract.js";
-import {Order} from "../../models/enums/order.js";
-import {querySchema} from "./query.schema.js";
+    SORT_BY_CREATED_AT_UTC, SORT_BY_NAME
+} from "../../databases/contracts/user.contract";
+import {Order} from "../../models/enums/order";
+import {querySchema} from "./query.schema";
 export const DEFAULT_LANGUAGE = "en";
 export const createUserSchema=z.object({
     firstName:z.string().trim().nonempty().max(64),
