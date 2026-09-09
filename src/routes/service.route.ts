@@ -1,15 +1,14 @@
 import express from "express";
-import {validateBody, validateParameter, validateQuery} from "../middlewares/validaiton.js";
-import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema.js";
-import {handleGetOrganizationService, handleUpdateOrganizationService, handleCreateOrganizationService, handleGetOrganizationServices} from "../controllers/service.controller.js";
-import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller.js";
-import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions.js";
-import { validateUuid } from "../middlewares/zod-schemas/parameters.schema.js";
-import {authorize} from "../middlewares/authorization/authorization.js";
-import {queryUserSchema} from "../middlewares/zod-schemas/user.schema.js";
-export let serviceRouter=express.Router({mergeParams:true});
+import {validateBody, validateParameter} from "../middlewares/validaiton";
+import {createServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema";
+import {handleGetOrganizationService, handleUpdateOrganizationService, handleCreateOrganizationService, handleGetOrganizationServices} from "../controllers/service.controller";
+import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
+import {CREATE_SERVICE, UPDATE_SERVICE} from "../permissions/permissions";
+import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
+import {authorize} from "../middlewares/authorization/authorization";
+export const serviceRouter=express.Router({mergeParams:true});
 serviceRouter.route("/")
-    .get(validateQuery(queryServiceSchema),handleGetOrganizationServices)
+    .get(handleGetOrganizationServices)
     .post(authenticateToken,authorize(CREATE_SERVICE),validateBody(createServiceSchema),handleCreateOrganizationService)
 
 serviceRouter.route("/:serviceUuid")

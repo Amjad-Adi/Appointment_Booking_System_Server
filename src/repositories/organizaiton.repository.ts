@@ -103,13 +103,13 @@ export async function create(organization: CreateOrganization):Promise<Organizat
     const client = await pool.connect();
     try{
         await client.query("BEGIN")
-        let location=organization.location
+        const location=organization.location
         let locationId:number|null=null
         if(!(location==null)) {
-            let locationData:Location= await createLocation(location,client)
+            const locationData:Location= await createLocation(location,client)
             locationId=locationData.id
         }
-       let result= await client.query(
+        const result= await client.query(
             `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH})
                         VALUES ($1,$2,$3,$4,$5,$6)
                         RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
@@ -130,7 +130,7 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
     const client = await pool.connect();
     try{
         await client.query("BEGIN")
-        let location:UpdateLocation=organization.location as UpdateLocation
+        const location:UpdateLocation=organization.location as UpdateLocation
         if(location!==undefined) {
             location.id = (await pool.query(
                 `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
@@ -138,7 +138,7 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
                 JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} = ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
             await updateLocation(location, client)
         }
-        let result= await client.query(
+        const result= await client.query(
             `UPDATE ${TABLE_NAME}
              SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),
                  ${COLUMN_BIO}=COALESCE($2,${COLUMN_BIO}),

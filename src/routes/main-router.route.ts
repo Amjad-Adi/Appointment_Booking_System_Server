@@ -6,7 +6,7 @@ import {app} from "../../app.js";
 import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "../middlewares/rate-limiter.js";
 import {receiveInvitationRouter} from "./receive-invitation.route.js";
 
-export let mainRouter=express.Router()
+export const mainRouter=express.Router()
 
 mainRouter.use(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_GENERAL)));
 mainRouter.use("/users",userRouter)
