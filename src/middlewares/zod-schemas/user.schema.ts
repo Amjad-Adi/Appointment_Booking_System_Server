@@ -21,8 +21,6 @@ export const createUserSchema=z.object({
 }).strict().refine((data)=>data.password===data.confirmPassword)
 
 export const inviteUserSchema=z.object({
-    firstName:z.string().trim().nonempty().max(64),
-    lastName:z.string().trim().nonempty().max(64),
     email:z.email(),
     role:z.enum(Role).refine((role)=>(role!=Role.SUPER_ADMIN&&role!=Role.CUSTOMER)),
 }).strict();

@@ -48,7 +48,7 @@ const superAdminPermissions:string[]=[
     READ_USERS,
     UPDATE_SERVICE
 ]
-export const rolesPermissions : Record<string, string[]>= {
+export const rolesPermissions : Record<Role, string[]>= {
     [Role.SUPER_ADMIN]: superAdminPermissions,
     [Role.OWNER]: ownerPermissions,
     [Role.MANAGER]: managerPermissions,
