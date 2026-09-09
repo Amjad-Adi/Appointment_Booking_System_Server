@@ -17,7 +17,7 @@ import {
 import {isUserWorkingByUuid} from "./user.service.js";
 import {ForbiddenError} from "../errors/forbidden.error.js";
 export async function getOrganizations():Promise<OrganizationResponse[]>{
-    let result:OrganizationRow[]= await findAll()
+    const result:OrganizationRow[]= await findAll()
     return result.map((row):OrganizationResponse=>({
             uuid: row.uuid,
             name: row.name,
@@ -39,7 +39,7 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
 }
 
 export async function getOrganization(uuid:string):Promise<OrganizationResponse>{
-    let result:OrganizationRow= await findByUuid(uuid)
+    const result:OrganizationRow= await findByUuid(uuid)
     if(result===undefined){
         throw new NotFoundError("Organization");
     }
@@ -68,7 +68,7 @@ export async function createOrganization(organization:CreateOrganization):Promis
     if(emailFound||phoneNumberFound||userWorking){
         throw new ConflictError()
     }
-    let result= await create(organization)
+    const result= await create(organization)
     if(result===undefined){
         throw new BadRequestError()
     }
@@ -79,7 +79,7 @@ export async function updateOrganization(organization:UpdateOrganization):Promis
     if((await getUserOrganization(organization.userUuid)).uuid!=organization.uuid){
         throw new ForbiddenError()
     }
-    let result:Organization= await update(organization)
+    const result:Organization= await update(organization)
     if(result===undefined){
         throw new NotFoundError("organization")
     }
@@ -87,7 +87,7 @@ export async function updateOrganization(organization:UpdateOrganization):Promis
 }
 
 export async function updateOrganizationByAdmin(organization:UpdateOrganizationByAdmin):Promise<Organization>{
-    let result:Organization= await updateByAdmin(organization)
+    const result:Organization= await updateByAdmin(organization)
     if(result===undefined){
         throw new NotFoundError("organization")
     }
@@ -95,7 +95,7 @@ export async function updateOrganizationByAdmin(organization:UpdateOrganizationB
 }
 
 export async function getUserOrganization(userUuid:string):Promise<OrganizationResponse>{
-    let result:OrganizationRow=await findUserOrganizationByUuid(userUuid)
+    const result:OrganizationRow=await findUserOrganizationByUuid(userUuid)
     if(result===undefined){
         throw new NotFoundError("Organization");
     }
@@ -119,7 +119,7 @@ export async function getUserOrganization(userUuid:string):Promise<OrganizationR
 }
 
 export async function getOrganizationIdByUuid(uuid:string):Promise<number>{
-    let result:number= await findIdByUuid(uuid);
+    const result:number= await findIdByUuid(uuid);
     if(result===undefined){
         throw new NotFoundError("Organization");
     }

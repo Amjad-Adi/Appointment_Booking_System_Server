@@ -6,6 +6,6 @@ import {updateInvitationSchema} from "../middlewares/zod-schemas/invitations.sch
 import {handleReceiveOrganizationInvitation} from "../controllers/invitation.controller.js";
 import {invitationLogin} from "../controllers/authentication/authentication-management.controller.js";
 
-export let receiveInvitationRouter=express.Router({mergeParams:true});
+export const receiveInvitationRouter=express.Router({mergeParams:true});
 receiveInvitationRouter.route("/:invitationUuid")
     .get(validateParameter(validateUuid,"invitationUuid"),invitationLogin,handleReceiveOrganizationInvitation)

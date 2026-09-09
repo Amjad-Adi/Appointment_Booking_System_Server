@@ -12,7 +12,7 @@ export async function getBlackListedToken(jti:string):Promise<BlacklistedToken>{
 }
 
 export async function createBlacklistedToken(blacklistedToken:CreateBlacklistedToken):Promise<BlacklistedToken>{
-    let result:BlacklistedToken= await createBlacklistedTokenService(blacklistedToken)
+    const result:BlacklistedToken= await createBlacklistedTokenService(blacklistedToken)
     if(result===undefined){
         throw new Error()
     }
@@ -21,7 +21,7 @@ export async function createBlacklistedToken(blacklistedToken:CreateBlacklistedT
 
 
 export async function createRefreshToken(refreshToken:CreateRefreshToken):Promise<RefreshToken>{
-    let result:RefreshToken= await createRefreshTokenService(refreshToken)
+    const result:RefreshToken= await createRefreshTokenService(refreshToken)
     if(result===undefined){
         throw new Error()
     }
