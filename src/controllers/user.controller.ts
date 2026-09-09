@@ -8,21 +8,21 @@ import {
 import { type Request, type Response } from "express";
 import {createFireBaseUser, updateFireBaseUser} from "../services/firebase-admin.service.js"
 import {} from "../utils/Request.js"
-import {UserRecord} from "firebase-admin/auth";
 import {BadRequestError} from "../errors/bad-request.error.js";
+import {UserRecord} from "firebase-admin/auth";
 import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/user.model.js";
 import {QueryResponse} from "../models/query.model.js";
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
-    const [users,totalNumberOfUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
-    query.offset=(query.page-1)*query.limit
+    const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
+    query.offset=(query?.page-1)*query?.limit
     const baseUrl=req.originalUrl?.split("?")[0]
-    const responseResult:QueryResponse=new QueryResponse(users,totalNumberOfUsers,baseUrl,query?.page,query?.limit)
+    const responseResult:QueryResponse=new QueryResponse(users,totalUsers,baseUrl,query?.page,query?.limit)
     return res.status(200).json(responseResult)
 }
 
 export async function handleGetUser(req:Request,res:Response){
-    let uuid:string=(req.params.userUuid) as any as string;
+    const uuid:string=(req.params.userUuid) as any as string;
     const result:UserResponse=await getUser(uuid)
     return res.status(200).json(result)
 }
@@ -32,7 +32,7 @@ export async function handleGetCurrentUser(req:Request,res:Response){
 }
 
 export async function handleCreateUser(req:Request,res:Response){
-    let user: CreateUser = (req.body)
+    const user: CreateUser = (req.body)
     let userRecord: UserRecord | undefined;
     try {
         userRecord = await createFireBaseUser(user.email, user.password)
@@ -45,13 +45,13 @@ export async function handleCreateUser(req:Request,res:Response){
 }
 
 export async function handleUpdateUser(req:Request,res:Response){
-    let user:UpdateUser=(req.body)
+    const user:UpdateUser=(req.body)
     const result:User=await updateUser(user)
     return res.status(200).json(result)
 }
 
 export async function handleUpdateCurrentUser(req:Request,res:Response){
-    let user:UpdateUser=(req.body)
+    const user:UpdateUser=(req.body)
     user.uuid = req.user.uuid;
     user.uid = req.user.uid;
     if(user.password !== undefined){
@@ -66,8 +66,8 @@ export async function handleUpdateCurrentUser(req:Request,res:Response){
 }
 
 export async function handleUpdateUserByAdmin(req:Request,res:Response){
-    let uuid:string=(req.params.userUuid) as any as string;
-    let user:User=(req.body)
+    const uuid:string=(req.params.userUuid) as any as string;
+    const user:User=(req.body)
     user.uuid=uuid;
     const result:User=await updateUserByAdmin(user)
     return res.status(200).json(result)

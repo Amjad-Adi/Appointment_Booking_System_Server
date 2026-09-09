@@ -10,22 +10,20 @@ import {CreateSpecialDay, SpecialDay, UpdateSpecialDay} from "../models/special-
 import {findIdByUuid} from "../repositories/user.repository.js";
 import {getOrganizationIdByUuid} from "../services/organization.service.js";
 export async function handleGetOrganizationSpecialDays(req:Request,res:Response){
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    let userUuid:string=req.user.uuid as string;
+    const organizationUuid:string=req.params.organizationUuid  as string;
     const result:SpecialDay[]=await getSpecialDays(organizationUuid)
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganizationSpecialDay(req:Request,res:Response){
-    let specialDayUuid:string=req.params.specialDayUuid as string;
-    let organizationUuid:string=req.params.organizationUuid  as string;
-    let userUuid:string=req.user.uuid as string;
+    const specialDayUuid:string=req.params.specialDayUuid as string;
+    const organizationUuid:string=req.params.organizationUuid  as string;
     const result:SpecialDay=await getSpecialDay(specialDayUuid,organizationUuid)
     return res.status(200).json(result)
 }
 
 export async function handleCreateSpecialDay(req:Request,res:Response){
-    let specialDay:CreateSpecialDay=(req.body)
+    const specialDay:CreateSpecialDay=(req.body)
     specialDay.organizationUuid=req.params.organizationUuid as string;
     specialDay.userUuid=req.user.uuid as string;
     specialDay.organizationId=await getOrganizationIdByUuid(specialDay.organizationUuid)
@@ -34,7 +32,7 @@ export async function handleCreateSpecialDay(req:Request,res:Response){
 }
 
 export async function handleUpdateSpecialDay(req:Request,res:Response){
-    let specialDay:UpdateSpecialDay=(req.body)
+    const specialDay:UpdateSpecialDay=(req.body)
     specialDay.uuid=req.params.specialDay as string
     specialDay.organizationUuid=req.params.organizationUuid  as string;
     specialDay.userUuid=req.user.uuid as string;

@@ -2,12 +2,11 @@
   "name": "appointment_booking_system",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
+  "main": "dist/index.js","scripts": {
+  "dev": "tsx watch server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js"
+},
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -31,7 +30,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "bcrypt": "^6.0.0",

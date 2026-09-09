@@ -23,7 +23,7 @@ import {
 import {validateUuid} from "../middlewares/zod-schemas/parameters.schema.js";
 import {receiveInvitationRouter} from "./receive-invitation.route.js";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller.js";
-export let userRouter=express.Router()
+export const userRouter=express.Router()
 userRouter.route("/")
     .get(authenticateToken,authorize(READ_USERS),validateQuery(queryUserSchema),handleGetUsers)
 

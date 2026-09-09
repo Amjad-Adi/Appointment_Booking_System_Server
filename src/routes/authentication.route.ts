@@ -8,17 +8,16 @@ import {READ_USERS} from "../permissions/permissions.js";
 import {userRouter} from "./user.route.js";
 import { handleCreateUser } from "../controllers/user.controller.js";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller.js";
-export let authenticationRouter=express.Router()
+export const authenticationRouter=express.Router()
 
 userRouter.route("/register")
     .post(validateBody(createUserSchema),handleCreateUser)
-
 
 authenticationRouter.route("/login")
     .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),validateBody(loginUserSchema),login);
 
 authenticationRouter.route("/logout")
-    .post(authenticateToken,logOut);//make post
+    .get(authenticateToken,logOut);
 
 authenticationRouter.route("/refresh")
-    .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);
+    .get(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);

@@ -12,16 +12,14 @@ import pino from "pino";
 import {pinoHttp} from "pino-http";
 import {BadRequestError} from "./src/errors/bad-request.error.js";
 import bodyParserErrorHandler from "express-body-parser-error-handler";
-import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "./src/middlewares/rate-limiter.js";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-const __filename = fileURLToPath(import.meta.url);
-export const __dirname = path.dirname(__filename);
+import {RATE_LIMIT_FOR_GENERAL, rateLimit, RateLimiter, rateLimiterFactory} from "./src/middlewares/rate-limiter.js";
+const rateLimiter:RateLimiter=rateLimiterFactory(RATE_LIMIT_FOR_GENERAL)
 const logger = pino();
-export let app = express();
+export const app = express();
 app.set("query parser", "extended");
 const corsOptions = {
-    origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:3000",
+    origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:8080",
+    credentials: true
 };
 app.use((req, res, next) => {
     console.log(`request received ${req.method} ${req.url}`);
@@ -35,10 +33,10 @@ app.use(pinoHttp({logger}));
 app.use(helmet());
 app.use(cors(corsOptions));
 app.use(cookieParser());
-app.use(express.json({limit: "100kb"}));
+app.use(express.json({limit: "10mb"}));
 app.use(bodyParserErrorHandler() as unknown as ErrorRequestHandler);
+app.use(rateLimit(rateLimiter))
 app.use("/api",mainRouter)
-app.use(express.static(path.join(__dirname, "client")));
 app.use((req,res)=>
-    {throw new NotFoundError("Resource")})
+{throw new NotFoundError("Resource")})
 app.use(ErrorHandler);

@@ -21,8 +21,7 @@ export const ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT="12h";
 export const ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT="1d";
 
 export async function authenticateToken(req:Request,res:Response,next:NextFunction){
-    const authorizationHeader: string | undefined = req.headers.authorization
-    const token = authorizationHeader?.split(" ")[1]
+    const token = req.cookies.accessToken;
     if (!token) {
         throw new UnauthorizedError();
     }
