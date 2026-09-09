@@ -17,7 +17,7 @@ authenticationRouter.route("/login")
     .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),validateBody(loginUserSchema),login);
 
 authenticationRouter.route("/logout")
-    .get(authenticateToken,logOut);
+    .post(authenticateToken,logOut);
 
 authenticationRouter.route("/refresh")
-    .get(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);
+    .post(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_AUTHENTICATION)),refreshToken);

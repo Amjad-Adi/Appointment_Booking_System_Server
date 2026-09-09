@@ -14,8 +14,8 @@ import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/u
 import {QueryResponse} from "../models/query.model.js";
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
-    const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
     query.offset=(query?.page-1)*query?.limit
+    const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
     const baseUrl=req.originalUrl?.split("?")[0]
     const responseResult:QueryResponse=new QueryResponse(users,totalUsers,baseUrl,query?.page,query?.limit)
     return res.status(200).json(responseResult)
