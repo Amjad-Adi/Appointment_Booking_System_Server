@@ -4,7 +4,7 @@ import {
     create,
     update,
     updateByAdmin,
-    isEmailFound,
+    isEmailFound,countAll,
     isPhoneNumberFound, findByUuid, findIdByUuid
 } from "../repositories/organizaiton.repository.js"
 import {NotFoundError} from "../errors/not-found.error.js";
@@ -12,12 +12,13 @@ import {BadRequestError} from "../errors/bad-request.error.js";
 import {ConflictError} from "../errors/conflict.error.js";
 import {
     CreateOrganization, Organization, OrganizationResponse,
-    OrganizationRow, UpdateOrganization, UpdateOrganizationByAdmin,
+    OrganizationRow, QueryOrganization, UpdateOrganization, UpdateOrganizationByAdmin,
 } from "../models/organization.model.js";
 import {isUserWorkingByUuid} from "./user.service.js";
 import {ForbiddenError} from "../errors/forbidden.error.js";
-export async function getOrganizations():Promise<OrganizationResponse[]>{
-    const result:OrganizationRow[]= await findAll()
+import type {Request, Response} from "express";
+export async function getOrganizations(query: QueryOrganization):Promise<OrganizationResponse[]>{
+    const result:OrganizationRow[]= await findAll(query)
     return result.map((row):OrganizationResponse=>({
             uuid: row.uuid,
             name: row.name,
@@ -37,6 +38,11 @@ export async function getOrganizations():Promise<OrganizationResponse[]>{
         }
     ))
 }
+
+export async function getNumberOfOrganizations(query: QueryOrganization): Promise<number> {
+    return await countAll(query);
+}
+
 
 export async function getOrganization(uuid:string):Promise<OrganizationResponse>{
     const result:OrganizationRow= await findByUuid(uuid)
