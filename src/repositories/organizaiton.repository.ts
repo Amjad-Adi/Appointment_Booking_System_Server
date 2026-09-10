@@ -51,7 +51,7 @@ import {eq} from "drizzle-orm";
 import {Order} from "../models/enums/order";
 import {QueryUser} from "../models/user.model";
 
-export async function findAll(query: QueryOrganization,): Promise<OrganizationResponse[]> {
+export async function findAll(query: QueryOrganization,): Promise<OrganizationRow[]> {
     const search = query.search ? `%${query.search}%` : null;
     const sortColumnsDefinition = {
         name: `${ALIAS}.${COLUMN_NAME}`,

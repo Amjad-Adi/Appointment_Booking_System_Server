@@ -7,7 +7,7 @@ export interface Service{
     name:string
     description:string,
     price:number,
-    durationInMinutes:string,
+    durationInMinutes:number,
     servicePicturePath:string,
     createdAtUTC:Date,
     updatedAtUTC:Date,

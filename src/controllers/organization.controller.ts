@@ -15,6 +15,7 @@ import {
 } from "../models/organization.model.js";
 import {} from "../utils/Request.js"
 import {QueryResponse} from "../models/query.model";
+import {Role} from "../models/enums/roles";
 
 export async function handleGetOrganizations(req: Request, res: Response) {
     const query: QueryOrganization = req.validatedQuery as unknown as QueryOrganization;
@@ -41,7 +42,10 @@ export async function handleCreateOrganization(req:Request,res:Response){
 export async function handleUpdateOrganization(req:Request,res:Response){
     const organization:UpdateOrganization=(req.body)
     organization.uuid=req.params.organizationUuid as string
-    const result:Organization=await updateOrganization(organization)
+    let result: Organization
+    if(req.user?.role==Role.SUPER_ADMIN)
+        result=await updateOrganizationByAdmin(organization)
+    else  result=await updateOrganization(organization)
     return res.status(200).json(result)
 }
 
