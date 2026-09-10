@@ -1,5 +1,5 @@
 import {
-    createOrganization,
+    createOrganization, getNumberOfOrganizations,
     getOrganization,
     getOrganizations, getUserOrganization,
     updateOrganization,
@@ -9,14 +9,20 @@ import {type Request, type Response} from "express";
 import {
     CreateOrganization,
     Organization,
-    OrganizationResponse,
+    OrganizationResponse, QueryOrganization,
     UpdateOrganization,
     UpdateOrganizationByAdmin
 } from "../models/organization.model.js";
 import {} from "../utils/Request.js"
-export async function handleGetOrganizations(req:Request,res:Response){
-    const result:OrganizationResponse[]=await getOrganizations()
-    return res.status(200).json(result)
+import {QueryResponse} from "../models/query.model";
+
+export async function handleGetOrganizations(req: Request, res: Response) {
+    const query: QueryOrganization = req.validatedQuery as unknown as QueryOrganization;
+    query.offset = (query.page - 1) * query.limit;
+    const [organizations, totalOrganizations] = await Promise.all([getOrganizations(query), getNumberOfOrganizations(query),]);
+    const baseUrl = req.originalUrl?.split('?')[0];
+    const responseResult: QueryResponse =new QueryResponse(organizations, totalOrganizations, baseUrl, query.page, query.limit,);
+    return res.status(200).json(responseResult);
 }
 
 export async function handleGetOrganization(req:Request,res:Response){

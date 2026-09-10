@@ -1,6 +1,11 @@
 import express from "express";
-import {validateBody, validateBodyByRole, validateParameter} from "../middlewares/validaiton.js";
-import {createOrganizationSchema, updateOrganizationByAdminSchema,updateOrganizationSchema} from "../middlewares/zod-schemas/organization.schema.js"
+import {validateBody, validateBodyByRole, validateParameter, validateQuery} from "../middlewares/validaiton.js";
+import {
+    createOrganizationSchema,
+    queryOrganizationSchema,
+    updateOrganizationByAdminSchema,
+    updateOrganizationSchema
+} from "../middlewares/zod-schemas/organization.schema.js"
 import {
     handleCreateOrganization,
     handleGetOrganizations,
@@ -22,8 +27,9 @@ const roleSchemas={
     [Role.OWNER]:updateOrganizationSchema,
 };
 export const organizationRouter=express.Router()
-organizationRouter.route("/")
-    .get(handleGetOrganizations)
+organizationRouter
+    .route("/")
+    .get(authenticateToken, validateQuery(queryOrganizationSchema), handleGetOrganizations)
     .post(authenticateToken,authorize(CREATE_ORGANIZATION),validateBody(createOrganizationSchema),handleCreateOrganization)
 
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)

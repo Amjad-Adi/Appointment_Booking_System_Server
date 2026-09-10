@@ -17,3 +17,6 @@ export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
 export const ALIAS_COLUMN_NAME = `"organizationName"`;
 export const ALIAS_COLUMN_ORGANIZATION_UUID = `"organizationUuid"`;
+export const ALIAS_TOTAL_NUMBER_OF_ORGANIZATIONS= `"totalNumberOfOrganizations"`;
+export const SORT_BY_NAME = "name";
+export const SORT_BY_CREATED_AT_UTC = "createdAtUTC";

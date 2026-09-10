@@ -12,6 +12,7 @@ import {BadRequestError} from "../errors/bad-request.error.js";
 import {UserRecord} from "firebase-admin/auth";
 import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/user.model.js";
 import {QueryResponse} from "../models/query.model.js";
+import {mapFirebaseError} from "../middlewares/map-firebase-error";
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
     query.offset=(query?.page-1)*query?.limit
@@ -37,7 +38,7 @@ export async function handleCreateUser(req:Request,res:Response){
     try {
         userRecord = await createFireBaseUser(user.email, user.password)
     }catch(err){
-        throw new BadRequestError()
+        mapFirebaseError(err)
     }
     user.uid = (userRecord as UserRecord).uid
     const result: User = await createUser(user)

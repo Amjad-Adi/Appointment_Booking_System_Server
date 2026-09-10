@@ -15,7 +15,7 @@ import {
     ALIAS_COLUMN_PHONE_NUMBER,
     ALIAS_COLUMN_PROFILE_PICTURE_PATH,
     ALIAS_COLUMN_CREATED_AT_UTC,
-    ALIAS_COLUMN_UPDATED_AT_UTC, COLUMN_ID,
+    ALIAS_COLUMN_UPDATED_AT_UTC, COLUMN_ID, SORT_BY_NAME, ALIAS_TOTAL_NUMBER_OF_ORGANIZATIONS,
 } from "../databases/contracts/organization.contract.js"
 import {
     TABLE_NAME as LOCATION_TABLE_NAME,
@@ -36,20 +36,56 @@ import {
     ALIAS as USER_ALIAS,
     COLUMN_ORGANIZATION_ID as USER_COLUMN_ORGANIZATION_ID,
     COLUMN_UUID as USER_COLUMN_UUID,
-    COLUMN_EMAIL as USER_COLUMN_EMAIL,
+    COLUMN_EMAIL as USER_COLUMN_EMAIL, ALIAS_TOTAL_NUMBER_OF_USERS, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_ROLE,
 } from "../databases/contracts/user.contract.js"
 import {create as createLocation, updateLocation} from "./location.repository.js"
 import {Location, UpdateLocation} from "../models/location.model.js"
-import {CreateOrganization, UpdateOrganization, UpdateOrganizationByAdmin, OrganizationRow, Organization} from "../models/organization.model.js";
+import {
+    CreateOrganization, UpdateOrganization, UpdateOrganizationByAdmin, OrganizationRow, Organization,
+    QueryOrganization, OrganizationResponse
+} from "../models/organization.model.js";
 import {setUserOrganizationId} from "./user.repository.js";
 import {drizzleConnection} from "../databases/drizzle-connection.js";
 import {organizationTable} from "../drizzle-schemas/organizations.db.js";
 import {eq} from "drizzle-orm";
-export async function findAll():Promise<OrganizationRow[]>{
-    return (await pool.query(
-        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
+import {Order} from "../models/enums/order";
+import {QueryUser} from "../models/user.model";
+
+export async function findAll(query: QueryOrganization,): Promise<OrganizationResponse[]> {
+    const search = query.search ? `%${query.search}%` : null;
+    const sortColumnsDefinition = {
+        name: `${ALIAS}.${COLUMN_NAME}`,
+        createdAtUTC: `${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+    };
+    const sortColumn = sortColumnsDefinition[query.sortBy ?? SORT_BY_NAME];
+    const sortOrder = query.order?.toUpperCase() ?? Order.ASC;
+    const { status } = query.filter ?? {};
+    return (
+        await pool.query(
+        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME}, ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE},ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS}
+                         FROM ${TABLE_NAME} ${ALIAS}
+                         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} 
+                         ON ${ALIAS}.${COLUMN_LOCATION_ID}= ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
+                         WHERE
+                             ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1 OR ${ALIAS}.${COLUMN_PHONE_NUMBER} ILIKE $1)
+                         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS} = $2)
+                         ORDER BY ${sortColumn} ${sortOrder}, ${ALIAS}.${COLUMN_NAME}
+                         LIMIT $3
+                         OFFSET $4`,
+                         [search, status, query.limit, query.offset,],)).rows;
+}
+
+
+export async function countAll(query:QueryOrganization):Promise<number>{
+    const search=query.search?`%${query.search}%`: null
+    const {status}=query.filter??{}
+    return Number((await pool.query(
+        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_ORGANIZATIONS}
          FROM ${TABLE_NAME} ${ALIAS}
-         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows;
+         WHERE
+             ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1 OR ${ALIAS}.${COLUMN_PHONE_NUMBER} ILIKE $1)
+         AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS} = $2)`,
+        [search,status])).rows[0].totalNumberOfOrganizations)
 }
 
 export async function findByUuid(uuid:string):Promise<OrganizationRow>{
