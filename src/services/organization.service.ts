@@ -16,7 +16,6 @@ import {
 } from "../models/organization.model.js";
 import {isUserWorkingByUuid} from "./user.service.js";
 import {ForbiddenError} from "../errors/forbidden.error.js";
-import type {Request, Response} from "express";
 export async function getOrganizations(query: QueryOrganization):Promise<OrganizationResponse[]>{
     const result:OrganizationRow[]= await findAll(query)
     return result.map((row):OrganizationResponse=>({
