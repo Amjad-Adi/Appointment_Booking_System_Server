@@ -1,6 +1,7 @@
 import {ServiceResponse, Service, UpdateService, CreateService, QueryService} from "../models/service.model.js"
 import {pool} from "../databases/postgre-connection.js"
 import {
+    COLUMN_ID,
     COLUMN_UUID,
     COLUMN_NAME,
     COLUMN_ORGANIZATION_ID,
@@ -14,7 +15,22 @@ import {
     ALIAS,
     COLUMN_PICTURE_PATH, ALIAS_COLUMN_DURATION_IN_MINUTES, ALIAS_COLUMN_PICTURE_PATH, ALIAS_COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_UPDATED_AT_UTC, ALIAS_TOTAL_NUMBER_OF_SERVICES, SORT_BY_NAME
-} from "../databases/contracts/service.contract.js"
+} from "../databases/contracts/service.contract"
+import {
+    COLUMN_ID as COLUMN_SERVICE_CATEGORY_ID,
+    COLUMN_UUID as SERVICE_CATEGORY_COLUMN_UUID,
+    COLUMN_NAME as SERVICE_CATEGORY_COLUMN_NAME,
+    COLUMN_DESCRIPTION as SERVICE_CATEGORY_COLUMN_DESCRIPTION,
+    TABLE_NAME as SERVICE_CATEGORY_TABLE_NAME,
+    ALIAS as SERVICE_CATEGORY_ALIAS,
+    ALIAS_TOTAL_NUMBER_OF_SERVICE_CATEGORIES, ALIAS_CATEGORIES,
+} from "../databases/contracts/service-category.contract"
+import {
+    COLUMN_SERVICE_CATEGORY_ID as SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_CATEGORY_ID,
+    COLUMN_SERVICE_ID as SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_ID,
+    TABLE_NAME as SERVICE_JUNCTION_CATEGORY_TABLE_NAME,
+    ALIAS as SERVICE_JUNCTION_CATEGORY_ALIAS,
+} from "../databases/contracts/service-junction-category.contract"
 import {
     TABLE_NAME as ORGANIZATION_TABLE_NAME,
     ALIAS as ORGANIZATION_ALIAS,
@@ -27,56 +43,93 @@ import {
 } from "../databases/contracts/organization.contract.js"
 import {QueryUser} from  "../models/user.model.js";
 
-export async function findAll(query:QueryService,organizationUuid:string):Promise<ServiceResponse[]>{
-    const search=query.search?`%${query.search}%`: null
-    const sortColumnsDefinition={
-        name:`${ALIAS}.${COLUMN_NAME}`,
-        createdAtUTC:`${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
-        price:`${ALIAS}.${COLUMN_PRICE}`,
-        durationInMinutes:`${ALIAS}.${COLUMN_DURATION_IN_MINUTES}`
-    }
-    const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
-    const sortOrder = query.order?.toUpperCase() as string;
-    const {maxPrice,minPrice,status,}=query.filter??{}
+export async function findAll(query: QueryService): Promise<ServiceResponse[]> {
+    const search = query.search ? `%${query.search}%` : null;
+    const sortColumnsDefinition = {
+        name: `${ALIAS}.${COLUMN_NAME}`,
+        createdAtUTC: `${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+        price: `${ALIAS}.${COLUMN_PRICE}`,
+        durationInMinutes: `${ALIAS}.${COLUMN_DURATION_IN_MINUTES}`,
+    };
+    const sortColumn = sortColumnsDefinition[query.sortBy ?? SORT_BY_NAME];
+    const sortOrder = query.order?.toUpperCase() === "DESC" ? "DESC" : "ASC";
+    const { organizationUuid,maxPrice, minPrice, status, serviceCategoryUuid,} = query.filter ?? {};
     return (await pool.query(
-        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-         FROM ${TABLE_NAME} ${ALIAS}
-                  LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE
-             ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
-           AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $1)
-           AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}<=$2)
-           AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}>=$3)
-           AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$4)
-         ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
-             LIMIT $6
-         OFFSET $7`,
-        [organizationUuid,search, maxPrice,minPrice,status,query.limit,query.offset])).rows
+    `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+                    COALESCE((
+                         SELECT jsonb_agg(
+                                jsonb_build_object(${SERVICE_CATEGORY_COLUMN_UUID},  ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID}, ${SERVICE_CATEGORY_COLUMN_NAME}, ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME}, ${SERVICE_CATEGORY_COLUMN_DESCRIPTION}, ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_DESCRIPTION})
+                                ORDER BY ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME}
+                            )
+                            FROM ${SERVICE_JUNCTION_CATEGORY_TABLE_NAME} ${SERVICE_JUNCTION_CATEGORY_ALIAS}
+                            INNER JOIN ${SERVICE_CATEGORY_TABLE_NAME} ${SERVICE_CATEGORY_ALIAS}
+                            ON ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_CATEGORY_ID} =  ${SERVICE_CATEGORY_ALIAS}.${COLUMN_SERVICE_CATEGORY_ID}
+                            WHERE ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_ID} = ${ALIAS}.${COLUMN_ID}
+                            ),
+                            '[]'::jsonb
+                    )AS ${ALIAS_CATEGORIES}
+                    FROM ${TABLE_NAME} ${ALIAS}
+                    INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+                    ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}
+                    = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                    WHERE ($1::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1)
+                      AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
+                    AND ($3::NUMERIC IS NULL OR ${ALIAS}.${COLUMN_PRICE} <= $3)
+                    AND ($4::NUMERIC IS NULL OR ${ALIAS}.${COLUMN_PRICE} >= $4)
+                    AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS} = $5)
+                    AND ($6::UUID IS NULL OR EXISTS (SELECT 1
+                                                    FROM ${SERVICE_JUNCTION_CATEGORY_TABLE_NAME} ${SERVICE_JUNCTION_CATEGORY_ALIAS}
+                                                    INNER JOIN ${SERVICE_CATEGORY_TABLE_NAME} ${SERVICE_CATEGORY_ALIAS}
+                                                    ON ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_CATEGORY_ID} =  ${SERVICE_CATEGORY_ALIAS}.${COLUMN_SERVICE_CATEGORY_ID}
+                                                    WHERE ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_ID} = ${ALIAS}.${COLUMN_ID}
+                                                    AND ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID} = $6))
+                ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
+                LIMIT $7
+                OFFSET $8`, [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid, query.limit, query.offset,])).rows;
 }
 
-export async function countAll(query:QueryService,organizationUuid:string):Promise<number>{
-    const search=query.search?`%${query.search}%`: null
-    const {maxPrice,minPrice,status,}=query.filter??{}
+export async function countAll(query: QueryService): Promise<number> {
+    const search = query.search ? `%${query.search}%` : null;
+    const {organizationUuid,maxPrice, minPrice, status, serviceCategoryUuid,} = query.filter ?? {};
     return Number((await pool.query(
-        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_SERVICES}
-         FROM ${TABLE_NAME} ${ALIAS}
-         WHERE
-             ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
-           AND
-             ($2::TEXT IS NULL OR  ${ALIAS}.${COLUMN_NAME} ILIKE $1)
-           AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}<=$2)
-           AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}>=$3)
-           AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$4)`,
-        [organizationUuid,search, maxPrice,minPrice,status])).rows[0].totalNumberOfServices)
+`SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_SERVICES}
+                FROM ${TABLE_NAME} ${ALIAS}
+                INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+                ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                WHERE ($1::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1)
+                AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_NAME} ILIKE $2)
+                AND ($3::NUMERIC IS NULL OR ${ALIAS}.${COLUMN_PRICE} <= $3)
+                AND ($4::NUMERIC IS NULL OR ${ALIAS}.${COLUMN_PRICE} >= $4)
+                AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS} = $5)
+                AND ($6::UUID IS NULL OR EXISTS (SELECT 1
+                                                    FROM ${SERVICE_JUNCTION_CATEGORY_TABLE_NAME} ${SERVICE_JUNCTION_CATEGORY_ALIAS}
+                                                    INNER JOIN ${SERVICE_CATEGORY_TABLE_NAME} ${SERVICE_CATEGORY_ALIAS}
+                                                    ON ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_CATEGORY_ID} =  ${SERVICE_CATEGORY_ALIAS}.${COLUMN_SERVICE_CATEGORY_ID}
+                                                    WHERE ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_ID} = ${ALIAS}.${COLUMN_ID}
+                                                    AND ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID} = $6))`,
+                [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid])).rows[0].totalNumberOfServices);
 }
 
-export async function findByUuid(organizationUuid:string,serviceUuid:string):Promise<ServiceResponse>{
+export async function findByUuid(serviceUuid: string): Promise<ServiceResponse | undefined> {
     return (await pool.query(
-        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-         FROM ${TABLE_NAME} ${ALIAS}
-                  LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
-        [serviceUuid])).rows[0]
+`SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+                COALESCE((
+                        SELECT jsonb_agg(
+                           jsonb_build_object(${SERVICE_CATEGORY_COLUMN_UUID},  ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID}, ${SERVICE_CATEGORY_COLUMN_NAME}, ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME}, ${SERVICE_CATEGORY_COLUMN_DESCRIPTION}, ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_DESCRIPTION})
+                           ORDER BY ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME}
+                        )
+                        FROM ${SERVICE_JUNCTION_CATEGORY_TABLE_NAME} ${SERVICE_JUNCTION_CATEGORY_ALIAS}
+                        INNER JOIN ${SERVICE_CATEGORY_TABLE_NAME} ${SERVICE_CATEGORY_ALIAS}
+                        ON ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_CATEGORY_ID} =  ${SERVICE_CATEGORY_ALIAS}.${COLUMN_SERVICE_CATEGORY_ID}
+                        WHERE ${SERVICE_JUNCTION_CATEGORY_ALIAS}.${SERVICE_JUNCTION_CATEGORY_COLUMN_SERVICE_ID} = ${ALIAS}.${COLUMN_ID}
+                        ),
+                        '[]'::jsonb
+                )AS ${ALIAS_CATEGORIES}
+                FROM ${TABLE_NAME} ${ALIAS}
+                INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+                ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                WHERE ${ALIAS}.${COLUMN_UUID} = $2`,
+            [serviceUuid,])).rows[0];
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
@@ -90,7 +143,7 @@ export async function isNameFound(organizationUuid:string,name:string):Promise<b
 
 export async function create(service: CreateService):Promise<Service> {
     return (await pool.query(
-        `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH},${COLUMN_ORGANIZATION_ID})
+        `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} ,${COLUMN_PICTURE_PATH},${COLUMN_ORGANIZATION_ID})
          VALUES ($1,$2,$3,$4,$5,$6)
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
         [service.name, service.description,service.price,service.durationInMinutes,service.profilePicturePath,service.organizationId])).rows[0];
@@ -109,8 +162,21 @@ export async function update(service: UpdateService):Promise<Service> {
          WHERE ${COLUMN_UUID} = $7
            AND ${COLUMN_ORGANIZATION_ID}=
                (SELECT id
-                FROM TABLE ${ORGANIZATION_TABLE_NAME}
+                FROM ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_TABLE_NAME}
                 WHERE ${ORGANIZATION_COLUMN_UUID}=$8)
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
         [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid,service.organizationUuid])).rows[0];
+}
+
+export async function findIdByUuid(serviceUuid: string, organizationUuid: string): Promise<number|undefined> {
+    return (
+        await pool.query(
+`SELECT ${ALIAS}.${COLUMN_ID}
+                FROM ${TABLE_NAME} ${ALIAS}
+                INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+                ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                WHERE
+                ${ALIAS}.${COLUMN_UUID} = $1
+                AND ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $2`,
+            [serviceUuid, organizationUuid,])).rows[0]?.[COLUMN_ID];
 }

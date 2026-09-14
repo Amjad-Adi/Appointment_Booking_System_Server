@@ -7,11 +7,14 @@ import {
     isEmailFound,countAll,
     isPhoneNumberFound, findByUuid, findIdByUuid
 } from "../repositories/organizaiton.repository.js"
+import {
+   findByEmail
+} from "../repositories/user.repository"
 import {NotFoundError} from "../errors/not-found.error.js";
 import {BadRequestError} from "../errors/bad-request.error.js";
 import {ConflictError} from "../errors/conflict.error.js";
 import {
-    CreateOrganization, Organization, OrganizationResponse,
+    CreateOrganization, CreateOrganizationByAdmin, Organization, OrganizationResponse,
     OrganizationRow, QueryOrganization, UpdateOrganization, UpdateOrganizationByAdmin,
 } from "../models/organization.model.js";
 import {isUserWorkingByUuid} from "./user.service.js";
@@ -129,4 +132,25 @@ export async function getOrganizationIdByUuid(uuid:string):Promise<number>{
         throw new NotFoundError("Organization");
     }
     return result;
+}
+
+export async function createOrganizationByAdmin(
+    organization: CreateOrganizationByAdmin
+): Promise<Organization> {
+    const [emailFound,phoneNumberFound,user]=await Promise.all([await isEmailFound(organization.email),await isPhoneNumberFound(organization.phoneNumber), await findByEmail(organization.userEmail)])
+    if (user === undefined) {
+        throw new NotFoundError("User");
+    }
+    if(emailFound||phoneNumberFound||user.organizationUuid !== null){
+        throw new ConflictError()
+    }
+    const {
+        userEmail,
+        ...organizationData
+    } = organization;
+    const createData: CreateOrganization = {
+        ...organizationData,
+        organizationOwnerUuid: user.uuid,
+    };
+    return await createOrganization(createData);
 }

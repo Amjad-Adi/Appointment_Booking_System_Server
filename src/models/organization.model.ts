@@ -5,7 +5,7 @@ import {
     createOrganizationSchema,
     updateOrganizationSchema,
     updateOrganizationByAdminSchema,
-    queryOrganizationSchema
+    queryOrganizationSchema, createOrganizationByAdminSchema
 } from "../middlewares/zod-schemas/organization.schema.js"
 import {createLocationSchema} from "../middlewares/zod-schemas/location.schema.js";
 import {LocationResponse} from "./location.model.js";
@@ -53,3 +53,4 @@ export type CreateOrganization= z.infer<typeof createOrganizationSchema> & {orga
 export type UpdateOrganization= z.infer<typeof updateOrganizationSchema> & {uuid:string ,userUuid:string};
 export type UpdateOrganizationByAdmin= z.infer<typeof updateOrganizationByAdminSchema> & {uuid:string};
 export type QueryOrganization = z.infer<typeof queryOrganizationSchema> & { offset: number; };
+export type CreateOrganizationByAdmin = z.infer<typeof createOrganizationByAdminSchema>;

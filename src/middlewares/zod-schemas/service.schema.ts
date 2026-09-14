@@ -22,6 +22,8 @@ export const updateServiceSchema=createServiceSchema.partial().extend({
 
 
 export const serviceFilterSchema = z.object({
+    organizationUuid: z.uuid().optional(),
+    serviceCategoryUuid: z.uuid().optional(),
     minPrice: z.coerce.number().positive().optional(),
     maxPrice: z.coerce.number().positive().optional(),
     maxDurationInMinutes:z.coerce.number().positive().optional(),

@@ -4,10 +4,10 @@ CREATE TABLE users(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 first_name VARCHAR(64) NOT NULL,
-  last_name VARCHAR(64) NOT NULL,
+last_name VARCHAR(64) NOT NULL,
 email VARCHAR(320) UNIQUE NOT NULL,
 firebase_uid VARCHAR(128) NOT NULL,
-profile_picture_path TEXT DEFAULT 'DEFAULT_PICTURE_PATH',
+profile_picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 organization_id BIGINT,
@@ -20,6 +20,7 @@ DROP TABLE users;
 
 ALTER TABLE users ALTER COLUMN role CHECK (role in('SUPER ADMIN','WORKER','MANAGER', 'CRM', 'CUSTOMER')),
 ALTER TABLE users ALTER COLUMN language SET NOT NULL;
+ALTER TABLE users ALTER COLUMN profile_picture_path set DEFAULT 'DEFAULT_PICTURE_PATH';
 UPDATE users
 set language='en';
 
@@ -50,13 +51,14 @@ email VARCHAR(320) UNIQUE NOT NULL,
 phone_number VARCHAR(20),
 bio VARCHAR(4096),
 location_id BIGINT,
-profile_picture_path TEXT DEFAULT 'DEFAULT_PICTURE_PATH',
+profile_picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
-
+ALTER TABLE organizations ALTER COLUMN profile_picture_path set NOT NULL;
+DROP TABLE organizations;
 
 CREATE TABLE special_days(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -79,11 +81,31 @@ description VARCHAR(4096),
 price REAL NOT NULL,
 duration_in_minutes INTEGER NOT NULL,
 organization_id BIGINT NOT NULL,
-picture_path TEXT DEFAULT 'DEFAULT_PICTURE_PATH',
+picture_path TEXT  NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+CREATE TABLE service_categories(
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    uuid UUID DEFAULT gen_random_uuid() UNIQUE,
+    name VARCHAR(256) NOT NULL UNIQUE,
+    description VARCHAR(4096),
+	picture_path TEXT DEFAULT NOT NULL 'DEFAULT_PICTURE_PATH',
+    created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+    status VARCHAR(8) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')) DEFAULT 'ACTIVE',
+);
+
+CREATE TABLE service_category_junction(
+    service_category_id BIGINT NOT NULL,
+    service_id BIGINT NOT NULL,
+    PRIMARY KEY (service_category_id, service_id),
+    FOREIGN KEY (service_category_id) REFERENCES service_categories(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
 );
 
 CREATE TABLE customer_favourite_service(
@@ -263,8 +285,7 @@ organization_id BIGINT,
 day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('FRIDAY','SATURDAY','SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY')),
 start_time TIME,
 end_time TIME,
-
-UNIQUE(organization_id,day_of_week)
+UNIQUE(organization_id,day_of_week),
 FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -281,14 +302,51 @@ VALUES
     ('Ali', 'Naseem', 'alinaseem@gmail.com', 'Jilt7vIuzLVEg4aQ35fYOuEDqEz2', 'CUSTOMER'),
     ('Mohammad', 'Karam', 'testuser@gmail.com', 'mEKXUxFaO0UnGbMEp89hNZ9VsXG2', 'CUSTOMER'),
     ('Amjad', 'Adi', 'adminamjad123@gmail.com', 'mycFV8dE73XCBa6Tm4uZqa15mqf2', 'SUPER ADMIN');
-SELECT * FROM users;
+    ('Omar', 'Khaled', 'omarkhaled@gmail.com', 'aB7xKp92LmQ4RtY8NcV1sDf3GhJ5', 'CUSTOMER'),
+    ('Yousef', 'Ahmad', 'yousefahmad@gmail.com', 'pR4mTz81XqL6VnC2KbH9wFg5DsE7', 'CUSTOMER'),
+    ('Samer', 'Hassan', 'samerhassan@gmail.com', 'kN8vQx35LpR2MdT7YcF4sGh9WjA1', 'OWNER'),
+    ('Khaled', 'Nasser', 'khalednasser@gmail.com', 'uC6mZp19VrX5BnQ8LsD2fHg7JwE4', 'CUSTOMER'),
+    ('Tareq', 'Saleh', 'tareqsaleh@gmail.com', 'gF3xLw72QmN8RcY5VkP1dHs6AzB9', 'CUSTOMER'),
+    ('Rami', 'Odeh', 'ramiodeh@gmail.com', 'zT5nKq84XcM2LpR7VhD9sFg1WbE6', 'MANAGER'),
+    ('Laith', 'Mahmoud', 'laithmahmoud@gmail.com', 'dP8vYk31NqT6XmC4RsF2hGz9LbW5', 'CUSTOMER'),
+    ('Hani', 'Samir', 'hanisamir@gmail.com', 'mQ2xVn67KpR9TcL4YwF8sHd1ZgE3', 'WORKER'),
+    ('Fadi', 'Ibrahim', 'fadiibrahim@gmail.com', 'rL9cXk25VmT7QpN3HsD6wFg8YzA4', 'CUSTOMER'),
+    ('Anas', 'Kareem', 'anaskareem@gmail.com', 'bW4mZq83LpN6RxT1VcF7hDs9KgE2', 'CUSTOMER'),
+    ('Majd', 'Saeed', 'majdsaeed@gmail.com', 'nY7pQx42KmC9VtL5RsD3fHg8WbE1', 'CRM'),
+    ('Bilal', 'Hamad', 'bilalhamad@gmail.com', 'xC5vNk91QpL4MzT8YwR2sFd6GhA7', 'CUSTOMER'),
+    ('Zaid', 'Mansour', 'zaidmansour@gmail.com', 'qR8mXk36VpN2TcL7HsF5dGz1WbE9', 'CUSTOMER'),
+    ('Hamza', 'Adnan', 'hamzaadnan@gmail.com', 'sL3xQv75KmR1NzC8YpD6hFg4WbT2', 'OWNER'),
+    ('Suhail', 'Yasin', 'suhailyasin@gmail.com', 'vN6pKx29TcQ4LmR8YwF1sDg7HzE5', 'CUSTOMER');SELECT * FROM users;
+
+INSERT INTO locations (name, location_on_map)
+VALUES 
+    ('Downtown Business Center - Ramallah', ST_GeomFromText('POINT(35.2038 31.9038)', 4326)),
+    ('Old City Tech Hub - Jerusalem', ST_GeomFromText('POINT(35.2332 31.7767)', 4326)),
+    ('Al-Masyoun Heights - Ramallah', ST_GeomFromText('POINT(35.1972 31.8981)', 4326)),
+    ('University Square - Nablus', ST_GeomFromText('POINT(35.2343 32.2226)', 4326)),
+    ('Commercial Zone - Hebron', ST_GeomFromText('POINT(35.0998 31.5326)', 4326));
+
+INSERT INTO organizations (name, email, phone_number, bio, location_id, profile_picture_path, status)
+VALUES 
+    ('Apex Software Solutions', 'info@apexsolutions.ps', '+970599111222', 'Leading provider of enterprise software and web development services.', 10, 'organizations/apex_logo.png', 'ACTIVE'),
+    ('Jerusalem Creative Agency', 'contact@jcreatives.ps', '+970599222333', 'Full-service branding, digital marketing, and UI/UX design studio.', 11, 'organizations/jcreatives_logo.png', 'ACTIVE'),
+    ('Palestine Tech Incubator', 'support@paltech.ps', '+970599333444', 'Supporting tech startups with mentorship, seed funding, and workspace.', 12, 'organizations/paltech_logo.png', 'ACTIVE'),
+    ('Nablus Health & Wellness', 'care@nablushealth.ps', '+970599444555', 'Comprehensive wellness center and physical therapy clinic.', 13, 'organizations/nablus_health_logo.png', 'ACTIVE'),
+    ('Hebron Logistics & Trade', 'operations@hebronlogistics.ps', '+970599555666', 'Supply chain management, warehousing, and freight distribution.', 14, 'organizations/hebron_logistics_logo.png', 'ACTIVE');
+
+UPDATE users SET organization_id = 15 WHERE email = 'ahamdadi@gmail.com';       -- Owner
+UPDATE users SET organization_id = 16 WHERE email = 'ramiodeh@gmail.com';        -- Manager
+UPDATE users SET organization_id = 17 WHERE email = 'hamzaadnan@gmail.com';      -- Owner
+UPDATE users SET organization_id = 18 WHERE email = 'hanisamir@gmail.com';       -- Worker
+UPDATE users SET organization_id = 19 WHERE email = 'majdsaeed@gmail.com';        -- CRM
+
 SELECT * FROM locations;
 SELECT * FROM organizations;
 SELECT * FROM services;
 SELECT * FROM blacklisted_token;
 SELECT * FROM invitations;
 DELETE FROM users;
-
+DELETE  FROM organizations;
 SELECT (created_at_utc+(INTERVAL '7 DAYS')) FROM users;
 
 --check if today is not a special day for organizaiton

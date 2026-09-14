@@ -26,6 +26,7 @@ import {authenticateToken} from "../controllers/authentication/jwt.authenticatio
 export const userRouter=express.Router()
 userRouter.route("/")
     .get(authenticateToken,authorize(READ_USERS),validateQuery(queryUserSchema),handleGetUsers)
+    .post(authenticateToken, authorize(CREATE_USER),handleCreateUser)
 
 userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)

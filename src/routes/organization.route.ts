@@ -1,6 +1,7 @@
 import express from "express";
 import {validateBody, validateBodyByRole, validateParameter, validateQuery} from "../middlewares/validaiton.js";
 import {
+    createOrganizationByAdminSchema,
     createOrganizationSchema,
     queryOrganizationSchema,
     updateOrganizationByAdminSchema,
@@ -22,7 +23,11 @@ import {validateUuid} from "../middlewares/zod-schemas/parameters.schema.js";
 import {sendInvitationRouter} from "./sent-invitation.route.js";
 import { Role } from "../models/enums/roles.js";
 import {roomRouter} from "./room.route.js";
-const roleSchemas={
+const updateRoleSchemas={
+    [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
+    [Role.OWNER]:updateOrganizationSchema,
+};
+const createRoleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
 };
@@ -30,11 +35,10 @@ export const organizationRouter=express.Router()
 organizationRouter
     .route("/")
     .get(authenticateToken, validateQuery(queryOrganizationSchema), handleGetOrganizations)
-    .post(authenticateToken,authorize(CREATE_ORGANIZATION),validateBody(createOrganizationSchema),handleCreateOrganization)
-
+    .post(authenticateToken, authorize(CREATE_ORGANIZATION), validateBodyByRole(createRoleSchemas), handleCreateOrganization);
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
 organizationRouter.use("/:organizationUuid/rooms",validateParameter(validateUuid,"organizationUuid"),roomRouter)
 organizationRouter.use("/:organizationUuid/invitations",validateParameter(validateUuid,"organizationUuid"),sendInvitationRouter)
 organizationRouter.route("/:organizationUuid")
     .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string
-    .patch(authenticateToken,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(roleSchemas),handleUpdateOrganization)
+    .patch(authenticateToken,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(updateRoleSchemas),handleUpdateOrganization)
