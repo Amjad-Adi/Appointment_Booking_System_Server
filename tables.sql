@@ -93,19 +93,18 @@ CREATE TABLE service_categories(
     uuid UUID DEFAULT gen_random_uuid() UNIQUE,
     name VARCHAR(256) NOT NULL UNIQUE,
     description VARCHAR(4096),
-	picture_path TEXT DEFAULT NOT NULL 'DEFAULT_PICTURE_PATH',
+	picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
     created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-    status VARCHAR(8) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')) DEFAULT 'ACTIVE',
+    status VARCHAR(8) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')) DEFAULT 'ACTIVE'
 );
 
-CREATE TABLE service_category_junction(
+CREATE TABLE service_junction_category(
     service_category_id BIGINT NOT NULL,
     service_id BIGINT NOT NULL,
     PRIMARY KEY (service_category_id, service_id),
     FOREIGN KEY (service_category_id) REFERENCES service_categories(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CASCADE,
-
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE TABLE customer_favourite_service(
@@ -339,8 +338,7 @@ UPDATE users SET organization_id = 16 WHERE email = 'ramiodeh@gmail.com';       
 UPDATE users SET organization_id = 17 WHERE email = 'hamzaadnan@gmail.com';      -- Owner
 UPDATE users SET organization_id = 18 WHERE email = 'hanisamir@gmail.com';       -- Worker
 UPDATE users SET organization_id = 19 WHERE email = 'majdsaeed@gmail.com';        -- CRM
-
-SELECT * FROM locations;
+SELECT * FROM users;
 SELECT * FROM organizations;
 SELECT * FROM services;
 SELECT * FROM blacklisted_token;
@@ -382,3 +380,349 @@ AND NOT EXISTS (
     AND a.start_time<$2+s.duration_in_minutes
 AND a.end_time>$2
 );
+
+-- ============================================================
+-- Service Categories
+-- ============================================================
+
+INSERT INTO service_categories
+    (name, description, picture_path, status)
+VALUES
+    (
+        'Software Development',
+        'Custom software, web applications, backend systems, and application development.',
+        'service-categories/software-development.png',
+        'ACTIVE'
+    ),
+    (
+        'Web Development',
+        'Design and development of modern responsive websites and web applications.',
+        'service-categories/web-development.png',
+        'ACTIVE'
+    ),
+    (
+        'UI/UX Design',
+        'User interface and user experience design for websites and digital products.',
+        'service-categories/ui-ux-design.png',
+        'ACTIVE'
+    ),
+    (
+        'Digital Marketing',
+        'Digital marketing, search engine optimization, social media, and online advertising.',
+        'service-categories/digital-marketing.png',
+        'ACTIVE'
+    ),
+    (
+        'Business Consulting',
+        'Professional consulting services for business strategy, technology, and operations.',
+        'service-categories/business-consulting.png',
+        'ACTIVE'
+    ),
+    (
+        'Physical Therapy',
+        'Physical therapy and rehabilitation services for mobility and recovery.',
+        'service-categories/physical-therapy.png',
+        'ACTIVE'
+    ),
+    (
+        'Wellness',
+        'Health, wellness, and personal wellbeing services.',
+        'service-categories/wellness.png',
+        'ACTIVE'
+    ),
+    (
+        'Logistics',
+        'Supply chain, freight, warehousing, and logistics management services.',
+        'service-categories/logistics.png',
+        'ACTIVE'
+    ),
+    (
+        'Training',
+        'Professional training, workshops, and technical education services.',
+        'service-categories/training.png',
+        'ACTIVE'
+    );
+
+
+-- ============================================================
+-- Services
+--
+-- organization_id:
+-- 10 = Apex Software Solutions
+-- 11 = Jerusalem Creative Agency
+-- 12 = Palestine Tech Incubator
+-- 13 = Nablus Health & Wellness
+-- 14 = Hebron Logistics & Trade
+-- ============================================================
+
+INSERT INTO services
+    (
+        name,
+        description,
+        price,
+        duration_in_minutes,
+        organization_id,
+        picture_path,
+        status
+    )
+VALUES
+
+-- ------------------------------------------------------------
+-- Apex Software Solutions (10)
+-- ------------------------------------------------------------
+
+(
+    'Custom Web Application',
+    'Development of a custom web application based on the organization''s business requirements.',
+    850,
+    240,
+    15,
+    'services/custom-web-application.png',
+    'ACTIVE'
+),
+(
+    'Backend API Development',
+    'Design and development of secure REST APIs and backend services.',
+    600,
+    180,
+    15,
+    'services/backend-api.png',
+    'ACTIVE'
+),
+(
+    'Software Architecture Consultation',
+    'Technical consultation covering application architecture, databases, APIs, and scalability.',
+    120,
+    60,
+    15,
+    'services/software-architecture.png',
+    'ACTIVE'
+),
+(
+    'Database Design',
+    'Database modeling, normalization, indexing, and query optimization.',
+    250,
+    90,
+    15,
+    'services/database-design.png',
+    'ACTIVE'
+),
+
+-- ------------------------------------------------------------
+-- Jerusalem Creative Agency (11)
+-- ------------------------------------------------------------
+
+(
+    'Brand Identity Design',
+    'Complete visual identity design including logo concepts, typography, and brand guidelines.',
+    500,
+    180,
+    16,
+    'services/brand-identity.png',
+    'ACTIVE'
+),
+(
+    'UI/UX Design',
+    'User interface and user experience design for websites and digital applications.',
+    450,
+    180,
+    16,
+    'services/ui-ux-design.png',
+    'ACTIVE'
+),
+(
+    'Social Media Campaign',
+    'Planning and designing a digital social media campaign for a business or product.',
+    300,
+    120,
+    16,
+    'services/social-media-campaign.png',
+    'ACTIVE'
+),
+(
+    'Website Design',
+    'Modern responsive website design tailored to the organization''s brand.',
+    650,
+    240,
+    16,
+    'services/website-design.png',
+    'ACTIVE'
+),
+
+-- ------------------------------------------------------------
+-- Palestine Tech Incubator (12)
+-- ------------------------------------------------------------
+
+(
+    'Startup Consultation',
+    'One-on-one consultation covering startup strategy, technology, and product development.',
+    100,
+    60,
+    17,
+    'services/startup-consultation.png',
+    'ACTIVE'
+),
+(
+    'Technical Mentoring',
+    'Technical mentoring for software development teams and early-stage startups.',
+    80,
+    60,
+    17,
+    'services/technical-mentoring.png',
+    'ACTIVE'
+),
+(
+    'Product Development Workshop',
+    'Interactive workshop covering product planning, validation, and development processes.',
+    250,
+    180,
+    17,
+    'services/product-workshop.png',
+    'ACTIVE'
+),
+(
+    'Startup Training Session',
+    'Training session covering essential topics for launching and managing a technology startup.',
+    150,
+    120,
+    17,
+    'services/startup-training.png',
+    'ACTIVE'
+),
+
+-- ------------------------------------------------------------
+-- Nablus Health & Wellness (13)
+-- ------------------------------------------------------------
+
+(
+    'Initial Physical Therapy Assessment',
+    'Comprehensive assessment to evaluate mobility, movement, and rehabilitation needs.',
+    50,
+    60,
+    18,
+    'services/physical-therapy-assessment.png',
+    'ACTIVE'
+),
+(
+    'Physical Therapy Session',
+    'Individual physical therapy session focused on rehabilitation and mobility.',
+    40,
+    60,
+    18,
+    'services/physical-therapy.png',
+    'ACTIVE'
+),
+(
+    'Wellness Consultation',
+    'Personal wellness consultation focused on general wellbeing and healthy routines.',
+    35,
+    45,
+    18,
+    'services/wellness-consultation.png',
+    'ACTIVE'
+),
+(
+    'Rehabilitation Session',
+    'Guided rehabilitation session tailored to an individual recovery plan.',
+    45,
+    60,
+    18,
+    'services/rehabilitation.png',
+    'ACTIVE'
+),
+
+-- ------------------------------------------------------------
+-- Hebron Logistics & Trade (14)
+-- ------------------------------------------------------------
+
+(
+    'Logistics Consultation',
+    'Consultation for optimizing transportation, warehousing, and supply chain operations.',
+    150,
+    90,
+    19,
+    'services/logistics-consultation.png',
+    'ACTIVE'
+),
+(
+    'Freight Planning',
+    'Planning and coordination of freight transportation and distribution.',
+    250,
+    120,
+    19,
+    'services/freight-planning.png',
+    'ACTIVE'
+),
+(
+    'Warehouse Management Consultation',
+    'Professional consultation for improving warehouse organization and operations.',
+    180,
+    90,
+    19,
+    'services/warehouse-management.png',
+    'ACTIVE'
+),
+(
+    'Supply Chain Assessment',
+    'Analysis of supply chain processes with recommendations for operational improvements.',
+    300,
+    150,
+    19,
+    'services/supply-chain-assessment.png',
+    'ACTIVE'
+);
+
+
+-- ============================================================
+-- Service ↔ Category relationships
+-- ============================================================
+
+-- Apex Software Solutions
+INSERT INTO service_junction_category (service_category_id, service_id)
+SELECT c.id, s.id
+FROM service_categories c
+JOIN services s ON
+    (s.name = 'Custom Web Application' AND c.name IN ('Software Development', 'Web Development'))
+ OR (s.name = 'Backend API Development' AND c.name IN ('Software Development'))
+ OR (s.name = 'Software Architecture Consultation' AND c.name IN ('Software Development', 'Business Consulting'))
+ OR (s.name = 'Database Design' AND c.name IN ('Software Development'));
+
+-- Jerusalem Creative Agency
+INSERT INTO service_junction_category (service_category_id, service_id)
+SELECT c.id, s.id
+FROM service_categories c
+JOIN services s ON
+    (s.name = 'Brand Identity Design' AND c.name IN ('UI/UX Design'))
+ OR (s.name = 'UI/UX Design' AND c.name IN ('UI/UX Design', 'Web Development'))
+ OR (s.name = 'Social Media Campaign' AND c.name IN ('Digital Marketing'))
+ OR (s.name = 'Website Design' AND c.name IN ('Web Development', 'UI/UX Design'));
+
+-- Palestine Tech Incubator
+INSERT INTO service_junction_category (service_category_id, service_id)
+SELECT c.id, s.id
+FROM service_categories c
+JOIN services s ON
+    (s.name = 'Startup Consultation' AND c.name IN ('Business Consulting'))
+ OR (s.name = 'Technical Mentoring' AND c.name IN ('Training', 'Software Development'))
+ OR (s.name = 'Product Development Workshop' AND c.name IN ('Training', 'Software Development'))
+ OR (s.name = 'Startup Training Session' AND c.name IN ('Training'));
+
+-- Nablus Health & Wellness
+INSERT INTO service_junction_category (service_category_id, service_id)
+SELECT c.id, s.id
+FROM service_categories c
+JOIN services s ON
+    (s.name = 'Initial Physical Therapy Assessment' AND c.name IN ('Physical Therapy'))
+ OR (s.name = 'Physical Therapy Session' AND c.name IN ('Physical Therapy'))
+ OR (s.name = 'Wellness Consultation' AND c.name IN ('Wellness'))
+ OR (s.name = 'Rehabilitation Session' AND c.name IN ('Physical Therapy', 'Wellness'));
+
+-- Hebron Logistics & Trade
+INSERT INTO service_junction_category (service_category_id, service_id)
+SELECT c.id, s.id
+FROM service_categories c
+JOIN services s ON
+    (s.name = 'Logistics Consultation' AND c.name IN ('Logistics', 'Business Consulting'))
+ OR (s.name = 'Freight Planning' AND c.name IN ('Logistics'))
+ OR (s.name = 'Warehouse Management Consultation' AND c.name IN ('Logistics', 'Business Consulting'))
+ OR (s.name = 'Supply Chain Assessment' AND c.name IN ('Logistics', 'Business Consulting'));
