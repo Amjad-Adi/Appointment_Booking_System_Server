@@ -1,5 +1,5 @@
 import {
-    create as createRefreshTokenService, findRefreshToken, remove,revoke
+    create as createRefreshTokenRepository, findRefreshToken, remove,revoke
 } from "../repositories/refresh-token.repository"
 import {CreateRefreshToken, RefreshToken} from "../models/refresh-token.model";
 import {findBlacklistedToken,create as createBlacklistedTokenService} from "../repositories/blacklisted-token.repository";
@@ -21,7 +21,7 @@ export async function createBlacklistedToken(blacklistedToken:CreateBlacklistedT
 
 
 export async function createRefreshToken(refreshToken:CreateRefreshToken):Promise<RefreshToken>{
-    const result:RefreshToken= await createRefreshTokenService(refreshToken)
+    const result:RefreshToken= await createRefreshTokenRepository(refreshToken)
     if(result===undefined){
         throw new Error()
     }

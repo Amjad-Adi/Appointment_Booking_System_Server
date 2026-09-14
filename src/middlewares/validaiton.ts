@@ -10,6 +10,7 @@ export function validateBody(schema:z.ZodSchema) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
         const result = schema.safeParse(req.body);
         if (!result.success) {
+            console.log(result);
             throw new BadRequestError();
         }
         req.body = result.data;

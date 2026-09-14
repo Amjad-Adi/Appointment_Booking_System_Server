@@ -25,10 +25,10 @@ export async function findRefreshToken(hashedRefreshToken:string):Promise<Refres
 
 export async function create(refreshToken: CreateRefreshToken):Promise<RefreshToken> {
     return (await pool.query(
-        `INSERT INTO ${TABLE_NAME}(${COLUMN_USER_ID},${COLUMN_TOKEN_HASH})
-                    VALUES ($1,$2)
+        `INSERT INTO ${TABLE_NAME}(${COLUMN_USER_ID},${COLUMN_TOKEN_HASH},${COLUMN_EXPIRES_AT_UTC})
+                    VALUES ($1,$2,$3)
                     RETURNING ${COLUMN_USER_ID} AS ${ALIAS_COLUMN_USER_ID},${COLUMN_TOKEN_HASH} AS ${ALIAS_COLUMN_TOKEN_HASH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_EXPIRES_AT_UTC} AS ${ALIAS_COLUMN_EXPIRES_AT_UTC},${COLUMN_REVOKED},${COLUMN_REVOKED_AT_UTC} AS ${ALIAS_COLUMN_REVOKED_AT_UTC}`,
-        [refreshToken.userId, refreshToken.tokenHash])).rows[0];
+        [refreshToken.userId, refreshToken.tokenHash,refreshToken.expiresAtUTC])).rows[0];
 }
 export async function revoke(tokenHash:string):Promise<void> {
     (await pool.query(

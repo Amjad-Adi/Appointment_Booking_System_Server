@@ -1,5 +1,5 @@
 import {
-    createOrganization, getNumberOfOrganizations,
+    createOrganization, createOrganizationByAdmin, getNumberOfOrganizations,
     getOrganization,
     getOrganizations, getUserOrganization,
     updateOrganization,
@@ -7,7 +7,7 @@ import {
 } from "../services/organization.service.js"
 import {type Request, type Response} from "express";
 import {
-    CreateOrganization,
+    CreateOrganization, CreateOrganizationByAdmin,
     Organization,
     OrganizationResponse, QueryOrganization,
     UpdateOrganization,
@@ -32,11 +32,19 @@ export async function handleGetOrganization(req:Request,res:Response){
     return res.status(200).json(result)
 }
 
-export async function handleCreateOrganization(req:Request,res:Response){
-    const organization:CreateOrganization=(req.body)
-    organization.organizationOwnerUuid=req.user.uuid;
-    const result:Organization=await createOrganization(organization)
-    return res.status(201).json(result)
+export async function handleCreateOrganization(req:Request,res:Response) {
+    let result: Organization;
+    if (req.user.role === Role.SUPER_ADMIN) {
+        const organization: CreateOrganizationByAdmin = req.body;
+        result = await createOrganizationByAdmin(organization);
+    } else {
+        const organization: CreateOrganization = {
+            ...req.body,
+            organizationOwnerUuid: req.user.uuid,
+        };
+        result = await createOrganization(organization);
+    }
+    return res.status(201).json(result);
 }
 
 export async function handleUpdateOrganization(req:Request,res:Response){

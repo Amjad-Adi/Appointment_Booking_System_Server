@@ -19,7 +19,9 @@ import {getBlackListedToken} from "../../services/jwt-management-service";
 export const JWT_SECRET=process.env.JWT_SECRET as string
 export const ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT="12h";
 export const ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT="1d";
-
+export const REFRESH_TOKEN_EXPIRES_FOR_DEVELOPMENT =365*24*60*60*1000
+export const REFRESH_TOKEN_EXPIRES_FOR_DEPLOYMENT = 365*24*60*60*1000
+export const refreshTokenExpiresIn = process.env.NODE_ENV === "development" ? REFRESH_TOKEN_EXPIRES_FOR_DEVELOPMENT : REFRESH_TOKEN_EXPIRES_FOR_DEPLOYMENT;
 export async function authenticateToken(req:Request,res:Response,next:NextFunction){
     const token = req.cookies.accessToken;
     if (!token) {
@@ -65,7 +67,7 @@ export async function generateToken(userUid:string){
         sub: userUid
     };
     const signOptions:SignOptions={
-        expiresIn: process.env.NODE_ENV=="development"?ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT:ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT,
+        expiresIn: process.env.NODE_ENV=="development"?ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT:ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT,
         issuer:"appointment-booking-server",
         audience:"appointment-booking-api",
         jwtid:crypto.randomUUID()
@@ -75,9 +77,11 @@ export async function generateToken(userUid:string){
     const refreshHashedToken:string=hashRefreshToken(refreshToken)
     const currentUser:UserResponse = await getUserByFireBaseUid(userUid);
     const currentUserId:number=await getUserIdByUuid(currentUser.uuid);
+
     const refreshTokenToStore:CreateRefreshToken={
         userId: currentUserId,
-        tokenHash:refreshHashedToken
+        tokenHash:refreshHashedToken,
+        expiresAtUTC: new Date(Date.now() +refreshTokenExpiresIn),
     }
     await createRefreshToken(refreshTokenToStore)
     return {accessToken,refreshToken}

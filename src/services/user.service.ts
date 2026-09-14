@@ -4,7 +4,7 @@ import {
     create,
     update,
     updateByAdmin,
-    isEmailFound,
+    findByEmail,
     findByUid, findIdByUuid, findUidByUuid, findById, countAll
 } from "../repositories/user.repository.js"
 import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User, QueryUser} from "../models/user.model.js";
@@ -47,7 +47,7 @@ export async function getUserById(id:number):Promise<UserResponse>{
 }
 
 export async function createUser(user:CreateUser):Promise<User>{
-    if(await isEmailFound(user.email)===true) {
+    if(await findByEmail(user.email)!==undefined) {
         throw new ConflictError()
     }
     const result:User= await create(user)

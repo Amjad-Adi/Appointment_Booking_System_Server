@@ -9,7 +9,7 @@ import {
     CREATE_ROOM,
     UPDATE_ROOM,
     UPDATE_SERVICE,
-    READ_ORGANIZATION_INVITATIONS, CREATE_ORGANIZATION_INVITATIONS
+    READ_ORGANIZATION_INVITATIONS, CREATE_ORGANIZATION_INVITATIONS, CREATE_SERVICE_CATEGORY
 } from "./permissions.js";
 import {Role} from "../models/enums/roles.js";
 const customerPermissions:string[]=[
@@ -17,15 +17,13 @@ const customerPermissions:string[]=[
 ]
 
 const workerPermissions:string[]=[
-    ...customerPermissions,
+
 ]
 
 const crmPermissions:string[]=[
-    ...workerPermissions,
 ]
 
 const managerPermissions:string[]=[
-    ...crmPermissions,
     READ_ORGANIZATION_INVITATIONS,
     CREATE_ORGANIZATION_INVITATIONS,
     CREATE_SERVICE,
@@ -41,18 +39,18 @@ const ownerPermissions:string[]=[
 ]
 
 const superAdminPermissions:string[]=[
-    ...ownerPermissions,
     UPDATE_USER_AS_ADMIN,
     UPDATE_ORGANIZATION_AS_ADMIN,
     CREATE_USER,
     READ_USERS,
-    UPDATE_SERVICE
+    CREATE_SERVICE_CATEGORY,
+    CREATE_SERVICE_CATEGORY
 ]
-export const rolesPermissions : Record<Role, string[]>= {
+export const rolesPermissions: Record<Role, string[]> = {
     [Role.SUPER_ADMIN]: superAdminPermissions,
     [Role.OWNER]: ownerPermissions,
     [Role.MANAGER]: managerPermissions,
     [Role.CRM]: crmPermissions,
-    [Role.WORKER]:workerPermissions,
-    [Role.CUSTOMER]:customerPermissions
-}
+    [Role.WORKER]: workerPermissions,
+    [Role.CUSTOMER]: customerPermissions,
+};

@@ -2,7 +2,7 @@ import type {CookieOptions, NextFunction, Request, Response} from "express";
 import {fireBaseLogIn, invitationReceive} from "../../services/firebase-client.service.js";
 import {getAuth} from "firebase/auth";
 import {UnauthorizedError} from "../../errors/unauthorized.error.js";
-import {generateToken} from "./jwt.authentication.controller.js";
+import {generateToken, refreshTokenExpiresIn} from "./jwt.authentication.controller.js";
 import {UserResponse} from "../../models/user.model.js";
 import {getUserUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/user.service.js";
 import {mapFirebaseError} from "../../middlewares/map-firebase-error.js";
@@ -22,9 +22,13 @@ const cookieOptions:CookieOptions = {
     secure:true,
     sameSite:'strict',
 }
-const accessCookieOptions:CookieOptions=cookieOptions&& {maxAge:30*60*1000,}
+const accessCookieOptions: CookieOptions = cookieOptions&& {maxAge:
+        process.env.NODE_ENV === "development"
+            ? 25 * 60 * 60 * 1000
+            : 13 * 60 * 60 * 1000,
+};
 
-const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:365*24*60*60*1000,}
+const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:refreshTokenExpiresIn+60*60*1000}
 
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
@@ -37,7 +41,7 @@ export async function login(req: Request, res: Response, next: NextFunction){
         const tokens=await generateToken(uid);
         res.cookie('accessToken',tokens.accessToken,accessCookieOptions);
         res.cookie('refreshToken',tokens.refreshToken,refreshCookieOptions);
-        res.status(200).json({user});
+        res.status(200).json(user);
 }
 
 export async function invitationLogin(req: Request, res: Response, next: NextFunction){
@@ -88,5 +92,5 @@ export async function logOut(req: Request, res: Response, next: NextFunction){
     const refreshTokenString=req.cookies.refreshToken as string;
         await revokeToken(refreshTokenString)
     res.clearCookie('refreshToken');
-    res.json({ message: 'Logged out successfully' });
+    res.status(204).send();
 }
