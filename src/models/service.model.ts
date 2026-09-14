@@ -6,12 +6,8 @@ import {
     updateServiceSchema
 } from "../middlewares/zod-schemas/service.schema.js"
 import {DataResponses} from "./query.model.js";
+import {ServiceCategory} from "./service-category.model";
 
-export interface ServiceCategorySummary {
-    uuid:string,
-    name:string,
-    description:string,
-}
 
 export interface Service{
     uuid:string,
@@ -29,7 +25,7 @@ export interface ServiceResponse extends Service, DataResponses {
     organizationUuid: string;
     organizationName: string;
     profilePicturePath: string;
-    categories: ServiceCategorySummary[];
+    categories: ServiceCategory[];
 }
 
 export type OrganizationServiceResponseService=Service;

@@ -7,6 +7,7 @@ import {RATE_LIMIT_FOR_GENERAL, rateLimit, rateLimiterFactory} from "../middlewa
 import {receiveInvitationRouter} from "./receive-invitation.route.js";
 import {publicServiceRoute} from "./service.route";
 import {serviceCategoryRouter} from "./service-category.route";
+import {publicRoomRoute} from "./room.route";
 
 export const mainRouter=express.Router()
 
@@ -17,3 +18,4 @@ mainRouter.use("/auth",authenticationRouter)
 mainRouter.use("/invitations", receiveInvitationRouter)
 mainRouter.use("/services/categories",serviceCategoryRouter)
 mainRouter.use("/services",publicServiceRoute)
+mainRouter.use("/rooms",publicRoomRoute)

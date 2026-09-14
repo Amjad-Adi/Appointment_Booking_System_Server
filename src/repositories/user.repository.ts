@@ -50,34 +50,38 @@ export async function findAll(query:QueryUser):Promise<UserResponse[]>{
     }
     const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
     const sortOrder =query?.order?.toUpperCase() ?? Order.ASC;
-    const {role,status}=query.filter??{}
+    const {role, status, organizationUuid,} = query.filter ?? {};
     return (await pool.query(
         `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},${ALIAS}.${COLUMN_LAST_NAME} AS ${ALIAS_COLUMN_LAST_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_LANGUAGE},${ALIAS}.${COLUMN_ROLE}, ${ALIAS}.${COLUMN_STATUS}
          FROM ${TABLE_NAME} ${ALIAS}
          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
-         ON ${ALIAS}.${COLUMN_ORGANIZATION_ID} = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+         ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
          WHERE 
          ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1)
          AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_ROLE}=$2)
          AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+         AND ($4::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $4)
          ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME}
-         LIMIT $4
-         OFFSET $5`,
-       [search, role,status,query.limit,query.offset])).rows
+         LIMIT $5
+         OFFSET $6`,
+       [search, role,status,organizationUuid,query.limit,query.offset])).rows
 }
 
 
 export async function countAll(query:QueryUser):Promise<number>{
     const search=query.search?`%${query.search}%`: null
-    const {role,status}=query.filter??{}
+    const {role, status, organizationUuid,} = query.filter ?? {};
     return Number((await pool.query(
         `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_USERS}
-         FROM ${TABLE_NAME}
+         FROM ${TABLE_NAME} ${ALIAS}
+          LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+          ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
          WHERE
-         ($1::TEXT IS NULL OR ${COLUMN_FIRST_NAME}||' '||${COLUMN_LAST_NAME} ILIKE $1 OR ${COLUMN_EMAIL} ILIKE $1)
-         AND ($2::TEXT IS NULL OR ${COLUMN_ROLE}=$2)
-         AND ($3::TEXT IS NULL OR ${COLUMN_STATUS}=$3)`,
-        [search,  role,status])).rows[0].totalNumberOfUsers)
+             ($1::TEXT IS NULL OR ${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME} ILIKE $1 OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $1)
+           AND ($2::TEXT IS NULL OR ${ALIAS}.${COLUMN_ROLE}=$2)
+           AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$3)
+           AND ($4::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $4)`,
+        [search,  role,status,organizationUuid])).rows[0].totalNumberOfUsers)
 }
 
 

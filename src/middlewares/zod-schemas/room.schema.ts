@@ -7,20 +7,33 @@ import {
 } from "../../databases/contracts/room.contract.js";
 export const createRoomSchema=z.object({
     name:z.string().trim().nonempty().max(256),
-    description:z.string().trim().nonempty().max(4096).optional(),
+    description: z
+        .string()
+        .trim()
+        .max(4096, 'Description must not exceed 4096 characters')
+        .transform((value) => (value === '' ? null : value))
+        .nullable()
+        .optional(),
 }).strict()
 
 
 export const updateRoomSchema=z.object({
     name:z.string().trim().nonempty().max(256).optional(),
-    description:z.string().trim().nonempty().max(4096).optional(),
-    assignedUserUuid:z.uuid(),
+    description: z
+        .string()
+        .trim()
+        .max(4096, 'Description must not exceed 4096 characters')
+        .transform((value) => (value === '' ? null : value))
+        .nullable()
+        .optional(),
+    assignedUserUuid: z.uuid().nullable().optional(),
     status:z.enum(ActivationStatus).optional(),
     occupancyStatus:z.enum(RoomOccupancyStatus).optional(),
 }).strict()
 
 
 export const roomFilterSchema = z.object({
+    organizationUuid: z.uuid('Invalid organization UUID').optional(),
     status:z.enum(ActivationStatus).optional(),
     occupancyStatus:z.enum(RoomOccupancyStatus).optional(),
 }).strict();
