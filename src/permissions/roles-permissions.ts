@@ -21,6 +21,7 @@ const workerPermissions:string[]=[
 ]
 
 const crmPermissions:string[]=[
+    READ_USERS
 ]
 
 const managerPermissions:string[]=[
@@ -28,6 +29,7 @@ const managerPermissions:string[]=[
     CREATE_ORGANIZATION_INVITATIONS,
     CREATE_SERVICE,
     UPDATE_SERVICE,
+    READ_USERS,
     CREATE_ROOM,
     UPDATE_ROOM
 ]

@@ -9,7 +9,13 @@ import {
 } from "../../databases/contracts/service.contract.js";
 export const createServiceSchema=z.object({
     name:z.string().trim().nonempty().max(256),
-    description:z.string().trim().nonempty().max(4096).optional(),
+    description: z
+        .string()
+        .trim()
+        .max(4096, 'Description must not exceed 4096 characters')
+        .transform((value) => (value === '' ? null : value))
+        .nullable()
+        .optional(),
     price:z.number(),
     durationInMinutes:z.number().int().positive(),
     profilePicturePath:z.string().trim().nonempty().optional()

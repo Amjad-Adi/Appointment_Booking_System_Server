@@ -24,5 +24,5 @@ export interface RoomResponse extends Room,DataResponses{
 }
 
 export type CreateRoom= z.infer<typeof createRoomSchema> & {organizationUuid:string,organizationId:number;};
-export type UpdateRoom= z.infer<typeof updateRoomSchema> & {uuid:string,organizationUuid:string,userUuid:string,assignedUserId:number;};
+export type UpdateRoom= z.infer<typeof updateRoomSchema> & {uuid:string,organizationUuid:string,userUuid:string,    assignedUserId?: number | null; };
 export type QueryRoom=z.infer<typeof queryRoomSchema>&{offset:number};
