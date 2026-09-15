@@ -280,7 +280,7 @@ DROP TABLE invitations;
 CREATE TABLE working_hours(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
-organization_id BIGINT,
+organization_id BIGINT NOT NULL,
 day_of_week VARCHAR(10) NOT NULL CHECK (day_of_week IN ('FRIDAY','SATURDAY','SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY')),
 start_time TIME,
 end_time TIME,
