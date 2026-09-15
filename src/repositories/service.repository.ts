@@ -118,7 +118,7 @@ export async function countAll(query: QueryService): Promise<number> {
                 [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid])).rows[0].totalNumberOfServices);
 }
 
-export async function findByUuid(serviceUuid: string): Promise<ServiceResponse | undefined> {
+export async function findByUuid(serviceUuid: string,organizationUuid:string|undefined): Promise<ServiceResponse | undefined> {
     return (await pool.query(
 `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
                 COALESCE((
@@ -136,8 +136,9 @@ export async function findByUuid(serviceUuid: string): Promise<ServiceResponse |
                 FROM ${TABLE_NAME} ${ALIAS}
                 INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
                 ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-                WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-            [serviceUuid,])).rows[0];
+                WHERE ${ALIAS}.${COLUMN_UUID} = $1
+                AND ($2::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $2)`,
+            [serviceUuid,organizationUuid])).rows[0];
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{

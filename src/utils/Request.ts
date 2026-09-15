@@ -1,4 +1,4 @@
-import type { UserResponse } from "../../models/user";
+import type { UserResponse } from "../models/user.model";
 
 declare module "express-serve-static-core"{
 interface Request{

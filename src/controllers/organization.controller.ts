@@ -13,13 +13,17 @@ import {
     UpdateOrganization,
     UpdateOrganizationByAdmin
 } from "../models/organization.model.js";
-import {} from "../utils/Request.js"
+import {} from "../utils/Request"
 import {QueryResponse} from "../models/query.model";
 import {Role} from "../models/enums/roles";
 
 export async function handleGetOrganizations(req: Request, res: Response) {
     const query: QueryOrganization = req.validatedQuery as unknown as QueryOrganization;
     query.offset = (query.page - 1) * query.limit;
+    const organizationUuid=req.user?.organizationUuid;
+    if(organizationUuid!==null){
+        return getOrganization(organizationUuid as string);
+    }
     const [organizations, totalOrganizations] = await Promise.all([getOrganizations(query), getNumberOfOrganizations(query),]);
     const baseUrl = req.originalUrl?.split('?')[0];
     const responseResult: QueryResponse =new QueryResponse(organizations, totalOrganizations, baseUrl, query.page, query.limit,);
@@ -28,19 +32,23 @@ export async function handleGetOrganizations(req: Request, res: Response) {
 
 export async function handleGetOrganization(req:Request,res:Response){
     const uuid:string=(req.params.organizationUuid)  as string;
+    const organizationUuid=req.user?.organizationUuid;
+    if(organizationUuid!==null){
+        return getOrganization(organizationUuid as string);
+    }
     const result:OrganizationResponse=await getOrganization(uuid)
     return res.status(200).json(result)
 }
 
 export async function handleCreateOrganization(req:Request,res:Response) {
     let result: Organization;
-    if (req.user.role === Role.SUPER_ADMIN) {
+    if (req.user?.role === Role.SUPER_ADMIN) {
         const organization: CreateOrganizationByAdmin = req.body;
         result = await createOrganizationByAdmin(organization);
     } else {
         const organization: CreateOrganization = {
             ...req.body,
-            organizationOwnerUuid: req.user.uuid,
+            organizationOwnerUuid: req.user?.uuid,
         };
         result = await createOrganization(organization);
     }

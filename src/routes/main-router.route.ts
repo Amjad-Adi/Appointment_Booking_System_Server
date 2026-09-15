@@ -8,6 +8,7 @@ import {receiveInvitationRouter} from "./receive-invitation.route.js";
 import {publicServiceRoute} from "./service.route";
 import {serviceCategoryRouter} from "./service-category.route";
 import {publicRoomRoute} from "./room.route";
+import {appointmentRouter} from "./apppointment.route";
 
 export const mainRouter=express.Router()
 
@@ -19,3 +20,4 @@ mainRouter.use("/invitations", receiveInvitationRouter)
 mainRouter.use("/services/categories",serviceCategoryRouter)
 mainRouter.use("/services",publicServiceRoute)
 mainRouter.use("/rooms",publicRoomRoute)
+mainRouter.use("/appointments", appointmentRouter);

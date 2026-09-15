@@ -14,10 +14,16 @@ import type {
 import {QueryResponse,} from "../models/query.model.js";
 
 export async function handleGetOrganizationWorkingHours(req: Request, res: Response) {
-    const organizationUuid = req.params.organizationUuid as string;
+    const routeOrganizationUuid = req.params.organizationUuid as string;
     const query = req.validatedQuery as unknown as QueryWorkingHours;
+    const organizationUuid=req.user?.organizationUuid;
+    if(organizationUuid!==null){
+        query.filter = {
+            ...query.filter,
+            organizationUuid,
+        };
+    }
     query.offset = (query.page - 1) * query.limit;
-    query.filter = {...query.filter, organizationUuid};
     const [workingHours, totalNumberOfWorkingHours,] = await Promise.all([getWorkingHours(query), getNumberOfWorkingHours(query)]);
     const baseUrl = req.originalUrl?.split("?")[0];
     const responseResult = new QueryResponse(workingHours, totalNumberOfWorkingHours, baseUrl, query.page, query.limit,);
@@ -36,7 +42,7 @@ export async function handleUpdateOrganizationWorkingHours(req: Request, res: Re
     const workingHours = req.body as UpdateWorkingHours;
     workingHours.uuid = req.params.workingHoursUuid as string;
     workingHours.organizationUuid = req.params.organizationUuid as string;
-    workingHours.userUuid = req.user.uuid as string;
+    workingHours.userUuid = req.user?.uuid as string;
     const result: WorkingHours = await updateWorkingHours(workingHours);
     return res.status(200).json(result);
 }

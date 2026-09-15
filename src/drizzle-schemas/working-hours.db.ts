@@ -14,7 +14,7 @@ export const workingHoursTable = pgTable(TABLE_NAME, {
     id: bigint(COLUMN_ID, { mode: 'number' }).generatedAlwaysAsIdentity().primaryKey(),
     uuid: uuid(COLUMN_UUID).defaultRandom().unique().notNull(),
     organizationId: bigint(COLUMN_ORGANIZATION_ID, { mode: 'number' }).notNull().references(() => organizationTable.id, {onDelete: 'cascade', onUpdate: 'cascade',}),
-    dayOfWeek: varchar({length:10}).$type<DayOfWeek>().notNull(),
+    dayOfWeek: varchar(COLUMN_DAY_OF_WEEK,{length:10}).$type<DayOfWeek>().notNull(),
     startTime: time(COLUMN_START_TIME, {withTimezone: false,}),
     endTime: time(COLUMN_END_TIME, {withTimezone: false,}),
 },(table) => [

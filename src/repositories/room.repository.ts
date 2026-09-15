@@ -36,7 +36,7 @@ import {
     COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_COLUMN_PROFILE_PICTURE_PATH,
     ALIAS_COLUMN_ORGANIZATION_UUID as ORGANIZATION_ALIAS_COLUMN_UUID,
     ALIAS_COLUMN_NAME as ORGANIZATION_ALIAS_COLUMN_NAME,
-    ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH,
+    ALIAS_COLUMN_PROFILE_PICTURE_PATH as ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH, COLUMN_ID,
 } from "../databases/contracts/organization.contract.js";
 
 import {
@@ -98,7 +98,7 @@ export async function countAll(
 }
 
 export async function findByUuid(
-    roomUuid: string,
+    roomUuid: string,organizationUuid:string|undefined,
 ): Promise<RoomResponse | undefined> {
     return (
         await pool.query(
@@ -108,8 +108,9 @@ export async function findByUuid(
              ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
              LEFT JOIN ${USER_TABLE_NAME} ${USER_ALIAS}
              ON ${ALIAS}.${COLUMN_USER_ID}= ${USER_ALIAS}.${USER_COLUMN_ID}
-             WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-            [ roomUuid],)).rows[0];
+             WHERE ${ALIAS}.${COLUMN_UUID} = $1
+             AND ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $2`,
+            [roomUuid,organizationUuid],)).rows[0];
 }
 
 export async function isNameFound(
@@ -158,4 +159,12 @@ export async function update(
              )                    
              RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}, ${COLUMN_OCCUPANCY_STATUS} AS ${ALIAS_COLUMN_OCCUPANCY_STATUS}`,
             [room.name, room.description, room.status, room.occupancyStatus, room.assignedUserId, room.uuid, room.organizationUuid,],)).rows[0];
+}
+
+export async function findIdByUuid(uuid:string):Promise<number>{
+    return (await pool.query(
+        `SELECT ${COLUMN_ID}
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_UUID} = $1`,
+        [uuid])).rows[0]?.id
 }

@@ -6,7 +6,7 @@ import {
 } from "../services/invitation.service.js"
 import { type Request, type Response } from "express";
 import {getOrganization, getOrganizationIdByUuid, getUserOrganization} from "../services/organization.service.js";
-import {} from "../utils/Request.js"
+import {} from "../utils/Request"
 import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from "../models/invitation.model.js";
 import {inviteFireBaseUser} from "../services/firebase-admin.service.js";
 import {getUserByFireBaseUid, getUserById, getUserIdByUuid} from "../services/user.service.js";

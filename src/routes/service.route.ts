@@ -42,7 +42,7 @@ import {
 
 export const publicServiceRoute=express.Router();
 publicServiceRoute.route("/")
-    .get(validateQuery(queryServiceSchema), handleGetServices,);
+    .get(validateQuery(queryServiceSchema), handleGetServices);
 
 publicServiceRoute.route("/:serviceUuid")
     .get(validateParameter(validateUuid, "serviceUuid"), handleGetService,);

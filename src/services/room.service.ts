@@ -25,6 +25,7 @@ import {
     AuthorizeOrganizationUser,
     getUserIdByUuid,
 } from "./user.service.js";
+import {getOrganizationIdByUuid} from "./organization.service";
 
 export async function getRooms(query: QueryRoom): Promise<RoomResponse[]> {
     return findAll(query);
@@ -34,8 +35,8 @@ export async function getNumberOfRooms(query: QueryRoom):Promise<number> {
     return countAll(query);
 }
 
-export async function getRoom(roomUuid: string): Promise<RoomResponse> {
-    const result = await findByUuid(roomUuid,);
+export async function getRoom(roomUuid: string,organizationUuid:string|undefined): Promise<RoomResponse> {
+    const result = await findByUuid(roomUuid,organizationUuid);
     if (result === undefined) {
         throw new NotFoundError("Room");
     }
@@ -43,7 +44,7 @@ export async function getRoom(roomUuid: string): Promise<RoomResponse> {
 }
 
 export async function createRoom(room: CreateRoom, userUuid: string,): Promise<Room> {
-    await AuthorizeOrganizationUser(userUuid, room.organizationUuid,);
+    await AuthorizeOrganizationUser(userUuid, room.organizationUuid);
     const organizationId = await findIdByUuid(room.organizationUuid,);
     if (organizationId === undefined) {
         throw new NotFoundError("Organization");
@@ -74,6 +75,14 @@ export async function updateRoom(room: UpdateRoom,): Promise<Room> {
     const result = await update(room);
     if (result === undefined) {
         throw new NotFoundError('Room');
+    }
+    return result;
+}
+
+export async function getRoomIdByUuid(roomUuid: string): Promise<number> {
+    const result = await findIdByUuid(roomUuid);
+    if (result === undefined) {
+        throw new NotFoundError("Room");
     }
     return result;
 }
