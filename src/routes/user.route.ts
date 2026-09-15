@@ -1,5 +1,5 @@
 import express from "express";
-import type {} from "../utils/Request.js";
+import type {} from "../utils/Request";
 import {validateBody, validateParameter, validateQuery} from "../middlewares/validaiton.js";
 import {
     createUserSchema,

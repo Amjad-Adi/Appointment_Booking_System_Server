@@ -1,6 +1,6 @@
 import {type Request, type Response, type NextFunction} from "express";
 import {rolesPermissions} from "../../permissions/roles-permissions.js"
-import type {} from "../../utils/Request.js";
+import type {} from "../../utils/Request";
 import {findByUuid} from "../../repositories/user.repository.js";
 import {ForbiddenError} from "../../errors/forbidden.error.js";
 import {findUserOrganizationByUuid} from "../../repositories/organizaiton.repository.js";

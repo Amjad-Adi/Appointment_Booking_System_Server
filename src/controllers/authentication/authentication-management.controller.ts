@@ -7,7 +7,7 @@ import {UserResponse} from "../../models/user.model.js";
 import {getUserUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/user.service.js";
 import {mapFirebaseError} from "../../middlewares/map-firebase-error.js";
 import {findRefreshToken, remove} from "../../repositories/refresh-token.repository.js";
-import {} from "../../utils/Request.js"
+import {} from "../../utils/Request"
 import {RefreshToken} from "../../models/refresh-token.model.js";
 import {
     createBlacklistedToken,

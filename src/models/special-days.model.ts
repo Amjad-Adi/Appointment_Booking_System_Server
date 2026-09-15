@@ -1,16 +1,45 @@
-import {Role} from "./enums/roles.js";
-import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
-import {createSpecialDaysSchema, updateSpecialDaysSchema} from "../middlewares/zod-schemas/special-days.schema.js";
+import { z } from "zod";
+
+import {
+    createSpecialDaySchema,
+    querySpecialDaySchema,
+    updateSpecialDaySchema,
+} from "../middlewares/zod-schemas/special-days.schema.js";
+
+import { ActivationStatus } from "./enums/activation-status.js";
+
 export interface SpecialDay {
-    uuid:string,
-    name:string
-    description:string|null,
-    dayDate:string
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
-    status:ActivationStatus
+    uuid: string;
+
+    name: string;
+
+    description: string | null;
+
+    dayDate: string;
+
+    createdAtUTC: string;
+
+    updatedAtUTC: string;
+
+    status: ActivationStatus;
 }
 
-export type CreateSpecialDay= z.infer<typeof createSpecialDaysSchema> & {organizationUuid:string,organizationId:number,userUuid:string};
-export type UpdateSpecialDay= z.infer<typeof updateSpecialDaysSchema> & {uuid:string,organizationUuid:string,userUuid:string};
+export type CreateSpecialDay =
+    z.infer<typeof createSpecialDaySchema> & {
+    organizationUuid: string;
+    organizationId: number;
+    userUuid: string;
+};
+
+export type UpdateSpecialDay =
+    z.infer<typeof updateSpecialDaySchema> & {
+    uuid: string;
+    organizationUuid: string;
+    userUuid: string;
+};
+
+export type QuerySpecialDay =
+    z.infer<typeof querySpecialDaySchema> & {
+    organizationId: number;
+    offset: number;
+};

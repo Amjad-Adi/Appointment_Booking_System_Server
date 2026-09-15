@@ -1,166 +1,1034 @@
-import {AppointmentResponse,Appointment,CreateAppointment,UpdateAppointmentByUser,UpdateAppointmentByOrganization,QueryAppointment} from "../models/appointment.model.js"
-import {pool} from "../databases/postgre-connection.js"
 import {
-    AppointmentResponse,
+    and,
+    asc,
+    desc,
+    eq,
+    ilike,
+    or,
+    sql,
+    type SQL,
+} from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+
+import { drizzleConnection } from "../databases/drizzle-connection.js";
+
+import { appointmentTable } from "../drizzle-schemas/appointment.db.js";
+import { organizationTable } from "../drizzle-schemas/organizations.db.js";
+import { usersTable } from "../drizzle-schemas/users.db.js";
+import { serviceTable } from "../drizzle-schemas/service.db.js";
+import { roomTable } from "../drizzle-schemas/room.db.js";
+
+import type {
     Appointment,
-    UpdateAppointmentByOrganization,
-    ConfirmAppointment,
+    AppointmentRecord,
+    AppointmentResponse,
     CreateAppointment,
-    RejectAppointment,
     QueryAppointment,
-    PayAppointment,
-    UpdateAppointmentByUser,
-    UpdateAppointmentStatus
 } from "../models/appointment.model.js";
 
-import { pool } from "../databases/postgre-connection.js";
+import { AppointmentStatus } from "../models/enums/appointment-status.js";
+import { PaymentStatus } from "../models/enums/payment-status.js";
+import { PaymentMethod } from "../models/enums/payment-method.js";
 
-import {
-    COLUMN_UUID,
-    COLUMN_NAME,
-    COLUMN_CREATED_AT_UTC,
-    TABLE_NAME,
-    ALIAS, COLUMN_PAYMENT_METHOD, ALIAS_COLUMN_CREATED_AT_UTC, SORT_BY_NAME,
-} from "../databases/contracts/appointment.contract";
+const workerUsersTable = alias(usersTable, "worker");
+const approvalUsersTable = alias(usersTable, "approvalUser");
 
-import {
-    ALIAS as ORGANIZATION_ALIAS,
-    COLUMN_UUID as ORGANIZATION_COLUMN_UUID,
-    COLUMN_NAME as ORGANIZATION_COLUMN_NAME,
-    ALIAS_COLUMN_
-    COLUMN_EMAIL as ORGANIZATION_COLUMN_EMAIL,
-    COLUMN_PHONE_NUMBER as ORGANIZATION_COLUMN_PHONE_NUMBER,
-    ALIAS_COLUMN_ORGANIZATION_UUID,
-    ALIAS_COLUMN_NAME as ORGANIZATION_ALIAS_COLUMN_NAME,
-} from "../databases/contracts/organization.contract";
+/**
+ * Fields returned directly from INSERT/UPDATE.
+ *
+ * IMPORTANT:
+ * returning() can only return columns from the table
+ * being inserted/updated.
+ */
+const appointmentReturnSelect = {
+    uuid: appointmentTable.uuid,
+    name: appointmentTable.name,
 
-import {
-    ALIAS as ROOM_ALIAS,
-    COLUMN_UUID as ROOM_COLUMN_UUID,
-    COLUMN_NAME as ROOM_COLUMN_NAME,
-} from "../databases/contracts/room.contract";
+    userId: appointmentTable.userId,
+    organizationId: appointmentTable.organizationId,
+    serviceId: appointmentTable.serviceId,
+    workerId: appointmentTable.workerId,
+    roomId: appointmentTable.roomId,
+    approvalUserId: appointmentTable.approvalUserId,
 
-import {
-    ALIAS as SERVICE_ALIAS,
-    COLUMN_UUID as SERVICE_COLUMN_UUID,
-    COLUMN_NAME as SERVICE_COLUMN_NAME,
-    COLUMN_PRICE as SERVICE_COLUMN_PRICE, ALIAS_TOTAL_NUMBER_OF_SERVICES, COLUMN_PRICE,
-} from "../databases/contracts/service.contract";
+    userTitle: appointmentTable.userTitle,
+    organizationTitle: appointmentTable.organizationTitle,
 
-import {
-    ALIAS as USER_ALIAS,
-    SECONDARY_ALIAS as APPROVAL_USER_ALIAS,
-    COLUMN_UUID as USER_COLUMN_UUID,
-    COLUMN_FIRST_NAME as USER_COLUMN_FIRST_NAME,
-    COLUMN_LAST_NAME as USER_COLUMN_LAST_NAME,
-    COLUMN_EMAIL as USER_COLUMN_EMAIL,
-    COLUMN_PROFILE_PICTURE_PATH as USER_COLUMN_PROFILE_PICTURE_PATH,
-    COLUMN_PHONE_NUMBER as USER_COLUMN_PHONE_NUMBER,
-} from "../databases/contracts/user.contract";
+    userNote: appointmentTable.userNote,
+    organizationNote: appointmentTable.organizationNote,
 
-import {
-    ALIAS_COLUMN_ACTUAL_END_AT_UTC,
-    ALIAS_COLUMN_ACTUAL_START_AT_UTC,
-    ALIAS_COLUMN_APPOINTMENT_STATUS,
-    ALIAS_COLUMN_ORGANIZATION_COLOUR,
-    ALIAS_COLUMN_ORGANIZATION_NOTE,
-    ALIAS_COLUMN_PAID_AT_UTC,
-    ALIAS_COLUMN_PAYMENT_METHOD,
-    ALIAS_COLUMN_REJECTION_REASON,
-    ALIAS_COLUMN_SCHEDULED_END_AT_UTC,
-    ALIAS_COLUMN_SCHEDULED_START_AT_UTC,
-    ALIAS_COLUMN_USER_COLOUR,
-    ALIAS_COLUMN_USER_NOTE,
-    COLUMN_ACTUAL_END_AT_UTC,
-    COLUMN_ACTUAL_START_AT_UTC,
-    COLUMN_APPOINTMENT_STATUS,
-    COLUMN_ORGANIZATION_COLOUR,
-    COLUMN_ORGANIZATION_NOTE,
-    COLUMN_PAID_AT_UTC,
-    COLUMN_REJECTION_REASON,
-    COLUMN_SCHEDULED_END_AT_UTC,
-    COLUMN_SCHEDULED_START_AT_UTC,
-    COLUMN_USER_COLOUR,
-    COLUMN_USER_NOTE,
-} from "../databases/contracts/appointment.contract";
-import {QueryService} from "../models/service.model";
-import {drizzleConnection} from "../databases/drizzle-connection";
-import {workingHoursTable} from "../drizzle-schemas/working-hours.db";
-import {organizationTable} from "../drizzle-schemas/organizations.db";
-import {eq} from "drizzle-orm";
-import {appointmentTable} from "../drizzle-schemas/appointment.db";
-export async function findAllByUser(query:QueryAppointment,organizationUuid:string):Promise<AppointmentResponse[]>{
-    const search=query.search?`%${query.search}%`: null
-    const sortColumnsDefinition={
-        name:`${ALIAS}.${COLUMN_NAME}`,
-        scheduledStartTime:`${ALIAS}.${COLUMN_SCHEDULED_START_AT_UTC}`,
-        scheduledEndTime:`${ALIAS}.${COLUMN_SCHEDULED_END_AT_UTC}`,
-        paidAtUTC:`${ALIAS}.${COLUMN_PAID_AT_UTC}`
+    userColour: appointmentTable.userColour,
+    organizationColour: appointmentTable.organizationColour,
+
+    scheduledStartAtUTC: appointmentTable.scheduledStartAtUTC,
+    scheduledEndAtUTC: appointmentTable.scheduledEndAtUTC,
+
+    actualStartAtUTC: appointmentTable.actualStartAtUTC,
+    actualEndAtUTC: appointmentTable.actualEndAtUTC,
+
+    appointmentStatus: appointmentTable.appointmentStatus,
+
+    rejectionReason: appointmentTable.rejectionReason,
+
+    paymentMethod: appointmentTable.paymentMethod,
+    paymentStatus: appointmentTable.paymentStatus,
+    paidAtUTC: appointmentTable.paidAtUTC,
+
+    createdAtUTC: appointmentTable.createdAtUTC,
+    updatedAtUTC: appointmentTable.updatedAtUTC,
+};
+
+/**
+ * Fields returned by appointment SELECT queries.
+ *
+ * UUIDs are obtained from the related tables.
+ */
+const appointmentSelect = {
+    uuid: appointmentTable.uuid,
+    name: appointmentTable.name,
+
+    userUuid: usersTable.uuid,
+    organizationUuid: organizationTable.uuid,
+    serviceUuid: serviceTable.uuid,
+    workerUuid: workerUsersTable.uuid,
+    roomUuid: roomTable.uuid,
+    approvalUserUuid: approvalUsersTable.uuid,
+
+    userTitle: appointmentTable.userTitle,
+    organizationTitle: appointmentTable.organizationTitle,
+
+    userNote: appointmentTable.userNote,
+    organizationNote: appointmentTable.organizationNote,
+
+    userColour: appointmentTable.userColour,
+    organizationColour: appointmentTable.organizationColour,
+
+    scheduledStartAtUTC: appointmentTable.scheduledStartAtUTC,
+    scheduledEndAtUTC: appointmentTable.scheduledEndAtUTC,
+
+    actualStartAtUTC: appointmentTable.actualStartAtUTC,
+    actualEndAtUTC: appointmentTable.actualEndAtUTC,
+
+    appointmentStatus: appointmentTable.appointmentStatus,
+
+    rejectionReason: appointmentTable.rejectionReason,
+
+    paymentMethod: appointmentTable.paymentMethod,
+    paymentStatus: appointmentTable.paymentStatus,
+    paidAtUTC: appointmentTable.paidAtUTC,
+
+    createdAtUTC: appointmentTable.createdAtUTC,
+    updatedAtUTC: appointmentTable.updatedAtUTC,
+};
+
+/**
+ * Fields returned by SELECT queries that also require
+ * the related entity names.
+ */
+const appointmentResponseSelect = {
+    ...appointmentSelect,
+
+    userName: sql<string>`
+        ${usersTable.firstName} || ' ' || ${usersTable.lastName}
+    `,
+
+    organizationName: organizationTable.name,
+
+    serviceName: serviceTable.name,
+
+    workerName: sql<string>`
+        ${workerUsersTable.firstName}
+        || ' '
+        || ${workerUsersTable.lastName}
+    `,
+
+    roomName: roomTable.name,
+
+    approvalUserName: sql<string | null>`
+        ${approvalUsersTable.firstName}
+        || ' '
+        || ${approvalUsersTable.lastName}
+    `,
+};
+
+function buildConditions(query: QueryAppointment): SQL[] {
+    const conditions: SQL[] = [];
+
+    if (query.filter?.organizationUuid) {
+        conditions.push(
+            eq(
+                organizationTable.uuid,
+                query.filter.organizationUuid,
+            ),
+        );
     }
-    const sortColumn=sortColumnsDefinition[query.sortBy?? SORT_BY_NAME];
-    const sortOrder = query.order?.toUpperCase() as string;
-    return (await drizzleConnection
-        .select({uuid:appointmentTable.uuid,name:appointmentTable.name,userNote:appointmentTable.userNote,userColour:appointmentTable.userColour,createdAtUTC:appointmentTable.createdAtUTC,scheduledStartAtUTC:appointmentTable.scheduledStartAtUTC,scheduledEndAtUTC:appointmentTable.scheduledEndAtUTC,paymentMethod:appointmentTable.paymentMethod,paidAtUTC:appointmentTable.paidAtUTC,appointmentStatus:appointmentTable.appointmentStatus})
+
+    if (query.filter?.appointmentStatus) {
+        conditions.push(
+            eq(
+                appointmentTable.appointmentStatus,
+                query.filter.appointmentStatus,
+            ),
+        );
+    }
+
+    if (query.filter?.userUuid) {
+        conditions.push(
+            eq(
+                usersTable.uuid,
+                query.filter.userUuid,
+            ),
+        );
+    }
+
+    if (query.filter?.serviceUuid) {
+        conditions.push(
+            eq(
+                serviceTable.uuid,
+                query.filter.serviceUuid,
+            ),
+        );
+    }
+
+    if (query.filter?.workerUuid) {
+        conditions.push(
+            eq(
+                workerUsersTable.uuid,
+                query.filter.workerUuid,
+            ),
+        );
+    }
+
+    if (query.filter?.roomUuid) {
+        conditions.push(
+            eq(
+                roomTable.uuid,
+                query.filter.roomUuid,
+            ),
+        );
+    }
+
+    if (query.filter?.approvalUserUuid) {
+        conditions.push(
+            eq(
+                approvalUsersTable.uuid,
+                query.filter.approvalUserUuid,
+            ),
+        );
+    }
+
+    if (query.filter?.paymentMethod) {
+        conditions.push(
+            eq(
+                appointmentTable.paymentMethod,
+                query.filter.paymentMethod,
+            ),
+        );
+    }
+
+    if (query.filter?.paymentStatus) {
+        conditions.push(
+            eq(
+                appointmentTable.paymentStatus,
+                query.filter.paymentStatus,
+            ),
+        );
+    }
+
+    if (query.filter?.appointmentDate) {
+        conditions.push(
+            sql`
+                DATE(${appointmentTable.scheduledStartAtUTC})
+                = ${query.filter.appointmentDate}
+            `,
+        );
+    }
+
+    if (query.filter?.fromDate) {
+        conditions.push(
+            sql`
+                DATE(${appointmentTable.scheduledStartAtUTC})
+                >= ${query.filter.fromDate}
+            `,
+        );
+    }
+
+    if (query.filter?.toDate) {
+        conditions.push(
+            sql`
+                DATE(${appointmentTable.scheduledStartAtUTC})
+                <= ${query.filter.toDate}
+            `,
+        );
+    }
+
+    if (query.search) {
+        const searchValue = `%${query.search}%`;
+
+        conditions.push(
+            or(
+                ilike(
+                    appointmentTable.name,
+                    searchValue,
+                ),
+
+                ilike(
+                    appointmentTable.userNote,
+                    searchValue,
+                ),
+
+                ilike(
+                    appointmentTable.organizationNote,
+                    searchValue,
+                ),
+
+                ilike(
+                    sql<string>`
+                        ${usersTable.firstName}
+                        || ' '
+                        || ${usersTable.lastName}
+                    `,
+                    searchValue,
+                ),
+
+                ilike(
+                    serviceTable.name,
+                    searchValue,
+                ),
+
+                ilike(
+                    sql<string>`
+                        ${workerUsersTable.firstName}
+                        || ' '
+                        || ${workerUsersTable.lastName}
+                    `,
+                    searchValue,
+                ),
+
+                ilike(
+                    roomTable.name,
+                    searchValue,
+                ),
+            )!,
+        );
+    }
+
+    return conditions;
+}
+
+function getOrderBy(query: QueryAppointment) {
+    const isDescending = query.order === "desc";
+
+    switch (query.sortBy) {
+        case "scheduledStartAtUTC":
+            return isDescending
+                ? desc(appointmentTable.scheduledStartAtUTC)
+                : asc(appointmentTable.scheduledStartAtUTC);
+
+        case "scheduledEndAtUTC":
+            return isDescending
+                ? desc(appointmentTable.scheduledEndAtUTC)
+                : asc(appointmentTable.scheduledEndAtUTC);
+
+        case "createdAtUTC":
+            return isDescending
+                ? desc(appointmentTable.createdAtUTC)
+                : asc(appointmentTable.createdAtUTC);
+
+        case "appointmentStatus":
+            return isDescending
+                ? desc(appointmentTable.appointmentStatus)
+                : asc(appointmentTable.appointmentStatus);
+
+        case "paymentStatus":
+            return isDescending
+                ? desc(appointmentTable.paymentStatus)
+                : asc(appointmentTable.paymentStatus);
+
+        case "name":
+        default:
+            return isDescending
+                ? desc(appointmentTable.name)
+                : asc(appointmentTable.name);
+    }
+}
+
+export async function findAll(
+    query: QueryAppointment,
+): Promise<AppointmentResponse[]> {
+    const conditions = buildConditions(query);
+
+    return await drizzleConnection
+        .select(appointmentResponseSelect)
         .from(appointmentTable)
-        .leftJoin(organizationTable,eq(workingHoursTable.organizationId,organizationTable.id))
-        .where(eq(organizationTable.uuid,organizationUuid)))
-}
-export async function countAll(query:QueryService,organizationUuid:string):Promise<number>{
-    const search=query.search?`%${query.search}%`: null
-    return Number((await pool.query(
-        `SELECT COUNT(*) AS ${ALIAS_TOTAL_NUMBER_OF_SERVICES}
-         FROM ${TABLE_NAME} ${ALIAS}
-         WHERE 
-         ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1
-         AND
-         ($2::TEXT IS NULL OR  ${ALIAS}.${COLUMN_NAME} ILIKE $1)
-         AND ($3::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}<=$2)
-         AND ($4::TEXT IS NULL OR ${ALIAS}.${COLUMN_PRICE}>=$3)
-         AND ($5::TEXT IS NULL OR ${ALIAS}.${COLUMN_STATUS}=$4)`,
-        [organizationUuid,search, query.filter?.maxPrice,query.filter?.minPrice,query.filter?.status?.toUpperCase()])).rows[0].totalNumberOfServices)
+
+        .innerJoin(
+            organizationTable,
+            eq(
+                appointmentTable.organizationId,
+                organizationTable.id,
+            ),
+        )
+
+        .innerJoin(
+            usersTable,
+            eq(
+                appointmentTable.userId,
+                usersTable.id,
+            ),
+        )
+
+        .innerJoin(
+            serviceTable,
+            eq(
+                appointmentTable.serviceId,
+                serviceTable.id,
+            ),
+        )
+
+        .innerJoin(
+            roomTable,
+            eq(
+                appointmentTable.roomId,
+                roomTable.id,
+            ),
+        )
+
+        .innerJoin(
+            workerUsersTable,
+            eq(
+                appointmentTable.workerId,
+                workerUsersTable.id,
+            ),
+        )
+
+        .leftJoin(
+            approvalUsersTable,
+            eq(
+                appointmentTable.approvalUserId,
+                approvalUsersTable.id,
+            ),
+        )
+
+        .where(
+            conditions.length > 0
+                ? and(...conditions)
+                : undefined,
+        )
+
+        .orderBy(
+            getOrderBy(query),
+            asc(appointmentTable.uuid),
+        )
+
+        .limit(query.limit)
+        .offset(query.offset);
 }
 
-export async function findByUuid(serviceUuid:string):Promise<ServiceResponse>{
-    return (await pool.query(
-        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} as ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH} ,${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-         FROM ${TABLE_NAME} ${ALIAS}
-         LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-         WHERE ${ORGANIZATION_ALIAS}.${ALIAS_COLUMN_ORGANIZATION_UUID}=$1 AND ${ALIAS}.${COLUMN_UUID} = $2`,
-        [serviceUuid])).rows[0]
+export async function countAll(
+    query: QueryAppointment,
+): Promise<number> {
+    const conditions = buildConditions(query);
+
+    const result = await drizzleConnection
+        .select({
+            count: sql<number>`count(*)`,
+        })
+        .from(appointmentTable)
+
+        .innerJoin(
+            organizationTable,
+            eq(
+                appointmentTable.organizationId,
+                organizationTable.id,
+            ),
+        )
+
+        .innerJoin(
+            usersTable,
+            eq(
+                appointmentTable.userId,
+                usersTable.id,
+            ),
+        )
+
+        .innerJoin(
+            serviceTable,
+            eq(
+                appointmentTable.serviceId,
+                serviceTable.id,
+            ),
+        )
+
+        .innerJoin(
+            roomTable,
+            eq(
+                appointmentTable.roomId,
+                roomTable.id,
+            ),
+        )
+
+        .innerJoin(
+            workerUsersTable,
+            eq(
+                appointmentTable.workerId,
+                workerUsersTable.id,
+            ),
+        )
+
+        .leftJoin(
+            approvalUsersTable,
+            eq(
+                appointmentTable.approvalUserId,
+                approvalUsersTable.id,
+            ),
+        )
+
+        .where(
+            conditions.length > 0
+                ? and(...conditions)
+                : undefined,
+        );
+
+    return Number(result[0]?.count ?? 0);
 }
 
-export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
-    return (await pool.query(
-        `SELECT 1
-         FROM ${TABLE_NAME} ${ALIAS}
-        LEFT JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS} ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}=${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
-        WHERE ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1 AND ${ALIAS}.${COLUMN_NAME}=$2`,
-        [organizationUuid,name])).rowCount!=0
+export async function findByUuid(
+    appointmentUuid: string,
+    organizationUuid: string | undefined,
+): Promise<AppointmentResponse | undefined> {
+    const conditions: SQL[] = [
+        eq(
+            appointmentTable.uuid,
+            appointmentUuid,
+        ),
+    ];
+
+    if (organizationUuid !== undefined) {
+        conditions.push(
+            eq(
+                organizationTable.uuid,
+                organizationUuid,
+            ),
+        );
+    }
+
+    const [result] = await drizzleConnection
+        .select(appointmentResponseSelect)
+        .from(appointmentTable)
+
+        .innerJoin(
+            organizationTable,
+            eq(
+                appointmentTable.organizationId,
+                organizationTable.id,
+            ),
+        )
+
+        .innerJoin(
+            usersTable,
+            eq(
+                appointmentTable.userId,
+                usersTable.id,
+            ),
+        )
+
+        .innerJoin(
+            serviceTable,
+            eq(
+                appointmentTable.serviceId,
+                serviceTable.id,
+            ),
+        )
+
+        .innerJoin(
+            roomTable,
+            eq(
+                appointmentTable.roomId,
+                roomTable.id,
+            ),
+        )
+
+        .innerJoin(
+            workerUsersTable,
+            eq(
+                appointmentTable.workerId,
+                workerUsersTable.id,
+            ),
+        )
+
+        .leftJoin(
+            approvalUsersTable,
+            eq(
+                appointmentTable.approvalUserId,
+                approvalUsersTable.id,
+            ),
+        )
+
+        .where(and(...conditions));
+
+    return result;
 }
 
-export async function create(service: CreateService):Promise<Service> {
-    return (await pool.query(
-        `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH},${COLUMN_ORGANIZATION_ID})
-                    VALUES ($1,$2,$3,$4,$5,$6)
-                    RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-        [service.name, service.description,service.price,service.durationInMinutes,service.profilePicturePath,service.organizationId])).rows[0];
+export async function findByUuidAndOrganization(
+    appointmentUuid: string,
+    organizationId: number,
+): Promise<AppointmentResponse | undefined> {
+    const [result] = await drizzleConnection
+        .select(appointmentResponseSelect)
+        .from(appointmentTable)
+
+        .innerJoin(
+            organizationTable,
+            eq(
+                appointmentTable.organizationId,
+                organizationTable.id,
+            ),
+        )
+
+        .innerJoin(
+            usersTable,
+            eq(
+                appointmentTable.userId,
+                usersTable.id,
+            ),
+        )
+
+        .innerJoin(
+            serviceTable,
+            eq(
+                appointmentTable.serviceId,
+                serviceTable.id,
+            ),
+        )
+
+        .innerJoin(
+            roomTable,
+            eq(
+                appointmentTable.roomId,
+                roomTable.id,
+            ),
+        )
+
+        .innerJoin(
+            workerUsersTable,
+            eq(
+                appointmentTable.workerId,
+                workerUsersTable.id,
+            ),
+        )
+
+        .leftJoin(
+            approvalUsersTable,
+            eq(
+                appointmentTable.approvalUserId,
+                approvalUsersTable.id,
+            ),
+        )
+
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+            ),
+        );
+
+    return result;
 }
 
-export async function update(service: UpdateService):Promise<Service> {
-    return (await pool.query(
-        `UPDATE ${TABLE_NAME}
-         SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),
-             ${COLUMN_DESCRIPTION}=COALESCE($2,${COLUMN_DESCRIPTION}),
-             ${COLUMN_PRICE}=COALESCE($3,${COLUMN_PRICE}),
-             ${COLUMN_DURATION_IN_MINUTES}=COALESCE($4,${COLUMN_DURATION_IN_MINUTES}),
-             ${COLUMN_PICTURE_PATH}=COALESCE($5,${COLUMN_PICTURE_PATH}),
-             ${COLUMN_STATUS}=COALESCE($6,${COLUMN_STATUS}),
-             ${COLUMN_UPDATED_AT_UTC}=now()
-         WHERE ${COLUMN_UUID} = $7 
-         AND ${COLUMN_ORGANIZATION_ID}=
-               (SELECT id
-                FROM TABLE ${ORGANIZATION_TABLE_NAME}
-                WHERE ${ORGANIZATION_COLUMN_UUID}=$8)
-        RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
-        [service.name, service.description, service.price,service.durationInMinutes,service.profilePicturePath,service.status,service.uuid,service.organizationUuid])).rows[0];
+export async function findByUuidAndUser(
+    appointmentUuid: string,
+    userId: number,
+): Promise<AppointmentResponse | undefined> {
+    const [result] = await drizzleConnection
+        .select(appointmentResponseSelect)
+        .from(appointmentTable)
+
+        .innerJoin(
+            organizationTable,
+            eq(
+                appointmentTable.organizationId,
+                organizationTable.id,
+            ),
+        )
+
+        .innerJoin(
+            usersTable,
+            eq(
+                appointmentTable.userId,
+                usersTable.id,
+            ),
+        )
+
+        .innerJoin(
+            serviceTable,
+            eq(
+                appointmentTable.serviceId,
+                serviceTable.id,
+            ),
+        )
+
+        .innerJoin(
+            roomTable,
+            eq(
+                appointmentTable.roomId,
+                roomTable.id,
+            ),
+        )
+
+        .innerJoin(
+            workerUsersTable,
+            eq(
+                appointmentTable.workerId,
+                workerUsersTable.id,
+            ),
+        )
+
+        .leftJoin(
+            approvalUsersTable,
+            eq(
+                appointmentTable.approvalUserId,
+                approvalUsersTable.id,
+            ),
+        )
+
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.userId,
+                    userId,
+                ),
+            ),
+        );
+
+    return result;
+}
+
+export async function create(
+    appointment: CreateAppointment,
+): Promise<AppointmentRecord | undefined> {
+    const [created] = await drizzleConnection
+        .insert(appointmentTable)
+        .values({
+            name: appointment.name,
+
+            userId: appointment.userId,
+            organizationId: appointment.organizationId,
+            serviceId: appointment.serviceId,
+            workerId: appointment.workerId,
+            roomId: appointment.roomId,
+
+            userNote: appointment.userNote ?? null,
+
+            userColour:
+                appointment.userColour ?? "#2563EB",
+
+            scheduledStartAtUTC:
+            appointment.scheduledStartTimeUTC,
+
+            scheduledEndAtUTC:
+            appointment.scheduledEndTimeUTC,
+
+            paymentMethod:
+                appointment.paymentMethod ?? null,
+
+            appointmentStatus:
+            AppointmentStatus.PENDING_USER_CONFIRMATION,
+
+            paymentStatus:
+            PaymentStatus.UNPAID,
+        })
+        .returning(appointmentReturnSelect);
+
+    return created;
+}
+
+export async function updateByUser(
+    appointmentUuid: string,
+    userId: number,
+    updateValues: {
+        userNote?: string | null;
+        userColour?: string;
+    },
+): Promise<AppointmentRecord | undefined> {
+    if (Object.keys(updateValues).length === 0) {
+        return undefined;
+    }
+
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            ...updateValues,
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.userId,
+                    userId,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function updateByOrganization(
+    appointmentUuid: string,
+    organizationId: number,
+    updateValues: {
+        organizationNote?: string | null;
+        organizationColour?: string;
+    },
+): Promise<AppointmentRecord | undefined> {
+    if (Object.keys(updateValues).length === 0) {
+        return undefined;
+    }
+
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            ...updateValues,
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function confirm(
+    appointmentUuid: string,
+    organizationId: number,
+    approvalUserId: number,
+    name: string,
+    organizationColour?: string,
+    organizationNote?: string | null,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            name,
+            organizationColour,
+            organizationNote,
+            approvalUserId,
+
+            appointmentStatus:
+            AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
+
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+                eq(
+                    appointmentTable.appointmentStatus,
+                    AppointmentStatus.PENDING_USER_CONFIRMATION,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function approve(
+    appointmentUuid: string,
+    organizationId: number,
+    approvalUserId: number,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            approvalUserId,
+
+            appointmentStatus:
+            AppointmentStatus.CONFIRMED,
+
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+                eq(
+                    appointmentTable.appointmentStatus,
+                    AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function reject(
+    appointmentUuid: string,
+    organizationId: number,
+    approvalUserId: number,
+    rejectionReason: string,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            approvalUserId,
+            rejectionReason,
+
+            appointmentStatus:
+            AppointmentStatus.REJECTED,
+
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+                eq(
+                    appointmentTable.appointmentStatus,
+                    AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function updateStatus(
+    appointmentUuid: string,
+    organizationId: number,
+    appointmentStatus: AppointmentStatus,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            appointmentStatus,
+
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.organizationId,
+                    organizationId,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function cancelByUser(
+    appointmentUuid: string,
+    userId: number,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            appointmentStatus:
+            AppointmentStatus.CANCELLED,
+
+            updatedAtUTC: new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.userId,
+                    userId,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
+}
+
+export async function pay(
+    appointmentUuid: string,
+    userId: number,
+    paymentMethod: PaymentMethod,
+): Promise<AppointmentRecord | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            paymentMethod,
+
+            paymentStatus:
+            PaymentStatus.PAID,
+
+            paidAtUTC:
+                new Date().toISOString(),
+
+            updatedAtUTC:
+                new Date().toISOString(),
+        })
+        .where(
+            and(
+                eq(
+                    appointmentTable.uuid,
+                    appointmentUuid,
+                ),
+                eq(
+                    appointmentTable.userId,
+                    userId,
+                ),
+            ),
+        )
+        .returning(appointmentReturnSelect);
+
+    return updated;
 }

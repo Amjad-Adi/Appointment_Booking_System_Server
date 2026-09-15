@@ -1,5 +1,4 @@
 export enum AppointmentTimeType{
-    TODAY="TODAY",
-    UPCOMING="UPCOMING",
-    PAST="PAST",
+    WORKER="WORKER",
+    NEAREST="NEAREST",
 }

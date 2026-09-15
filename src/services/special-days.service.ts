@@ -1,54 +1,205 @@
 import {
     findAll,
     findByUuid,
+    findByDate,
     create,
-    update, isTodayFound,
-} from "../repositories/special-days.repository.js"
-import {NotFoundError} from "../errors/not-found.error.js";
-import {BadRequestError} from "../errors/bad-request.error.js";
-import {CreateSpecialDay, SpecialDay, UpdateSpecialDay} from "../models/special-days.model.js";
-import {findIdByUuid} from "../repositories/organizaiton.repository.js";
-import {AuthorizeOrganizationUser} from "./user.service.js";
+    update,
+    countAll,
+} from "../repositories/special-days.repository.js";
 
-export async function getSpecialDays(organizationUuid:string):Promise<SpecialDay[]>{
-    return (await findAll(organizationUuid))
-}
+import {
+    AuthorizeOrganizationUser,
+    getUserIdByUuid,
+} from "./user.service.js";
 
-export async function getSpecialDay(specialDayUuid:string,organizationUuid:string):Promise<SpecialDay>{
-    const result:SpecialDay= await findByUuid(organizationUuid,specialDayUuid)
-    if(result===undefined){
-        throw new NotFoundError("Special Day");
-    }
-    return result
-}
+import {
+    findIdByUuid,
+} from "../repositories/organizaiton.repository.js";
 
-export async function createSpecialDay(specialDay:CreateSpecialDay):Promise<SpecialDay>{
-    await AuthorizeOrganizationUser(specialDay.userUuid,specialDay.organizationUuid)
-    const organizationId:number= await findIdByUuid(specialDay.organizationUuid)
-    if(organizationId===undefined){
+import {
+    NotFoundError,
+} from "../errors/not-found.error.js";
+
+import {
+    BadRequestError,
+} from "../errors/bad-request.error.js";
+
+import type {
+    CreateSpecialDay,
+    QuerySpecialDay,
+    SpecialDay,
+    UpdateSpecialDay,
+} from "../models/special-days.model.js";
+
+export async function getSpecialDays(
+    query: QuerySpecialDay,
+): Promise<SpecialDay[]> {
+    const organizationUuid =
+        query.filter?.organizationUuid;
+
+    if (organizationUuid === undefined) {
         throw new NotFoundError("Organization");
     }
-    specialDay.organizationId=organizationId
-    const result:SpecialDay= await create(specialDay)
-    if(result===undefined){
-        throw new BadRequestError()
+
+    const organizationId =
+        await findIdByUuid(organizationUuid);
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
     }
+
+    query.organizationId = organizationId;
+
+    return await findAll(query);
+}
+
+export async function getNumberOfSpecialDays(
+    query: QuerySpecialDay,
+): Promise<number> {
+    const organizationUuid =
+        query.filter?.organizationUuid;
+
+    if (organizationUuid === undefined) {
+        throw new NotFoundError("Organization");
+    }
+
+    const organizationId =
+        await findIdByUuid(organizationUuid);
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
+    }
+
+    query.organizationId = organizationId;
+
+    return await countAll(query);
+}
+
+export async function getSpecialDay(
+    specialDayUuid: string,
+    organizationUuid: string,
+    userUuid: string,
+): Promise<SpecialDay> {
+    await AuthorizeOrganizationUser(
+        userUuid,
+        organizationUuid,
+    );
+
+    const organizationId =
+        await findIdByUuid(
+            organizationUuid,
+        );
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
+    }
+
+    const result =
+        await findByUuid(
+            organizationId,
+            specialDayUuid,
+        );
+
+    if (result === undefined) {
+        throw new NotFoundError("Special Day");
+    }
+
     return result;
 }
 
-export async function updateSpecialDay(specialDay:UpdateSpecialDay):Promise<SpecialDay>{
-    await AuthorizeOrganizationUser(specialDay.userUuid,specialDay.organizationUuid)
-    const result:SpecialDay= await update(specialDay)
-    if(result===undefined){
-        throw new NotFoundError("Special Day")
+export async function createSpecialDay(
+    specialDay: CreateSpecialDay,
+): Promise<SpecialDay> {
+    await AuthorizeOrganizationUser(
+        specialDay.userUuid,
+        specialDay.organizationUuid,
+    );
+
+    const organizationId =
+        await findIdByUuid(
+            specialDay.organizationUuid,
+        );
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
     }
+
+    const userId =
+        await getUserIdByUuid(
+            specialDay.userUuid,
+        );
+
+    if (userId === undefined) {
+        throw new NotFoundError("User");
+    }
+
+    const result = await create({
+        ...specialDay,
+        organizationId,
+        userUuid: specialDay.userUuid,
+    });
+
+    if (result === undefined) {
+        throw new BadRequestError();
+    }
+
     return result;
 }
 
-export async function isTodaySpecialDay(organizationUuid:string){
-    const result:SpecialDay= await isTodayFound(organizationUuid,new Date().toISOString().split("T")[0])
-    if(result===undefined){
-        throw new NotFoundError("Special Day")
+export async function updateSpecialDay(
+    specialDay: UpdateSpecialDay,
+): Promise<SpecialDay> {
+    await AuthorizeOrganizationUser(
+        specialDay.userUuid,
+        specialDay.organizationUuid,
+    );
+
+    const organizationId =
+        await findIdByUuid(
+            specialDay.organizationUuid,
+        );
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
     }
+
+    const result = await update(
+        specialDay,
+        organizationId,
+    );
+
+    if (result === undefined) {
+        throw new NotFoundError("Special Day");
+    }
+
     return result;
+}
+
+export async function isTodaySpecialDay(
+    organizationUuid: string,
+    userUuid: string,
+): Promise<SpecialDay | undefined> {
+    await AuthorizeOrganizationUser(
+        userUuid,
+        organizationUuid,
+    );
+
+    const organizationId =
+        await findIdByUuid(
+            organizationUuid,
+        );
+
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
+    }
+
+    const today =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    return await findByDate(
+        organizationId,
+        today,
+    );
 }

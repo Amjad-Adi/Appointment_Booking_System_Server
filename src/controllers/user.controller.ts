@@ -7,7 +7,7 @@ import {
 } from "../services/user.service.js"
 import { type Request, type Response } from "express";
 import {createFireBaseUser, updateFireBaseUser} from "../services/firebase-admin.service.js"
-import {} from "../utils/Request.js"
+import {} from "../utils/Request"
 import {BadRequestError} from "../errors/bad-request.error.js";
 import {UserRecord} from "firebase-admin/auth";
 import {CreateUser, QueryUser, UpdateUser, User, UserResponse} from "../models/user.model.js";
@@ -15,14 +15,19 @@ import {QueryResponse} from "../models/query.model.js";
 import {mapFirebaseError} from "../middlewares/map-firebase-error";
 import {Role} from "../models/enums/roles";
 import {UnauthorizedError} from "../errors/unauthorized.error";
+import {} from "../utils/Request"
+
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
     query.offset=(query?.page-1)*query?.limit
-    const scopedQuery = applyUserAccessScope(
-        query,
-        req.user,
-    );
-    const [users,totalUsers]=await Promise.all([getUsers(scopedQuery),getNumberOfUsers(scopedQuery)])
+    const organizationUuid=req.user?.organizationUuid;
+    if(organizationUuid!==null){
+        query.filter = {
+            ...query.filter,
+            organizationUuid,
+        };
+    }
+    const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
     const baseUrl=req.originalUrl?.split("?")[0]
     const responseResult:QueryResponse=new QueryResponse(users,totalUsers,baseUrl,query?.page,query?.limit)
     return res.status(200).json(responseResult)
@@ -59,8 +64,8 @@ export async function handleUpdateUser(req:Request,res:Response){
 
 export async function handleUpdateCurrentUser(req:Request,res:Response){
     const user:UpdateUser=(req.body)
-    user.uuid = req.user.uuid;
-    user.uid = req.user.uid;
+    user.uuid = req.user?.uuid as string;
+    user.uid = req.user?.uid  as string;
     if(user.password !== undefined){
         try {
             await updateFireBaseUser(user.uid, user.password)
@@ -78,20 +83,4 @@ export async function handleUpdateUserByAdmin(req:Request,res:Response){
     user.uuid=uuid;
     const result:User=await updateUserByAdmin(user)
     return res.status(200).json(result)
-}
-
-function applyUserAccessScope(query: QueryUser, currentUser: UserResponse): QueryUser {
-    if (currentUser.role === Role.OWNER || currentUser.role === Role.MANAGER) {
-        if (!currentUser.organizationUuid) {
-            throw new UnauthorizedError("User is not associated with an organization");
-        }
-        return {
-            ...query,
-            filter: {
-                ...query.filter,
-                organizationUuid: currentUser.organizationUuid,
-            },
-        };
-    }
-    return query;
 }

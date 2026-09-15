@@ -3,7 +3,7 @@ import express from "express";
 import {BadRequestError} from "../errors/bad-request.error.js";
 import {Role} from "../models/enums/roles.js";
 import {NotFoundError} from "../errors/not-found.error.js";
-import {} from "../utils/Request.js"
+import {} from "../utils/Request"
 import {QueryUser} from "../models/user.model.js";
 import { Request, Response, NextFunction } from "express";
 export function validateBody(schema:z.ZodSchema) {
