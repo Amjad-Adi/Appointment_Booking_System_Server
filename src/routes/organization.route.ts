@@ -23,6 +23,7 @@ import {validateUuid} from "../middlewares/zod-schemas/parameters.schema.js";
 import {sendInvitationRouter} from "./sent-invitation.route.js";
 import { Role } from "../models/enums/roles.js";
 import {roomRouter} from "./room.route.js";
+import {workingHoursRouter} from "./working-hours-route";
 const updateRoleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
@@ -39,6 +40,7 @@ organizationRouter
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
 organizationRouter.use("/:organizationUuid/rooms",validateParameter(validateUuid,"organizationUuid"),roomRouter)
 organizationRouter.use("/:organizationUuid/invitations",validateParameter(validateUuid,"organizationUuid"),sendInvitationRouter)
+organizationRouter.use("/:organizationUuid/working-hours",validateParameter(validateUuid,"organizationUuid"),workingHoursRouter)
 organizationRouter.route("/:organizationUuid")
     .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string
     .patch(authenticateToken,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(updateRoleSchemas),handleUpdateOrganization)
