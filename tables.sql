@@ -142,48 +142,60 @@ FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE ON UPDATE CAS
 );
 
 CREATE TABLE time_block(
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
 reason VARCHAR(4096),
-start_time_utc TIMESTAMPTZ NOT NUll,
-end_time_utc TIMESTAMPTZ NOT NUll,
+start_at_utc TIMESTAMPTZ NOT NUll,
+end_at_utc TIMESTAMPTZ NOT NUll,
+organization_id BIGINT NOT NULL,
 request_user_id BIGINT NOT NULL,
 respond_user_id BIGINT,
 requested_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 responded_at_utc TIMESTAMPTZ,
 request_status VARCHAR(256) NOT NULL CHECK (request_status IN ('APPROVED', 'PENDING', 'REJECTED','DELETED')) DEFAULT 'PENDING',
 FOREIGN KEY (request_user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
-FOREIGN KEY (respond_user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+FOREIGN KEY (respond_user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 DROP TABLE time_block;
 
-CREATE TABLE appointments(
-id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-uuid UUID DEFAULT gen_random_uuid() UNIQUE,
-name VARCHAR(256),
-user_note VARCHAR(4096),
-organizaiton_note VARCHAR(4096),
-rejection_reason VARCHAR(4096),
-created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-scheduled_start_at_utc TIMESTAMPTZ NOT NUll,
-sceduled_end_at_utc TIMESTAMPTZ NOT NUll,
-actual_start_at_utc TIMESTAMPTZ,
-actual_end_at_utc TIMESTAMPTZ,
-user_colour CHAR(7) NOT NULL,
-organization_colour CHAR(7) NOT NULL DEFAULT '#2563EB',
-payment_method VARCHAR(10) NOT NULL CHECK (payment_method in('CASH','VISA')),
-paid_at_utc TIMESTAMPTZ,
-appointment_status VARCHAR(16) NOT NULL CHECK (appointment_status in('PENDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED','REJECTED','NO_SHOW')) DEFAULT 'PENDING',
-user_id BIGINT NOT NULL,
-room_id BIGINT NOT NULL,
-service_id BIGINT NOT NULL,
-approval_user_id BIGINT,
-FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-FOREIGN KEY (approval_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
-FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE
-FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT ON UPDATE CASCADE
-
+CREATE TABLE appointments (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+    name VARCHAR(256) NOT NULL,
+    user_id BIGINT NOT NULL,
+    organization_id BIGINT NOT NULL,
+    service_id BIGINT NOT NULL,
+    worker_id BIGINT NOT NULL,
+    room_id BIGINT NOT NULL,
+    approval_user_id BIGINT,
+    user_title VARCHAR(256),
+    organization_title VARCHAR(256),
+    user_note VARCHAR(4096),
+    organization_note VARCHAR(4096),
+    user_colour VARCHAR(7) NOT NULL DEFAULT '#2563EB',
+    organization_colour VARCHAR(7) NOT NULL DEFAULT '#2563EB',
+    scheduled_start_at_utc TIMESTAMPTZ NOT NULL,
+    scheduled_end_at_utc TIMESTAMPTZ NOT NULL,
+    actual_start_at_utc TIMESTAMPTZ,
+    actual_end_at_utc TIMESTAMPTZ,
+	appointment_status VARCHAR(64) NOT NULL CHECK (appointment_status IN ('PENDING_USER_CONFIRMATION','PENDING_ORGANIZATION_APPROVAL','CONFIRMED','REJECTED','NO_SHOW','CANCELLED','COMPLETED','IN_PROGRESS')) DEFAULT 'PENDING_USER_CONFIRMATION',
+    rejection_reason VARCHAR(4096),
+    payment_method VARCHAR(64) CHECK (payment_method IN ('CASH','VISA')),
+    payment_status VARCHAR(64) NOT NULL CHECK (payment_status IN ('UNPAID','PENDING','PAID','FAILED','REFUNDED')) DEFAULT 'UNPAID',
+    paid_at_utc TIMESTAMPTZ,
+    created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT appointments_scheduled_time_check CHECK (scheduled_start_at_utc < scheduled_end_at_utc),
+    CONSTRAINT appointments_actual_time_check CHECK (actual_start_at_utc IS NULL OR actual_end_at_utc IS NULL OR actual_start_at_utc < actual_end_at_utc),
+    CONSTRAINT appointments_paid_at_check CHECK (payment_status = 'PAID 'OR paid_at_utc IS NULL),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (approval_user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 CREATE TABLE reviews(
