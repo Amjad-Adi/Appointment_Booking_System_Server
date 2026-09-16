@@ -40,6 +40,6 @@ export type UpdateSpecialDay =
 
 export type QuerySpecialDay =
     z.infer<typeof querySpecialDaySchema> & {
-    organizationId: number;
-    offset: number;
+    organizationId?: number;
+    offset?: number;
 };

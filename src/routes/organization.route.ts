@@ -27,6 +27,7 @@ import {workingHoursRouter} from "./working-hours-route";
 import {organizationAppointmentRouter} from "./organization-appointment.route";
 import {timeBlockRouter} from "./time-block.route";
 import {specialDaysRouter} from "./special-day.route";
+import {schedulingRouter} from "./scheduling.route";
 const updateRoleSchemas={
     [Role.SUPER_ADMIN]:updateOrganizationByAdminSchema,
     [Role.OWNER]:updateOrganizationSchema,
@@ -47,6 +48,7 @@ organizationRouter.use("/:organizationUuid/working-hours",validateParameter(vali
 organizationRouter.use("/:organizationUuid/appointments", validateParameter(validateUuid, "organizationUuid"), organizationAppointmentRouter);
 organizationRouter.use("/:organizationUuid/time-blocks", validateParameter(validateUuid, "organizationUuid"), timeBlockRouter);
 organizationRouter.use("/:organizationUuid/special-days", validateParameter(validateUuid, "organizationUuid"), specialDaysRouter);
+organizationRouter.use("/:organizationUuid/scheduling", validateParameter(validateUuid, "organizationUuid"), schedulingRouter);
 
 organizationRouter.route("/:organizationUuid")
     .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string

@@ -20,12 +20,17 @@ import {} from "../utils/Request"
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
     query.offset=(query?.page-1)*query?.limit
-    const organizationUuid=req.user?.organizationUuid;
-    if(organizationUuid!==null){
-        query.filter = {
-            ...query.filter,
-            organizationUuid,
-        };
+    const organizationUuid = req.user?.organizationUuid;
+    const currentUserRole = req.user?.role;
+    if (currentUserRole !== Role.SUPER_ADMIN) {
+        if (query.filter?.role === Role.CUSTOMER) {
+            query.filter.organizationUuid = undefined;
+        } else {
+            query.filter = {
+                ...query.filter,
+                organizationUuid,
+            };
+        }
     }
     const [users,totalUsers]=await Promise.all([getUsers(query),getNumberOfUsers(query)])
     const baseUrl=req.originalUrl?.split("?")[0]

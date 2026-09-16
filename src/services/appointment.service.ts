@@ -4,7 +4,8 @@ import {
     findByUuidAndOrganization,
     findByUuidAndUser,
     countAll,
-    create,
+    createByUser,
+    createByOrganization,
     updateByUser,
     updateByOrganization,
     confirm,
@@ -16,13 +17,22 @@ import {
 } from "../repositories/appointment.repository.js";
 
 import {
-    findIdByUuid,
-} from "../repositories/organizaiton.repository.js";
+    getOrganizationIdByUuid,
+} from "./organization.service.js";
 
 import {
     AuthorizeOrganizationUser,
     getUserIdByUuid,
 } from "./user.service.js";
+
+import {
+    getService,
+    getServiceIdByUuid,
+} from "./service.service.js";
+
+import {
+    getRoomIdByUserUuid,
+} from "./room.service.js";
 
 import {
     NotFoundError,
@@ -36,6 +46,7 @@ import type {
     Appointment,
     AppointmentResponse,
     CreateAppointment,
+    CreateOrganizationAppointment,
     QueryAppointment,
     UpdateAppointmentByOrganization,
     UpdateAppointmentByUser,
@@ -44,22 +55,6 @@ import type {
     UpdateAppointmentStatus,
     PayAppointment,
 } from "../models/appointment.model.js";
-
-import {
-    AppointmentStatus,
-} from "../models/enums/appointment-status.js";
-
-import {
-    PaymentStatus,
-} from "../models/enums/payment-status.js";
-
-import {
-    getServiceIdByUuid,
-} from "./service.service.js";
-
-import {
-    getRoomIdByUuid,
-} from "./room.service.js";
 
 
 export async function getAppointments(
@@ -77,12 +72,19 @@ export async function getNumberOfAppointments(
 
 
 export async function getAppointment(
-    appointmentUuid: string,organizationUuid:string|undefined,
-): Promise<AppointmentResponse|undefined> {
+    appointmentUuid: string,
+    organizationUuid: string | undefined,
+): Promise<AppointmentResponse> {
     const result =
-        findByUuid(appointmentUuid,organizationUuid);
+        await findByUuid(
+            appointmentUuid,
+            organizationUuid,
+        );
+
     if (result === undefined) {
-        throw new NotFoundError("Appointment");
+        throw new NotFoundError(
+            "Appointment",
+        );
     }
 
     return result;
@@ -94,10 +96,14 @@ export async function getOrganizationAppointment(
     organizationUuid: string,
 ): Promise<AppointmentResponse> {
     const organizationId =
-        await findIdByUuid(organizationUuid);
+        await getOrganizationIdByUuid(
+            organizationUuid,
+        );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
+        throw new NotFoundError(
+            "Organization",
+        );
     }
 
     const result =
@@ -107,7 +113,9 @@ export async function getOrganizationAppointment(
         );
 
     if (result === undefined) {
-        throw new NotFoundError("Appointment");
+        throw new NotFoundError(
+            "Appointment",
+        );
     }
 
     return result;
@@ -119,10 +127,14 @@ export async function getUserAppointment(
     userUuid: string,
 ): Promise<AppointmentResponse> {
     const userId =
-        await getUserIdByUuid(userUuid);
+        await getUserIdByUuid(
+            userUuid,
+        );
 
     if (userId === undefined) {
-        throw new NotFoundError("User");
+        throw new NotFoundError(
+            "User",
+        );
     }
 
     const result =
@@ -132,40 +144,73 @@ export async function getUserAppointment(
         );
 
     if (result === undefined) {
-        throw new NotFoundError("Appointment");
+        throw new NotFoundError(
+            "Appointment",
+        );
     }
 
     return result;
 }
 
 
+/*
+ * CUSTOMER / USER creates an appointment.
+ *
+ * The request data comes from createAppointmentSchema.
+ *
+ * The service resolves:
+ * - user ID
+ * - organization ID
+ * - service ID
+ * - worker ID
+ * - room ID
+ * - scheduled end time
+ *
+ * The resolved CreateAppointment model is then
+ * passed to createByUser().
+ */
 export async function createAppointmentService(
     appointment: CreateAppointment,
     userUuid: string,
 ): Promise<Appointment> {
     const userId =
-        await getUserIdByUuid(userUuid);
+        await getUserIdByUuid(
+            userUuid,
+        );
 
     if (userId === undefined) {
-        throw new NotFoundError("User");
+        throw new NotFoundError(
+            "User",
+        );
     }
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             appointment.organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
+        throw new NotFoundError(
+            "Organization",
+        );
     }
+
+    const service =
+        await getService(
+            appointment.serviceUuid,
+            appointment.organizationUuid,
+        );
 
     const serviceId =
         await getServiceIdByUuid(
-            appointment.serviceUuid,appointment.organizationUuid
+            appointment.serviceUuid,
+            appointment.organizationUuid,
         );
 
     if (serviceId === undefined) {
-        throw new NotFoundError("Service");
+        throw new NotFoundError(
+            "Service",
+        );
     }
 
     const workerId =
@@ -174,99 +219,258 @@ export async function createAppointmentService(
         );
 
     if (workerId === undefined) {
-        throw new NotFoundError("Worker");
+        throw new NotFoundError(
+            "Worker",
+        );
     }
 
     const roomId =
-        await getRoomIdByUuid(
-            appointment.roomUuid,
+        await getRoomIdByUserUuid(
+            appointment.workerUuid,
+            appointment.organizationUuid,
         );
 
     if (roomId === undefined) {
-        throw new NotFoundError("Room");
+        throw new NotFoundError(
+            "Room",
+        );
     }
 
-    appointment.userId = userId;
-    appointment.organizationId = organizationId;
-    appointment.serviceId = serviceId;
-    appointment.workerId = workerId;
-    appointment.roomId = roomId;
+    const scheduledStartAtUTC =
+        new Date(
+            appointment.scheduledStartAtUTC,
+        );
 
     if (
-        new Date(
-            appointment.scheduledStartTimeUTC,
-        ) >=
-        new Date(
-            appointment.scheduledEndTimeUTC,
+        Number.isNaN(
+            scheduledStartAtUTC.getTime(),
         )
+    ) {
+        throw new BadRequestError(
+            "Invalid appointment start time",
+        );
+    }
+
+    const scheduledEndAtUTC =
+        new Date(
+            scheduledStartAtUTC.getTime() +
+            service.durationInMinutes *
+            60 *
+            1000,
+        );
+
+    if (
+        scheduledStartAtUTC >=
+        scheduledEndAtUTC
     ) {
         throw new BadRequestError(
             "Appointment end time must be after start time",
         );
     }
 
+    const createData: CreateAppointment = {
+        ...appointment,
+
+        userId,
+        organizationId,
+        serviceId,
+        workerId,
+        roomId,
+
+        scheduledStartAtUTC,
+        scheduledEndAtUTC,
+    };
+
     const result =
-        await create(appointment);
+        await createByUser(
+            createData,
+        );
 
     if (result === undefined) {
-        throw new BadRequestError();
+        throw new BadRequestError(
+            "Appointment could not be created",
+        );
     }
 
     return result;
 }
 
 
-export async function updateAppointmentByUser(
-    appointment: UpdateAppointmentByUser,
+/*
+ * ORGANIZATION creates an appointment for a customer.
+ *
+ * The request data comes from
+ * createOrganizationAppointmentSchema.
+ *
+ * The service resolves:
+ * - customer ID
+ * - organization ID
+ * - service ID
+ * - worker ID
+ * - room ID
+ * - scheduled end time
+ *
+ * The resolved CreateOrganizationAppointment model
+ * is then passed to createByOrganization().
+ */
+export async function createOrganizationAppointmentService(
+    appointment: CreateOrganizationAppointment,
+    organizationUserUuid: string,
 ): Promise<Appointment> {
-    const userId =
+    await AuthorizeOrganizationUser(
+        organizationUserUuid,
+        appointment.organizationUuid,
+    );
+
+    const organizationId =
+        await getOrganizationIdByUuid(
+            appointment.organizationUuid,
+        );
+
+    if (organizationId === undefined) {
+        throw new NotFoundError(
+            "Organization",
+        );
+    }
+
+    const customerId =
         await getUserIdByUuid(
             appointment.userUuid,
         );
 
-    if (userId === undefined) {
-        throw new NotFoundError("User");
+    if (customerId === undefined) {
+        throw new NotFoundError(
+            "User",
+        );
     }
 
-    const current =
-        await findByUuidAndUser(
-            appointment.uuid,
-            userId,
+    const service =
+        await getService(
+            appointment.serviceUuid,
+            appointment.organizationUuid,
         );
 
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
+    const serviceId =
+        await getServiceIdByUuid(
+            appointment.serviceUuid,
+            appointment.organizationUuid,
+        );
+
+    if (serviceId === undefined) {
+        throw new NotFoundError(
+            "Service",
+        );
     }
 
+    const workerId =
+        await getUserIdByUuid(
+            appointment.workerUuid,
+        );
+
+    if (workerId === undefined) {
+        throw new NotFoundError(
+            "Worker",
+        );
+    }
+
+    const roomId =
+        await getRoomIdByUserUuid(
+            appointment.workerUuid,
+            appointment.organizationUuid,
+        );
+
+    if (roomId === undefined) {
+        throw new NotFoundError(
+            "Room",
+        );
+    }
+
+    const scheduledStartAtUTC =
+        new Date(
+            appointment.scheduledStartAtUTC,
+        );
+
     if (
-        current.appointmentStatus ===
-        AppointmentStatus.COMPLETED ||
-        current.appointmentStatus ===
-        AppointmentStatus.CANCELLED ||
-        current.appointmentStatus ===
-        AppointmentStatus.REJECTED
+        Number.isNaN(
+            scheduledStartAtUTC.getTime(),
+        )
     ) {
         throw new BadRequestError(
-            "This appointment cannot be updated",
+            "Invalid appointment start time",
+        );
+    }
+
+    const scheduledEndAtUTC =
+        new Date(
+            scheduledStartAtUTC.getTime() +
+            service.durationInMinutes *
+            60 *
+            1000,
+        );
+
+    if (
+        scheduledStartAtUTC >=
+        scheduledEndAtUTC
+    ) {
+        throw new BadRequestError(
+            "Appointment end time must be after start time",
+        );
+    }
+
+    const createData: CreateOrganizationAppointment = {
+        ...appointment,
+
+        organizationId,
+        userId: customerId,
+        serviceId,
+        workerId,
+        roomId,
+
+        scheduledStartAtUTC,
+        scheduledEndAtUTC,
+    };
+
+    const result =
+        await createByOrganization(
+            createData,
+        );
+
+    if (result === undefined) {
+        throw new BadRequestError(
+            "Appointment could not be created",
+        );
+    }
+
+    return result;
+}
+
+
+export async function updateAppointmentByUserService(
+    appointmentUuid: string,
+    userUuid: string,
+    appointment: UpdateAppointmentByUser,
+): Promise<Appointment> {
+    const userId =
+        await getUserIdByUuid(
+            userUuid,
+        );
+
+    if (userId === undefined) {
+        throw new NotFoundError(
+            "User",
         );
     }
 
     const result =
         await updateByUser(
-            appointment.uuid,
+            appointmentUuid,
             userId,
-            {
-                userNote:
-                appointment.userNote,
-
-                userColour:
-                appointment.userColour,
-            },
+            appointment,
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "No appointment fields were provided",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -274,62 +478,32 @@ export async function updateAppointmentByUser(
 }
 
 
-export async function updateAppointmentByOrganization(
+export async function updateAppointmentByOrganizationService(
+    appointmentUuid: string,
+    organizationUuid: string,
     appointment: UpdateAppointmentByOrganization,
 ): Promise<Appointment> {
-    await AuthorizeOrganizationUser(
-        appointment.userUuid,
-        appointment.organizationUuid,
-    );
-
     const organizationId =
-        await findIdByUuid(
-            appointment.organizationUuid,
+        await getOrganizationIdByUuid(
+            organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
-    }
-
-    const current =
-        await findByUuidAndOrganization(
-            appointment.uuid,
-            organizationId,
-        );
-
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.appointmentStatus ===
-        AppointmentStatus.COMPLETED ||
-        current.appointmentStatus ===
-        AppointmentStatus.CANCELLED ||
-        current.appointmentStatus ===
-        AppointmentStatus.REJECTED
-    ) {
-        throw new BadRequestError(
-            "This appointment cannot be updated",
+        throw new NotFoundError(
+            "Organization",
         );
     }
 
     const result =
         await updateByOrganization(
-            appointment.uuid,
+            appointmentUuid,
             organizationId,
-            {
-                organizationNote:
-                appointment.organizationNote,
-
-                organizationColour:
-                appointment.organizationColour,
-            },
+            appointment,
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "No appointment fields were provided",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -338,53 +512,36 @@ export async function updateAppointmentByOrganization(
 
 
 export async function confirmAppointmentService(
+    appointmentUuid: string,
+    organizationUuid: string,
+    approvalUserUuid: string,
     appointment: ConfirmAppointment,
 ): Promise<Appointment> {
-    await AuthorizeOrganizationUser(
-        appointment.userUuid,
-        appointment.organizationUuid,
-    );
-
     const organizationId =
-        await findIdByUuid(
-            appointment.organizationUuid,
+        await getOrganizationIdByUuid(
+            organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
+        throw new NotFoundError(
+            "Organization",
+        );
     }
 
     const approvalUserId =
         await getUserIdByUuid(
-            appointment.userUuid,
+            approvalUserUuid,
         );
 
     if (approvalUserId === undefined) {
-        throw new NotFoundError("User");
-    }
-
-    const current =
-        await findByUuidAndOrganization(
-            appointment.uuid,
-            organizationId,
-        );
-
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.appointmentStatus !==
-        AppointmentStatus.PENDING_USER_CONFIRMATION
-    ) {
-        throw new BadRequestError(
-            "Appointment is not waiting for user confirmation",
+        throw new NotFoundError(
+            "User",
         );
     }
 
     const result =
         await confirm(
-            appointment.uuid,
+            appointmentUuid,
             organizationId,
             approvalUserId,
             appointment.name,
@@ -393,8 +550,8 @@ export async function confirmAppointmentService(
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment could not be confirmed",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -405,45 +562,27 @@ export async function confirmAppointmentService(
 export async function approveAppointmentService(
     appointmentUuid: string,
     organizationUuid: string,
-    userUuid: string,
+    approvalUserUuid: string,
 ): Promise<Appointment> {
-    await AuthorizeOrganizationUser(
-        userUuid,
-        organizationUuid,
-    );
-
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
+        throw new NotFoundError(
+            "Organization",
+        );
     }
 
     const approvalUserId =
-        await getUserIdByUuid(userUuid);
-
-    if (approvalUserId === undefined) {
-        throw new NotFoundError("User");
-    }
-
-    const current =
-        await findByUuidAndOrganization(
-            appointmentUuid,
-            organizationId,
+        await getUserIdByUuid(
+            approvalUserUuid,
         );
 
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.appointmentStatus !==
-        AppointmentStatus.PENDING_ORGANIZATION_APPROVAL
-    ) {
-        throw new BadRequestError(
-            "Appointment is not waiting for organization approval",
+    if (approvalUserId === undefined) {
+        throw new NotFoundError(
+            "User",
         );
     }
 
@@ -455,8 +594,8 @@ export async function approveAppointmentService(
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment could not be approved",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -465,61 +604,44 @@ export async function approveAppointmentService(
 
 
 export async function rejectAppointmentService(
+    appointmentUuid: string,
+    organizationUuid: string,
+    approvalUserUuid: string,
     appointment: RejectAppointment,
 ): Promise<Appointment> {
-    await AuthorizeOrganizationUser(
-        appointment.userUuid,
-        appointment.organizationUuid,
-    );
-
     const organizationId =
-        await findIdByUuid(
-            appointment.organizationUuid,
+        await getOrganizationIdByUuid(
+            organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
+        throw new NotFoundError(
+            "Organization",
+        );
     }
 
     const approvalUserId =
         await getUserIdByUuid(
-            appointment.userUuid,
+            approvalUserUuid,
         );
 
     if (approvalUserId === undefined) {
-        throw new NotFoundError("User");
-    }
-
-    const current =
-        await findByUuidAndOrganization(
-            appointment.uuid,
-            organizationId,
-        );
-
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.appointmentStatus !==
-        AppointmentStatus.PENDING_ORGANIZATION_APPROVAL
-    ) {
-        throw new BadRequestError(
-            "Appointment is not waiting for organization approval",
+        throw new NotFoundError(
+            "User",
         );
     }
 
     const result =
         await reject(
-            appointment.uuid,
+            appointmentUuid,
             organizationId,
             approvalUserId,
             appointment.rejectionReason,
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment could not be rejected",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -528,47 +650,31 @@ export async function rejectAppointmentService(
 
 
 export async function updateAppointmentStatusService(
+    appointmentUuid: string,
+    organizationUuid: string,
     appointment: UpdateAppointmentStatus,
 ): Promise<Appointment> {
-    await AuthorizeOrganizationUser(
-        appointment.userUuid,
-        appointment.organizationUuid,
-    );
-
     const organizationId =
-        await findIdByUuid(
-            appointment.organizationUuid,
+        await getOrganizationIdByUuid(
+            organizationUuid,
         );
 
     if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
-    }
-
-    const current =
-        await findByUuidAndOrganization(
-            appointment.uuid,
-            organizationId,
+        throw new NotFoundError(
+            "Organization",
         );
-
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
     }
-
-    validateStatusTransition(
-        current.appointmentStatus,
-        appointment.appointmentStatus,
-    );
 
     const result =
         await updateStatus(
-            appointment.uuid,
+            appointmentUuid,
             organizationId,
             appointment.appointmentStatus,
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment status could not be updated",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -576,37 +682,18 @@ export async function updateAppointmentStatusService(
 }
 
 
-export async function cancelAppointmentService(
+export async function cancelAppointmentByUserService(
     appointmentUuid: string,
     userUuid: string,
 ): Promise<Appointment> {
     const userId =
-        await getUserIdByUuid(userUuid);
-
-    if (userId === undefined) {
-        throw new NotFoundError("User");
-    }
-
-    const current =
-        await findByUuidAndUser(
-            appointmentUuid,
-            userId,
+        await getUserIdByUuid(
+            userUuid,
         );
 
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.appointmentStatus ===
-        AppointmentStatus.COMPLETED ||
-        current.appointmentStatus ===
-        AppointmentStatus.CANCELLED ||
-        current.appointmentStatus ===
-        AppointmentStatus.REJECTED
-    ) {
-        throw new BadRequestError(
-            "Appointment cannot be cancelled",
+    if (userId === undefined) {
+        throw new NotFoundError(
+            "User",
         );
     }
 
@@ -617,8 +704,8 @@ export async function cancelAppointmentService(
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment could not be cancelled",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
@@ -627,107 +714,33 @@ export async function cancelAppointmentService(
 
 
 export async function payAppointmentService(
+    appointmentUuid: string,
+    userUuid: string,
     appointment: PayAppointment,
 ): Promise<Appointment> {
     const userId =
         await getUserIdByUuid(
-            appointment.userUuid,
+            userUuid,
         );
 
     if (userId === undefined) {
-        throw new NotFoundError("User");
-    }
-
-    const current =
-        await findByUuidAndUser(
-            appointment.uuid,
-            userId,
-        );
-
-    if (current === undefined) {
-        throw new NotFoundError("Appointment");
-    }
-
-    if (
-        current.paymentStatus ===
-        PaymentStatus.PAID
-    ) {
-        throw new BadRequestError(
-            "Appointment is already paid",
-        );
-    }
-
-    if (
-        current.appointmentStatus ===
-        AppointmentStatus.CANCELLED ||
-        current.appointmentStatus ===
-        AppointmentStatus.REJECTED
-    ) {
-        throw new BadRequestError(
-            "Cancelled or rejected appointments cannot be paid",
+        throw new NotFoundError(
+            "User",
         );
     }
 
     const result =
         await pay(
-            appointment.uuid,
+            appointmentUuid,
             userId,
             appointment.paymentMethod,
         );
 
     if (result === undefined) {
-        throw new BadRequestError(
-            "Appointment could not be paid",
+        throw new NotFoundError(
+            "Appointment",
         );
     }
 
     return result;
-}
-
-
-function validateStatusTransition(
-    currentStatus: AppointmentStatus,
-    newStatus: AppointmentStatus,
-): void {
-    const validTransitions: Record<
-        AppointmentStatus,
-        AppointmentStatus[]
-    > = {
-        [AppointmentStatus.PENDING_USER_CONFIRMATION]: [
-            AppointmentStatus.CANCELLED,
-        ],
-
-        [AppointmentStatus.PENDING_ORGANIZATION_APPROVAL]: [
-            AppointmentStatus.CONFIRMED,
-            AppointmentStatus.REJECTED,
-        ],
-
-        [AppointmentStatus.CONFIRMED]: [
-            AppointmentStatus.IN_PROGRESS,
-            AppointmentStatus.CANCELLED,
-            AppointmentStatus.NO_SHOW,
-        ],
-
-        [AppointmentStatus.IN_PROGRESS]: [
-            AppointmentStatus.COMPLETED,
-        ],
-
-        [AppointmentStatus.COMPLETED]: [],
-
-        [AppointmentStatus.REJECTED]: [],
-
-        [AppointmentStatus.CANCELLED]: [],
-
-        [AppointmentStatus.NO_SHOW]: [],
-    };
-
-    if (
-        !validTransitions[currentStatus]?.includes(
-            newStatus,
-        )
-    ) {
-        throw new BadRequestError(
-            `Cannot change appointment status from ${currentStatus} to ${newStatus}`,
-        );
-    }
 }

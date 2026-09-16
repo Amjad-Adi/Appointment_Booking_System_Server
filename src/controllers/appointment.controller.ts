@@ -10,15 +10,15 @@ import {
     getOrganizationAppointment,
     getUserAppointment,
     createAppointmentService,
-    updateAppointmentByUser,
-    updateAppointmentByOrganization,
+    updateAppointmentByOrganizationService,
+    updateAppointmentByUserService,
     confirmAppointmentService,
     approveAppointmentService,
     rejectAppointmentService,
     updateAppointmentStatusService,
-    cancelAppointmentService,
+    cancelAppointmentByUserService,
     payAppointmentService,
-} from "../services/appointment.service";
+} from "../services/appointment.service.js";
 
 import type {
     QueryAppointment,
@@ -29,7 +29,7 @@ import type {
     RejectAppointment,
     UpdateAppointmentStatus,
     PayAppointment,
-} from "../models/appointment.model";
+} from "../models/appointment.model.js";
 
 import {
     QueryResponse,
@@ -40,19 +40,45 @@ export async function handleGetAppointments(
     req: Request,
     res: Response,
 ) {
-    const query = req.validatedQuery as unknown as QueryAppointment;
-    query.offset = (query.page - 1) * query.limit;
-    const organizationUuid=req.user?.organizationUuid;
-    if(organizationUuid!==null){
+    const query =
+        req.validatedQuery as unknown as QueryAppointment;
+
+    query.offset =
+        (query.page - 1) * query.limit;
+
+    const organizationUuid =
+        req.user?.organizationUuid;
+
+    if (organizationUuid) {
         query.filter = {
             ...query.filter,
             organizationUuid,
         };
     }
-    const [appointments, totalNumberOfAppointments,] = await Promise.all([getAppointments(query), getNumberOfAppointments(query),]);
-    const baseUrl = req.originalUrl?.split("?")[0];
-    const responseResult = new QueryResponse(appointments, totalNumberOfAppointments, baseUrl, query.page, query.limit,);
-    return res.status(200).json(responseResult);
+
+    const [
+        appointments,
+        totalNumberOfAppointments,
+    ] = await Promise.all([
+        getAppointments(query),
+        getNumberOfAppointments(query),
+    ]);
+
+    const baseUrl =
+        req.originalUrl?.split("?")[0];
+
+    const responseResult =
+        new QueryResponse(
+            appointments,
+            totalNumberOfAppointments,
+            baseUrl,
+            query.page,
+            query.limit,
+        );
+
+    return res
+        .status(200)
+        .json(responseResult);
 }
 
 
@@ -85,15 +111,18 @@ export async function handleGetOrganizationAppointments(
     const baseUrl =
         req.originalUrl?.split("?")[0];
 
-    const responseResult = new QueryResponse(
-        appointments,
-        totalNumberOfAppointments,
-        baseUrl,
-        query.page,
-        query.limit,
-    );
+    const responseResult =
+        new QueryResponse(
+            appointments,
+            totalNumberOfAppointments,
+            baseUrl,
+            query.page,
+            query.limit,
+        );
 
-    return res.status(200).json(responseResult);
+    return res
+        .status(200)
+        .json(responseResult);
 }
 
 
@@ -103,12 +132,19 @@ export async function handleGetAppointment(
 ) {
     const appointmentUuid =
         req.params.appointmentUuid as string;
-    const organizationUuid=req.user?.organizationUuid;
 
-    const result = await getAppointment(
-            appointmentUuid,organizationUuid);
+    const organizationUuid =
+        req.user?.organizationUuid;
 
-    return res.status(200).json(result);
+    const result =
+        await getAppointment(
+            appointmentUuid,
+            organizationUuid,
+        );
+
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -128,7 +164,9 @@ export async function handleGetOrganizationAppointment(
             organizationUuid,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -148,7 +186,9 @@ export async function handleGetUserAppointment(
             userUuid,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -162,13 +202,18 @@ export async function handleCreateAppointment(
     const userUuid =
         req.user?.uuid as string;
 
+    appointment.organizationUuid =
+        req.user?.organizationUuid as string;
+
     const result =
         await createAppointmentService(
             appointment,
             userUuid,
         );
 
-    return res.status(201).json(result);
+    return res
+        .status(201)
+        .json(result);
 }
 
 
@@ -179,17 +224,22 @@ export async function handleUpdateAppointmentByUser(
     const appointment =
         req.body as UpdateAppointmentByUser;
 
-    appointment.uuid = req.params.appointmentUuid as string;
+    const appointmentUuid =
+        req.params.appointmentUuid as string;
 
-    appointment.userUuid =
+    const userUuid =
         req.user?.uuid as string;
 
     const result =
-        await updateAppointmentByUser(
+        await updateAppointmentByUserService(
+            appointmentUuid,
+            userUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -200,21 +250,22 @@ export async function handleUpdateAppointmentByOrganization(
     const appointment =
         req.body as UpdateAppointmentByOrganization;
 
-    appointment.uuid =
+    const appointmentUuid =
         req.params.appointmentUuid as string;
 
-    appointment.organizationUuid =
+    const organizationUuid =
         req.params.organizationUuid as string;
 
-    appointment.userUuid =
-        req.user?.uuid as string;
-
     const result =
-        await updateAppointmentByOrganization(
+        await updateAppointmentByOrganizationService(
+            appointmentUuid,
+            organizationUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -225,21 +276,26 @@ export async function handleConfirmAppointment(
     const appointment =
         req.body as ConfirmAppointment;
 
-    appointment.uuid =
+    const appointmentUuid =
         req.params.appointmentUuid as string;
 
-    appointment.organizationUuid =
+    const organizationUuid =
         req.params.organizationUuid as string;
 
-    appointment.userUuid =
+    const approvalUserUuid =
         req.user?.uuid as string;
 
     const result =
         await confirmAppointmentService(
+            appointmentUuid,
+            organizationUuid,
+            approvalUserUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -253,17 +309,19 @@ export async function handleApproveAppointment(
     const organizationUuid =
         req.params.organizationUuid as string;
 
-    const userUuid =
+    const approvalUserUuid =
         req.user?.uuid as string;
 
     const result =
         await approveAppointmentService(
             appointmentUuid,
             organizationUuid,
-            userUuid,
+            approvalUserUuid,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -274,21 +332,26 @@ export async function handleRejectAppointment(
     const appointment =
         req.body as RejectAppointment;
 
-    appointment.uuid =
+    const appointmentUuid =
         req.params.appointmentUuid as string;
 
-    appointment.organizationUuid =
+    const organizationUuid =
         req.params.organizationUuid as string;
 
-    appointment.userUuid =
+    const approvalUserUuid =
         req.user?.uuid as string;
 
     const result =
         await rejectAppointmentService(
+            appointmentUuid,
+            organizationUuid,
+            approvalUserUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -299,21 +362,22 @@ export async function handleUpdateAppointmentStatus(
     const appointment =
         req.body as UpdateAppointmentStatus;
 
-    appointment.uuid =
+    const appointmentUuid =
         req.params.appointmentUuid as string;
 
-    appointment.organizationUuid =
+    const organizationUuid =
         req.params.organizationUuid as string;
-
-    appointment.userUuid =
-        req.user?.uuid as string;
 
     const result =
         await updateAppointmentStatusService(
+            appointmentUuid,
+            organizationUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -328,12 +392,14 @@ export async function handleCancelAppointment(
         req.user?.uuid as string;
 
     const result =
-        await cancelAppointmentService(
+        await cancelAppointmentByUserService(
             appointmentUuid,
             userUuid,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }
 
 
@@ -344,16 +410,20 @@ export async function handlePayAppointment(
     const appointment =
         req.body as PayAppointment;
 
-    appointment.uuid =
+    const appointmentUuid =
         req.params.appointmentUuid as string;
 
-    appointment.userUuid =
+    const userUuid =
         req.user?.uuid as string;
 
     const result =
         await payAppointmentService(
+            appointmentUuid,
+            userUuid,
             appointment,
         );
 
-    return res.status(200).json(result);
+    return res
+        .status(200)
+        .json(result);
 }

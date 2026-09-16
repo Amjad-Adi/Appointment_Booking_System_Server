@@ -22,6 +22,7 @@ export async function handleGetServices(req: Request, res: Response,) {
     const query: QueryService = req.validatedQuery as unknown as QueryService;
     query.offset = (query.page - 1) * query.limit;
     const organizationUuid=req.user?.organizationUuid;
+    console.log(query);
     if(organizationUuid!==null){
         query.filter = {
             ...query.filter,

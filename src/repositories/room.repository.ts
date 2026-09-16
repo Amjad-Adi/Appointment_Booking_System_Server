@@ -161,10 +161,56 @@ export async function update(
             [room.name, room.description, room.status, room.occupancyStatus, room.assignedUserId, room.uuid, room.organizationUuid,],)).rows[0];
 }
 
-export async function findIdByUuid(uuid:string):Promise<number>{
-    return (await pool.query(
-        `SELECT ${COLUMN_ID}
-         FROM ${TABLE_NAME}
-         WHERE ${COLUMN_UUID} = $1`,
-        [uuid])).rows[0]?.id
+export async function findIdByUuid(
+    roomUuid: string,
+    organizationUuid: string,
+): Promise<number | undefined> {
+    return (
+        await pool.query(
+            `SELECT ${ALIAS}.${COLUMN_ID}
+             FROM ${TABLE_NAME} ${ALIAS}
+             INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+                ON ${ALIAS}.${COLUMN_ORGANIZATION_ID} =
+                   ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+             WHERE
+                ${ALIAS}.${COLUMN_UUID} = $1
+                AND ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $2`,
+            [roomUuid, organizationUuid],
+        )
+    ).rows[0]?.[COLUMN_ID];
+}
+
+import { and, eq } from "drizzle-orm";
+
+import { drizzleConnection } from "../databases/drizzle-connection.js";
+import { roomTable } from "../drizzle-schemas/room.db.js";
+import { organizationTable } from "../drizzle-schemas/organizations.db.js";
+import {usersTable} from "../drizzle-schemas/users.db";
+
+
+export async function findIdByUserUuid(
+    userUuid: string,
+    organizationUuid: string,
+): Promise<number | undefined> {
+    const [result] = await drizzleConnection
+        .select({
+            roomId: roomTable.id,
+        })
+        .from(roomTable)
+        .innerJoin(
+            usersTable,
+            eq(roomTable.userId, usersTable.id),
+        )
+        .innerJoin(
+            organizationTable,
+            eq(roomTable.organizationId, organizationTable.id),
+        )
+        .where(
+            and(
+                eq(usersTable.uuid, userUuid),
+                eq(organizationTable.uuid, organizationUuid),
+            ),
+        )
+
+    return result?.roomId;
 }
