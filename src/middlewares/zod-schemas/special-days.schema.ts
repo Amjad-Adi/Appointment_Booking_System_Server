@@ -6,6 +6,7 @@ import {
     SORT_BY_DAY_DATE,
     SORT_BY_NAME,
 } from "../../databases/contracts/special-days.contract.js";
+import {querySchema} from "./query.schema";
 
 export const createSpecialDaySchema = z.object({
     name: z
@@ -83,21 +84,8 @@ export const specialDayFilterSchema = z.object({
         }
     });
 
-export const querySpecialDaySchema = z.object({
-    page: z
-        .coerce
-        .number()
-        .int()
-        .positive()
-        .default(1),
-
-    limit: z
-        .coerce
-        .number()
-        .int()
-        .positive()
-        .max(100)
-        .default(20),
+export const querySpecialDaySchema =querySchema
+    .extend({
 
     search: z
         .string()
@@ -116,12 +104,6 @@ export const querySpecialDaySchema = z.object({
         {
             error: "Invalid sort field",
         },
-    ).default(SORT_BY_DAY_DATE),
+    ).default(SORT_BY_DAY_DATE).optional(),
 
-    sortOrder: z.enum(
-        ["asc", "desc"],
-        {
-            error: "Invalid sort order",
-        },
-    ).default("asc"),
 }).strict();

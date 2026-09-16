@@ -4,14 +4,14 @@ import {
     create,
     update,
     isNameFound,
-    countAll,
+    countAll, findIdByUuid, findIdByUserUuid
 } from "../repositories/room.repository.js";
 
 import { NotFoundError } from "../errors/not-found.error.js";
 import { BadRequestError } from "../errors/bad-request.error.js";
 import { ConflictError } from "../errors/conflict.error.js";
 
-import { findIdByUuid } from "../repositories/organizaiton.repository.js";
+import { findIdByUuid as findOrganizationIdByuUuid} from "../repositories/organizaiton.repository.js";
 
 import {
     RoomResponse,
@@ -45,7 +45,7 @@ export async function getRoom(roomUuid: string,organizationUuid:string|undefined
 
 export async function createRoom(room: CreateRoom, userUuid: string,): Promise<Room> {
     await AuthorizeOrganizationUser(userUuid, room.organizationUuid);
-    const organizationId = await findIdByUuid(room.organizationUuid,);
+    const organizationId = await findOrganizationIdByuUuid(room.organizationUuid,);
     if (organizationId === undefined) {
         throw new NotFoundError("Organization");
     }
@@ -79,8 +79,17 @@ export async function updateRoom(room: UpdateRoom,): Promise<Room> {
     return result;
 }
 
-export async function getRoomIdByUuid(roomUuid: string): Promise<number> {
-    const result = await findIdByUuid(roomUuid);
+export async function getRoomIdByUuid(roomUuid:string,organizationUuid:string):Promise<number>{
+    const result = await findIdByUuid(roomUuid,organizationUuid);
+    if (result === undefined) {
+        throw new NotFoundError("Room");
+    }
+    return result;
+}
+
+
+export async function getRoomIdByUserUuid(userUuid:string,organizationUuid:string):Promise<number>{
+    const result = await findIdByUserUuid(userUuid,organizationUuid);
     if (result === undefined) {
         throw new NotFoundError("Room");
     }

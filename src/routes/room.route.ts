@@ -33,22 +33,18 @@ import {
 
 export const publicRoomRoute = express.Router();
 
-publicRoomRoute
-    .route('/')
-    .get(authenticateToken,validateQuery(queryRoomSchema), handleGetOrganizationRooms,);
+publicRoomRoute.route('/')
 
-publicRoomRoute
-    .route('/:roomUuid')
-    .get(authenticateToken,validateParameter(validateUuid, 'roomUuid'), handleGetOrganizationRoom,);
+publicRoomRoute.route('/:roomUuid')
 
 export const roomRouter = express.Router({
     mergeParams: true,
 });
 
-roomRouter
-    .route('/')
+roomRouter.route('/')
+    .get(authenticateToken,validateQuery(queryRoomSchema), handleGetOrganizationRooms,)
     .post(authenticateToken, authorize(CREATE_ROOM), validateBody(createRoomSchema), handleCreateOrganizationRoom,);
 
-roomRouter
-    .route('/:roomUuid')
+roomRouter.route('/:roomUuid')
+    .get(authenticateToken,validateParameter(validateUuid, 'roomUuid'), handleGetOrganizationRoom,)
     .patch(authenticateToken, authorize(UPDATE_ROOM), validateParameter(validateUuid, 'roomUuid'), validateBody(updateRoomSchema), handleUpdateOrganizationRoom,);

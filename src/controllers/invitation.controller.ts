@@ -14,14 +14,14 @@ import {OrganizationResponse} from "../models/organization.model.js";
 import {InvitationStatus} from "../models/enums/invitation-status.js";
 export async function handleGetOrganizationInvitations(req:Request,res:Response){
     const organizationUuid:string=req.params.organizationUuid  as string;
-    const userUuid:string=req.user.uuid as string;
+    const userUuid:string=req.user?.uuid as string;
     const result:InvitationResponse[]=await getInvitations(organizationUuid,userUuid)
     return res.status(200).json(result)
 }
 
 export async function handleGetOrganizationInvitation(req:Request,res:Response){
     const invitationUuid:string=req.params.invitationUuid as string;
-    const userUuid:string=req.user.uuid as string;
+    const userUuid:string=req.user?.uuid as string;
     const organizationUuid:string=req.params.organizationUuid  as string;
     const result:InvitationResponse=await getInvitation(invitationUuid,organizationUuid,userUuid)
     return res.status(200).json(result)
@@ -29,20 +29,20 @@ export async function handleGetOrganizationInvitation(req:Request,res:Response){
 
 export async function handleCreateOrganizationInvitation(req:Request,res:Response){
     const userToInvite:CreateInvitation=(req.body)
-    const currentUserUuid:string =req.user.uuid
+    const currentUserUuid:string | undefined =req.user?.uuid as string
     const organizationUuid=req.params.organizationUuid as string;
     const organization:OrganizationResponse=await getOrganization(organizationUuid)
     userToInvite.senderId= await getUserIdByUuid(currentUserUuid)
     userToInvite.organizationId=await getOrganizationIdByUuid(organizationUuid)
     const invitation:Invitation=await createInvitation(userToInvite,organizationUuid,currentUserUuid)
-    await inviteFireBaseUser(invitation.uuid,organization.name,req.user.email,userToInvite.email)
+    await inviteFireBaseUser(invitation.uuid,organization.name,req.user?.email as string,userToInvite.email)
     return res.status(201).json(invitation)
 }
 
 export async function handleReceiveOrganizationInvitation(req:Request,res:Response){
     const invitation:UpdateInvitation=req.body
     invitation.uuid=req.params.invitationUuid as string;
-    invitation.userUuid=req.user.uuid as string;
+    invitation.userUuid=req.user?.uuid as string;
     invitation.organizationUuid=req.params.organizationUuid  as string;
     invitation.status=InvitationStatus.ACCEPTED
     const result:Invitation=await updateInvitation(invitation)

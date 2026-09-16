@@ -50,9 +50,11 @@ publicServiceRoute.route("/:serviceUuid")
 export const serviceRouter = express.Router({mergeParams: true,});
 
 serviceRouter.route("/")
+    .get(authenticateToken,validateQuery(queryServiceSchema), handleGetServices)
     .post(authenticateToken, authorize(CREATE_SERVICE), validateBody(createServiceSchema), handleCreateOrganizationService,);
 
 serviceRouter.route("/:serviceUuid")
+    .get(authenticateToken,validateParameter(validateUuid, "serviceUuid"), handleGetService,)
     .patch(authenticateToken, authorize(UPDATE_SERVICE), validateParameter(validateUuid, "serviceUuid"), validateBody(updateServiceSchema), handleUpdateOrganizationService,);
 
 serviceRouter.use("/:serviceUuid/categories", validateParameter(validateUuid, "serviceUuid"), serviceJunctionCategoryRouter,);

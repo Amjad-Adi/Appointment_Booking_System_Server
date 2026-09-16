@@ -41,7 +41,7 @@ export function validateQuery(schema: z.ZodSchema) {
 
 export function validateBodyByRole(roleToSchema:Partial<Record<Role,z.ZodType>>) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
-        const schema= roleToSchema[req.user.role as Role] as z.ZodType ;
+        const schema= roleToSchema[req.user?.role as Role] as z.ZodType ;
         const result = schema.safeParse(req.body);
         if (!result.success) {
             throw new BadRequestError();

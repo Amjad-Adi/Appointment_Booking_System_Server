@@ -45,172 +45,263 @@ import { AppointmentStatus } from "../models/enums/appointment-status.js";
 import { PaymentMethod } from "../models/enums/payment-method.js";
 import { PaymentStatus } from "../models/enums/payment-status.js";
 
-export const appointmentTable = pgTable(TABLE_NAME, {
-    id: bigint(COLUMN_ID, {
-        mode: "number",
-    })
-        .generatedAlwaysAsIdentity()
-        .primaryKey(),
 
-    uuid: uuid(COLUMN_UUID)
-        .defaultRandom()
-        .unique()
-        .notNull(),
+export const appointmentTable = pgTable(
+    TABLE_NAME,
+    {
+        id: bigint(
+            COLUMN_ID,
+            {
+                mode: "number",
+            },
+        )
+            .generatedAlwaysAsIdentity()
+            .primaryKey(),
 
-    name: varchar(COLUMN_NAME, {
-        length: 256,
-    }).notNull(),
+        uuid: uuid(
+            COLUMN_UUID,
+        )
+            .defaultRandom()
+            .unique()
+            .notNull(),
 
-    userId: bigint(COLUMN_USER_ID, {
-        mode: "number",
-    })
-        .notNull()
-        .references(() => usersTable.id, {
-            onDelete: "restrict",
-            onUpdate: "cascade",
-        }),
+        name: varchar(
+            COLUMN_NAME,
+            {
+                length: 256,
+            },
+        ).notNull(),
 
-    organizationId: bigint(COLUMN_ORGANIZATION_ID, {
-        mode: "number",
-    })
-        .notNull()
-        .references(() => organizationTable.id, {
-            onDelete: "restrict",
-            onUpdate: "cascade",
-        }),
+        userId: bigint(
+            COLUMN_USER_ID,
+            {
+                mode: "number",
+            },
+        )
+            .notNull()
+            .references(
+                () => usersTable.id,
+                {
+                    onDelete: "restrict",
+                    onUpdate: "cascade",
+                },
+            ),
 
-    serviceId: bigint(COLUMN_SERVICE_ID, {
-        mode: "number",
-    })
-        .notNull()
-        .references(() => serviceTable.id, {
-            onDelete: "restrict",
-            onUpdate: "cascade",
-        }),
+        organizationId: bigint(
+            COLUMN_ORGANIZATION_ID,
+            {
+                mode: "number",
+            },
+        )
+            .notNull()
+            .references(
+                () => organizationTable.id,
+                {
+                    onDelete: "restrict",
+                    onUpdate: "cascade",
+                },
+            ),
 
-    workerId: bigint(COLUMN_WORKER_ID, {
-        mode: "number",
-    })
-        .notNull()
-        .references(() => usersTable.id, {
-            onDelete: "restrict",
-            onUpdate: "cascade",
-        }),
+        serviceId: bigint(
+            COLUMN_SERVICE_ID,
+            {
+                mode: "number",
+            },
+        )
+            .notNull()
+            .references(
+                () => serviceTable.id,
+                {
+                    onDelete: "restrict",
+                    onUpdate: "cascade",
+                },
+            ),
 
-    roomId: bigint(COLUMN_ROOM_ID, {
-        mode: "number",
-    })
-        .notNull()
-        .references(() => roomTable.id, {
-            onDelete: "restrict",
-            onUpdate: "cascade",
-        }),
+        workerId: bigint(
+            COLUMN_WORKER_ID,
+            {
+                mode: "number",
+            },
+        )
+            .notNull()
+            .references(
+                () => usersTable.id,
+                {
+                    onDelete: "restrict",
+                    onUpdate: "cascade",
+                },
+            ),
 
-    approvalUserId: bigint(COLUMN_APPROVAL_USER_ID, {
-        mode: "number",
-    }).references(() => usersTable.id, {
-        onDelete: "set null",
-        onUpdate: "cascade",
-    }),
+        roomId: bigint(
+            COLUMN_ROOM_ID,
+            {
+                mode: "number",
+            },
+        )
+            .notNull()
+            .references(
+                () => roomTable.id,
+                {
+                    onDelete: "restrict",
+                    onUpdate: "cascade",
+                },
+            ),
 
-    userTitle: varchar(COLUMN_USER_TITLE, {
-        length: 256,
-    }),
+        approvalUserId: bigint(
+            COLUMN_APPROVAL_USER_ID,
+            {
+                mode: "number",
+            },
+        ).references(
+            () => usersTable.id,
+            {
+                onDelete: "set null",
+                onUpdate: "cascade",
+            },
+        ),
 
-    organizationTitle: varchar(COLUMN_ORGANIZATION_TITLE, {
-        length: 256,
-    }),
+        userTitle: varchar(
+            COLUMN_USER_TITLE,
+            {
+                length: 256,
+            },
+        ),
 
-    userNote: varchar(COLUMN_USER_NOTE, {
-        length: 4096,
-    }),
+        organizationTitle: varchar(
+            COLUMN_ORGANIZATION_TITLE,
+            {
+                length: 256,
+            },
+        ),
 
-    organizationNote: varchar(COLUMN_ORGANIZATION_NOTE, {
-        length: 4096,
-    }),
+        userNote: varchar(
+            COLUMN_USER_NOTE,
+            {
+                length: 4096,
+            },
+        ),
 
-    userColour: varchar(COLUMN_USER_COLOUR, {
-        length: 7,
-    })
-        .notNull()
-        .default("#2563EB"),
+        organizationNote: varchar(
+            COLUMN_ORGANIZATION_NOTE,
+            {
+                length: 4096,
+            },
+        ),
 
-    organizationColour: varchar(COLUMN_ORGANIZATION_COLOUR, {
-        length: 7,
-    })
-        .notNull()
-        .default("#2563EB"),
+        userColour: varchar(
+            COLUMN_USER_COLOUR,
+            {
+                length: 7,
+            },
+        )
+            .notNull()
+            .default("#2563EB"),
 
-    scheduledStartAtUTC: timestamp(
-        COLUMN_SCHEDULED_START_AT_UTC,
-        {
-            withTimezone: true,
-            mode: "string",
-        },
-    ).notNull(),
+        organizationColour: varchar(
+            COLUMN_ORGANIZATION_COLOUR,
+            {
+                length: 7,
+            },
+        )
+            .notNull()
+            .default("#2563EB"),
 
-    scheduledEndAtUTC: timestamp(
-        COLUMN_SCHEDULED_END_AT_UTC,
-        {
-            withTimezone: true,
-            mode: "string",
-        },
-    ).notNull(),
+        scheduledStartAtUTC: timestamp(
+            COLUMN_SCHEDULED_START_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        ).notNull(),
 
-    actualStartAtUTC: timestamp(
-        COLUMN_ACTUAL_START_AT_UTC,
-        {
-            withTimezone: true,
-            mode: "string",
-        },
-    ),
+        scheduledEndAtUTC: timestamp(
+            COLUMN_SCHEDULED_END_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        ).notNull(),
 
-    actualEndAtUTC: timestamp(
-        COLUMN_ACTUAL_END_AT_UTC,
-        {
-            withTimezone: true,
-            mode: "string",
-        },
-    ),
+        actualStartAtUTC: timestamp(
+            COLUMN_ACTUAL_START_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        ),
 
-    appointmentStatus: varchar(COLUMN_APPOINTMENT_STATUS, {
-        length: 64,
-    })
-        .$type<AppointmentStatus>()
-        .notNull()
-        .default(AppointmentStatus.PENDING_USER_CONFIRMATION),
+        actualEndAtUTC: timestamp(
+            COLUMN_ACTUAL_END_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        ),
 
-    rejectionReason: varchar(COLUMN_REJECTION_REASON, {
-        length: 4096,
-    }),
+        appointmentStatus: varchar(
+            COLUMN_APPOINTMENT_STATUS,
+            {
+                length: 64,
+            },
+        )
+            .$type<AppointmentStatus>()
+            .notNull()
+            .default(
+                AppointmentStatus.PENDING_USER_CONFIRMATION,
+            ),
 
-    paymentMethod: varchar(COLUMN_PAYMENT_METHOD, {
-        length: 64,
-    }).$type<PaymentMethod>(),
+        rejectionReason: varchar(
+            COLUMN_REJECTION_REASON,
+            {
+                length: 4096,
+            },
+        ),
 
-    paymentStatus: varchar(COLUMN_PAYMENT_STATUS, {
-        length: 64,
-    })
-        .$type<PaymentStatus>()
-        .notNull()
-        .default(PaymentStatus.UNPAID),
+        paymentMethod: varchar(
+            COLUMN_PAYMENT_METHOD,
+            {
+                length: 64,
+            },
+        ).$type<PaymentMethod>(),
 
-    paidAtUTC: timestamp(COLUMN_PAID_AT_UTC, {
-        withTimezone: true,
-        mode: "string",
-    }),
+        paymentStatus: varchar(
+            COLUMN_PAYMENT_STATUS,
+            {
+                length: 64,
+            },
+        )
+            .$type<PaymentStatus>()
+            .notNull()
+            .default(
+                PaymentStatus.UNPAID,
+            ),
 
-    createdAtUTC: timestamp(COLUMN_CREATED_AT_UTC, {
-        withTimezone: true,
-        mode: "string",
-    })
-        .notNull()
-        .defaultNow(),
+        paidAtUTC: timestamp(
+            COLUMN_PAID_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        ),
 
-    updatedAtUTC: timestamp(COLUMN_UPDATED_AT_UTC, {
-        withTimezone: true,
-        mode: "string",
-    })
-        .notNull()
-        .defaultNow(),
-});
+        createdAtUTC: timestamp(
+            COLUMN_CREATED_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        )
+            .notNull()
+            .defaultNow(),
+
+        updatedAtUTC: timestamp(
+            COLUMN_UPDATED_AT_UTC,
+            {
+                withTimezone: true,
+                mode: "date",
+            },
+        )
+            .notNull()
+            .defaultNow(),
+    },
+);

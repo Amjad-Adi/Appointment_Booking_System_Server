@@ -88,13 +88,39 @@ export async function countAll(query:QueryOrganization):Promise<number>{
         [search,status])).rows[0].totalNumberOfOrganizations)
 }
 
-export async function findByUuid(uuid:string):Promise<OrganizationRow>{
-    return (await pool.query(
-        `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_EMAIL},${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},${ALIAS}.${COLUMN_BIO},${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE} ,ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC}, ${ALIAS}.${COLUMN_STATUS}
-         FROM ${TABLE_NAME} ${ALIAS}
-         LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID}=${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
-         WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
-         [uuid])).rows[0]
+export async function findByUuid(
+    uuid: string,
+): Promise<OrganizationRow | undefined> {
+
+    console.log("findByUuid UUID:", uuid);
+
+    const result = await pool.query(
+        `SELECT
+            ${ALIAS}.${COLUMN_UUID},
+            ${ALIAS}.${COLUMN_NAME},
+            ${ALIAS}.${COLUMN_EMAIL},
+            ${ALIAS}.${COLUMN_PHONE_NUMBER} AS ${ALIAS_COLUMN_PHONE_NUMBER},
+            ${ALIAS}.${COLUMN_BIO},
+            ${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},
+            ${LOCATION_ALIAS}.${LOCATION_COLUMN_NAME} AS ${LOCATION_ALIAS_COLUMN_NAME},
+            ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE},
+            ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},
+            ${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_COLUMN_CREATED_AT_UTC},
+            ${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_COLUMN_UPDATED_AT_UTC},
+            ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},
+            ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},
+            ${ALIAS}.${COLUMN_STATUS}
+        FROM ${TABLE_NAME} ${ALIAS}
+        LEFT JOIN ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
+            ON ${ALIAS}.${COLUMN_LOCATION_ID} =
+               ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
+        WHERE ${ALIAS}.${COLUMN_UUID} = $1`,
+        [uuid],
+    );
+
+    console.log("findByUuid rows:", result.rows);
+
+    return result.rows[0];
 }
 
 export async function findIdByUuid(uuid:string):Promise<number>{

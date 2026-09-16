@@ -6,7 +6,7 @@ import {
     handleUpdateAppointmentByOrganization,
     handleApproveAppointment,
     handleRejectAppointment,
-    handleUpdateAppointmentStatus,
+    handleUpdateAppointmentStatus, handleCreateAppointment,
 } from "../controllers/appointment.controller.js";
 
 import {
@@ -27,7 +27,7 @@ import {
     updateAppointmentSchemaByOrganization,
     rejectAppointmentSchemaBy,
     updateAppointmentSchemaStatus,
-    queryAppointmentSchema,
+    queryAppointmentSchema, createAppointmentSchema,createOrganizationAppointmentSchema
 } from "../middlewares/zod-schemas/appointment.schema.js";
 
 import {
@@ -37,6 +37,7 @@ import {
 import {
     validateUuid,
 } from "../middlewares/zod-schemas/parameters.schema.js";
+import {appointmentRouter} from "./apppointment.route";
 
 
 export const organizationAppointmentRouter = express.Router({
@@ -60,6 +61,15 @@ organizationAppointmentRouter.get(
     validateParameter(validateUuid, "appointmentUuid"),
     handleGetOrganizationAppointment,
 );
+
+
+organizationAppointmentRouter.post(
+        "/",
+        authenticateToken,
+        validateBody(createOrganizationAppointmentSchema),
+        handleCreateAppointment,
+);
+
 
 
 organizationAppointmentRouter.patch(

@@ -24,4 +24,4 @@ export type CreateWorkingHours = {
     organizationId: number;
 };
 export type UpdateWorkingHours = z.infer<typeof updateWorkingHoursSchema> & { uuid: string; organizationUuid: string; userUuid: string; };
-export type QueryWorkingHours = z.infer<typeof queryWorkingHoursSchema> & { offset: number; };
+export type QueryWorkingHours = z.infer<typeof queryWorkingHoursSchema> & { offset?: number; };

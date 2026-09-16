@@ -59,7 +59,7 @@ status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIV
 FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 ALTER TABLE organizations ALTER COLUMN profile_picture_path set NOT NULL;
-DROP TABLE organizations;
+DROP TABLE special_days;
 
 CREATE TABLE special_days(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -70,7 +70,7 @@ day_date DATE NOT NULL,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 description VARCHAR(4096),
-status VARCHAR(256) NOT NULL CHECK (status in(' ')),
+status VARCHAR(256) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
 FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -300,7 +300,7 @@ end_time TIME,
 UNIQUE(organization_id,day_of_week),
 FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-
+SELECT * FroM working_hours;
 DROP TABLE working_hours;
 
 INSERT INTO locations (name, location_on_map)
@@ -328,7 +328,7 @@ VALUES
     ('Bilal', 'Hamad', 'bilalhamad@gmail.com', 'xC5vNk91QpL4MzT8YwR2sFd6GhA7', 'CUSTOMER'),
     ('Zaid', 'Mansour', 'zaidmansour@gmail.com', 'qR8mXk36VpN2TcL7HsF5dGz1WbE9', 'CUSTOMER'),
     ('Hamza', 'Adnan', 'hamzaadnan@gmail.com', 'sL3xQv75KmR1NzC8YpD6hFg4WbT2', 'OWNER'),
-    ('Suhail', 'Yasin', 'suhailyasin@gmail.com', 'vN6pKx29TcQ4LmR8YwF1sDg7HzE5', 'CUSTOMER');SELECT * FROM users;
+    ('Suhail', 'Yasin', 'suhailyasin@gmail.com', 'vN6pKx29TcQ4LmR8YwF1sDg7HzE5', 'CUSTOMER');
 
 INSERT INTO locations (name, location_on_map)
 VALUES 
@@ -354,6 +354,8 @@ UPDATE users SET organization_id = 19 WHERE email = 'majdsaeed@gmail.com';      
 SELECT * FROM users;
 SELECT * FROM organizations;
 SELECT * FROM services;
+SELECT * FROM rooms;
+
 SELECT * FROM blacklisted_token;
 SELECT * FROM invitations;
 DELETE FROM users;
@@ -739,3 +741,172 @@ JOIN services s ON
  OR (s.name = 'Freight Planning' AND c.name IN ('Logistics'))
  OR (s.name = 'Warehouse Management Consultation' AND c.name IN ('Logistics', 'Business Consulting'))
  OR (s.name = 'Supply Chain Assessment' AND c.name IN ('Logistics', 'Business Consulting'));
+
+ INSERT INTO appointments (
+    name,
+    user_id,
+    organization_id,
+    service_id,
+    worker_id,
+    room_id,
+    user_title,
+    organization_title,
+    user_note,
+    organization_note,
+    user_colour,
+    organization_colour,
+    scheduled_start_at_utc,
+    scheduled_end_at_utc,
+    appointment_status,
+    payment_method,
+    payment_status
+)
+VALUES
+(
+    'Mohammad Ali - Eat Salamon',
+    8,
+    1,
+    1,
+    3,
+    1,
+    'Customer appointment',
+    'Regular appointment',
+    'Customer requested morning appointment.',
+    'Prepare room before appointment.',
+    '#2563EB',
+    '#2563EB',
+    '2026-09-16 09:00:00+03',
+    '2026-09-16 10:00:00+03',
+    'CONFIRMED',
+    'CASH',
+    'PAID'
+),
+(
+    'Samer - Na3na3',
+    10,
+    1,
+    2,
+    5,
+    2,
+    'Service appointment',
+    'Customer booking',
+    'Customer requested a quiet appointment.',
+    NULL,
+    '#16A34A',
+    '#2563EB',
+    '2026-09-16 10:30:00+03',
+    '2026-09-16 11:15:00+03',
+    'CONFIRMED',
+    'VISA',
+    'PAID'
+),
+(
+    'Mohammad Ali - Na3na3',
+    8,
+    1,
+    3,
+    2,
+    1,
+    'Follow-up appointment',
+    'Worker appointment',
+    NULL,
+    'Check customer requirements before starting.',
+    '#7C3AED',
+    '#2563EB',
+    '2026-09-16 11:30:00+03',
+    '2026-09-16 12:30:00+03',
+    'PENDING_ORGANIZATION_APPROVAL',
+    NULL,
+    'UNPAID'
+),
+(
+    'Samer - Eat Mansaf',
+    10,
+    1,
+    5,
+    3,
+    2,
+    'Afternoon appointment',
+    'Scheduled service',
+    'Customer prefers afternoon.',
+    NULL,
+    '#EA580C',
+    '#2563EB',
+    '2026-09-16 13:00:00+03',
+    '2026-09-16 14:30:00+03',
+    'PENDING_USER_CONFIRMATION',
+    NULL,
+    'UNPAID'
+),
+(
+    'Mohammad Ali - Na3na34',
+    8,
+    1,
+    2,
+    5,
+    1,
+    'Service appointment',
+    'Organization booking',
+    NULL,
+    'Room should be ready before arrival.',
+    '#0891B2',
+    '#2563EB',
+    '2026-09-16 15:00:00+03',
+    '2026-09-16 15:45:00+03',
+    'IN_PROGRESS',
+    'CASH',
+    'PENDING'
+),
+(
+    'Samer - Eat Salamon',
+    10,
+    1,
+    1,
+    2,
+    2,
+    'Evening appointment',
+    'Regular appointment',
+    'Customer note for evening booking.',
+    NULL,
+    '#DB2777',
+    '#2563EB',
+    '2026-09-16 16:00:00+03',
+    '2026-09-16 17:30:00+03',
+    'COMPLETED',
+    'VISA',
+    'PAID'
+),
+(
+    'Mohammad Ali - a',
+    8,
+    1,
+    4,
+    3,
+    1,
+    'Short appointment',
+    'Service booking',
+    NULL,
+    NULL,
+    '#2563EB',
+    '#2563EB',
+    '2026-09-16 18:00:00+03',
+    '2026-09-16 18:20:00+03',
+    'CONFIRMED',
+    NULL,
+    'UNPAID'
+);
+SELECT * FROM organizations;
+INSERT INTO working_hours (
+    organization_id,
+    day_of_week,
+    start_time,
+    end_time
+)
+VALUES
+    (1, 'SUNDAY',    '09:00:00', '17:00:00'),
+    (1, 'MONDAY',    '09:00:00', '17:00:00'),
+    (1, 'TUESDAY',   '09:00:00', '17:00:00'),
+    (1, 'WEDNESDAY', '09:00:00', '17:00:00'),
+    (1, 'THURSDAY',  '09:00:00', '17:00:00'),
+    (1, 'FRIDAY',    NULL,       NULL),
+    (1, 'SATURDAY',  NULL,       NULL);
