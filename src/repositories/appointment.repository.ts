@@ -20,7 +20,6 @@ import { roomTable } from "../drizzle-schemas/room.db.js";
 
 import type {
     Appointment,
-    AppointmentRecord,
     AppointmentResponse,
     CreateAppointment,
     QueryAppointment,
@@ -33,56 +32,6 @@ import { PaymentMethod } from "../models/enums/payment-method.js";
 const workerUsersTable = alias(usersTable, "worker");
 const approvalUsersTable = alias(usersTable, "approvalUser");
 
-/**
- * Fields returned directly from INSERT/UPDATE.
- *
- * IMPORTANT:
- * returning() can only return columns from the table
- * being inserted/updated.
- */
-const appointmentReturnSelect = {
-    uuid: appointmentTable.uuid,
-    name: appointmentTable.name,
-
-    userId: appointmentTable.userId,
-    organizationId: appointmentTable.organizationId,
-    serviceId: appointmentTable.serviceId,
-    workerId: appointmentTable.workerId,
-    roomId: appointmentTable.roomId,
-    approvalUserId: appointmentTable.approvalUserId,
-
-    userTitle: appointmentTable.userTitle,
-    organizationTitle: appointmentTable.organizationTitle,
-
-    userNote: appointmentTable.userNote,
-    organizationNote: appointmentTable.organizationNote,
-
-    userColour: appointmentTable.userColour,
-    organizationColour: appointmentTable.organizationColour,
-
-    scheduledStartAtUTC: appointmentTable.scheduledStartAtUTC,
-    scheduledEndAtUTC: appointmentTable.scheduledEndAtUTC,
-
-    actualStartAtUTC: appointmentTable.actualStartAtUTC,
-    actualEndAtUTC: appointmentTable.actualEndAtUTC,
-
-    appointmentStatus: appointmentTable.appointmentStatus,
-
-    rejectionReason: appointmentTable.rejectionReason,
-
-    paymentMethod: appointmentTable.paymentMethod,
-    paymentStatus: appointmentTable.paymentStatus,
-    paidAtUTC: appointmentTable.paidAtUTC,
-
-    createdAtUTC: appointmentTable.createdAtUTC,
-    updatedAtUTC: appointmentTable.updatedAtUTC,
-};
-
-/**
- * Fields returned by appointment SELECT queries.
- *
- * UUIDs are obtained from the related tables.
- */
 const appointmentSelect = {
     uuid: appointmentTable.uuid,
     name: appointmentTable.name,
@@ -121,10 +70,6 @@ const appointmentSelect = {
     updatedAtUTC: appointmentTable.updatedAtUTC,
 };
 
-/**
- * Fields returned by SELECT queries that also require
- * the related entity names.
- */
 const appointmentResponseSelect = {
     ...appointmentSelect,
 
@@ -150,7 +95,6 @@ const appointmentResponseSelect = {
         || ${approvalUsersTable.lastName}
     `,
 };
-
 function buildConditions(query: QueryAppointment): SQL[] {
     const conditions: SQL[] = [];
 
@@ -237,28 +181,22 @@ function buildConditions(query: QueryAppointment): SQL[] {
 
     if (query.filter?.appointmentDate) {
         conditions.push(
-            sql`
-                DATE(${appointmentTable.scheduledStartAtUTC})
-                = ${query.filter.appointmentDate}
-            `,
+            sql`${appointmentTable.scheduledStartAtUTC} >= ${query.filter.appointmentDate}::date AND${appointmentTable.scheduledStartAtUTC} < (${query.filter.appointmentDate}::date + INTERVAL '1 day')`,
         );
     }
 
     if (query.filter?.fromDate) {
         conditions.push(
-            sql`
-                DATE(${appointmentTable.scheduledStartAtUTC})
-                >= ${query.filter.fromDate}
-            `,
+            sql`${appointmentTable.scheduledStartAtUTC}>= ${query.filter.fromDate}::date`,
         );
     }
 
     if (query.filter?.toDate) {
         conditions.push(
             sql`
-                DATE(${appointmentTable.scheduledStartAtUTC})
-                <= ${query.filter.toDate}
-            `,
+${appointmentTable.scheduledStartAtUTC}
+< (${query.filter.toDate}::date + INTERVAL '1 day')
+`,
         );
     }
 
@@ -284,10 +222,10 @@ function buildConditions(query: QueryAppointment): SQL[] {
 
                 ilike(
                     sql<string>`
-                        ${usersTable.firstName}
-                        || ' '
-                        || ${usersTable.lastName}
-                    `,
+${usersTable.firstName}
+|| ' '
+|| ${usersTable.lastName}
+`,
                     searchValue,
                 ),
 
@@ -298,10 +236,10 @@ function buildConditions(query: QueryAppointment): SQL[] {
 
                 ilike(
                     sql<string>`
-                        ${workerUsersTable.firstName}
-                        || ' '
-                        || ${workerUsersTable.lastName}
-                    `,
+${workerUsersTable.firstName}
+|| ' '
+|| ${workerUsersTable.lastName}
+`,
                     searchValue,
                 ),
 
@@ -315,6 +253,7 @@ function buildConditions(query: QueryAppointment): SQL[] {
 
     return conditions;
 }
+
 
 function getOrderBy(query: QueryAppointment) {
     const isDescending = query.order === "desc";
@@ -358,7 +297,7 @@ export async function findAll(
 ): Promise<AppointmentResponse[]> {
     const conditions = buildConditions(query);
 
-    return await drizzleConnection
+    return drizzleConnection
         .select(appointmentResponseSelect)
         .from(appointmentTable)
 
@@ -716,7 +655,7 @@ export async function findByUuidAndUser(
 
 export async function create(
     appointment: CreateAppointment,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [created] = await drizzleConnection
         .insert(appointmentTable)
         .values({
@@ -748,7 +687,7 @@ export async function create(
             paymentStatus:
             PaymentStatus.UNPAID,
         })
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return created;
 }
@@ -760,7 +699,7 @@ export async function updateByUser(
         userNote?: string | null;
         userColour?: string;
     },
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     if (Object.keys(updateValues).length === 0) {
         return undefined;
     }
@@ -783,7 +722,7 @@ export async function updateByUser(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -795,7 +734,7 @@ export async function updateByOrganization(
         organizationNote?: string | null;
         organizationColour?: string;
     },
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     if (Object.keys(updateValues).length === 0) {
         return undefined;
     }
@@ -818,7 +757,7 @@ export async function updateByOrganization(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -830,7 +769,7 @@ export async function confirm(
     name: string,
     organizationColour?: string,
     organizationNote?: string | null,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -860,7 +799,7 @@ export async function confirm(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -869,7 +808,7 @@ export async function approve(
     appointmentUuid: string,
     organizationId: number,
     approvalUserId: number,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -896,7 +835,7 @@ export async function approve(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -906,7 +845,7 @@ export async function reject(
     organizationId: number,
     approvalUserId: number,
     rejectionReason: string,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -934,7 +873,7 @@ export async function reject(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -943,7 +882,7 @@ export async function updateStatus(
     appointmentUuid: string,
     organizationId: number,
     appointmentStatus: AppointmentStatus,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -963,7 +902,7 @@ export async function updateStatus(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -971,7 +910,7 @@ export async function updateStatus(
 export async function cancelByUser(
     appointmentUuid: string,
     userId: number,
-): Promise<AppointmentRecord | undefined> {
+): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -992,7 +931,7 @@ export async function cancelByUser(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }
@@ -1001,7 +940,7 @@ export async function pay(
     appointmentUuid: string,
     userId: number,
     paymentMethod: PaymentMethod,
-): Promise<AppointmentRecord | undefined> {
+    ): Promise<Appointment | undefined> {
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({
@@ -1028,7 +967,7 @@ export async function pay(
                 ),
             ),
         )
-        .returning(appointmentReturnSelect);
+        .returning(appointmentSelect);
 
     return updated;
 }

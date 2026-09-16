@@ -56,7 +56,7 @@ export async function findAll(query: QueryWorkingHours): Promise<WorkingHoursRes
             break;
     }
 
-    return await drizzleConnection
+    const dbQuery= drizzleConnection
         .select(workingHoursResponseSelect)
         .from(workingHoursTable)
         .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
@@ -64,6 +64,12 @@ export async function findAll(query: QueryWorkingHours): Promise<WorkingHoursRes
         .orderBy(orderBy, asc(workingHoursTable.uuid))
         .limit(query.limit)
         .offset(query.offset);
+    const sql = dbQuery.toSQL();
+    console.log("Generated SQL:");
+    console.log(sql.sql);
+    console.log("Parameters:");
+    console.log(sql.params);
+    return await dbQuery;
 }
 
 export async function countAll(query: QueryWorkingHours): Promise<number> {

@@ -84,8 +84,8 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
 
 export async function logOut(req: Request, res: Response, next: NextFunction){
     const blackListedToken:CreateBlacklistedToken={
-        jti:req.user.jti,
-        expiresAtUTC:req.user.exp,
+        jti:req.user?.jti as string,
+        expiresAtUTC:req.user?.exp as Date,
         reason:"logout"
     }
     await createBlacklistedToken(blackListedToken)

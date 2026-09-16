@@ -54,49 +54,6 @@ export interface Appointment {
     updatedAtUTC: string;
 }
 
-/**
- * Database representation returned directly by INSERT/UPDATE.
- *
- * This uses numeric database IDs rather than UUIDs because
- * Drizzle's returning() only returns columns from appointmentTable.
- */
-export interface AppointmentRecord {
-    uuid: string;
-    name: string;
-
-    userId: number;
-    organizationId: number;
-    serviceId: number;
-    workerId: number;
-    roomId: number;
-    approvalUserId: number | null;
-
-    userTitle: string | null;
-    organizationTitle: string | null;
-
-    userNote: string | null;
-    organizationNote: string | null;
-
-    userColour: string;
-    organizationColour: string;
-
-    scheduledStartAtUTC: string;
-    scheduledEndAtUTC: string;
-
-    actualStartAtUTC: string | null;
-    actualEndAtUTC: string | null;
-
-    appointmentStatus: AppointmentStatus;
-
-    rejectionReason: string | null;
-
-    paymentMethod: PaymentMethod | null;
-    paymentStatus: PaymentStatus;
-    paidAtUTC: string | null;
-
-    createdAtUTC: string;
-    updatedAtUTC: string;
-}
 
 export interface AppointmentResponse
     extends Appointment,
@@ -125,22 +82,22 @@ export type CreateAppointment =
 };
 
 export type UpdateAppointmentByUser =
-    z.infer<typeof updateAppointmentSchemaByUser>;
+    z.infer<typeof updateAppointmentSchemaByUser>&{uuid: string,userUuid:string};
 
 export type UpdateAppointmentByOrganization =
-    z.infer<typeof updateAppointmentSchemaByOrganization>;
+    z.infer<typeof updateAppointmentSchemaByOrganization>&{uuid: string,organizationUuid:string,userUuid:string};
 
 export type UpdateAppointmentStatus =
-    z.infer<typeof updateAppointmentSchemaStatus>;
+    z.infer<typeof updateAppointmentSchemaStatus>&{uuid: string,organizationUuid:string,userUuid:string};
 
 export type ConfirmAppointment =
-    z.infer<typeof confirmAppointmentSchema>;
+    z.infer<typeof confirmAppointmentSchema>&{uuid: string,organizationUuid:string,userUuid:string};
 
 export type RejectAppointment =
-    z.infer<typeof rejectAppointmentSchemaBy>;
+    z.infer<typeof rejectAppointmentSchemaBy>&{uuid: string,organizationUuid:string,userUuid:string};
 
 export type PayAppointment =
-    z.infer<typeof payAppointmentSchema>;
+    z.infer<typeof payAppointmentSchema>&{uuid: string,organizationUuid:string,userUuid:string};
 
 export type QueryAppointment =
     z.infer<typeof queryAppointmentSchema> & {
