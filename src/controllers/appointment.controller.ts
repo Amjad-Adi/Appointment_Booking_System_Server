@@ -40,11 +40,8 @@ export async function handleGetAppointments(
     req: Request,
     res: Response,
 ) {
-    const query =
-        req.validatedQuery as unknown as QueryAppointment;
-
-    query.offset =
-        (query.page - 1) * query.limit;
+    const query = req.validatedQuery as unknown as QueryAppointment;
+    query.offset = (query.page - 1) * query.limit;
     const organizationUuid=req.user?.organizationUuid;
     if(organizationUuid!==null){
         query.filter = {
@@ -52,25 +49,9 @@ export async function handleGetAppointments(
             organizationUuid,
         };
     }
-    const [
-        appointments,
-        totalNumberOfAppointments,
-    ] = await Promise.all([
-        getAppointments(query),
-        getNumberOfAppointments(query),
-    ]);
-
-    const baseUrl =
-        req.originalUrl?.split("?")[0];
-
-    const responseResult = new QueryResponse(
-        appointments,
-        totalNumberOfAppointments,
-        baseUrl,
-        query.page,
-        query.limit,
-    );
-
+    const [appointments, totalNumberOfAppointments,] = await Promise.all([getAppointments(query), getNumberOfAppointments(query),]);
+    const baseUrl = req.originalUrl?.split("?")[0];
+    const responseResult = new QueryResponse(appointments, totalNumberOfAppointments, baseUrl, query.page, query.limit,);
     return res.status(200).json(responseResult);
 }
 
@@ -198,8 +179,7 @@ export async function handleUpdateAppointmentByUser(
     const appointment =
         req.body as UpdateAppointmentByUser;
 
-    appointment.uuid =
-        req.params.appointmentUuid as string;
+    appointment.uuid = req.params.appointmentUuid as string;
 
     appointment.userUuid =
         req.user?.uuid as string;

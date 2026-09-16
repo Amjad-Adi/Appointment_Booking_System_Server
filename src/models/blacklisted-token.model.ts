@@ -8,7 +8,7 @@ export interface BlacklistedToken {
 
 
 export interface CreateBlacklistedToken{
-    jti:number,
+    jti:string,
     expiresAtUTC:Date
     reason:string
 }
