@@ -51,5 +51,5 @@ organizationRouter.use("/:organizationUuid/special-days", validateParameter(vali
 organizationRouter.use("/:organizationUuid/scheduling", validateParameter(validateUuid, "organizationUuid"), schedulingRouter);
 
 organizationRouter.route("/:organizationUuid")
-    .get(validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string
+    .get(authenticateToken,validateParameter(validateUuid,"organizationUuid"),handleGetOrganization)//parameter validation is important else it will produce 500 Internal server error because uuid of type uuid in database and this string
     .patch(authenticateToken,authorize(UPDATE_ORGANIZATION),validateParameter(validateUuid,"organizationUuid"),validateBodyByRole(updateRoleSchemas),handleUpdateOrganization)

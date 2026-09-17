@@ -5,6 +5,7 @@ export const COLUMN_LOCATION_ON_MAP = "location_on_map";
 export const COLUMN_CREATED_AT_UTC= "created_at_utc";
 export const COLUMN_UPDATED_AT_UTC = "updated_at_utc";
 export const ALIAS_COLUMN_CREATED_AT_UTC= `"locationCreatedAtUTC"`//Postgre lowers unquoted "" uppercase words ;
+export const COLUMN_TIMEZONE = "timezone";
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"locationUpdatedAtUTC"`;
 export const ALIAS_COLUMN_NAME = `"locationName"`;
 export const ALIAS_LONGITUDE = "longitude";

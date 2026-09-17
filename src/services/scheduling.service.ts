@@ -22,7 +22,8 @@ import {
 
 import {
     getUsers,
-    getUserIdByUuid, getUser,
+    getUserIdByUuid,
+    getUser,
 } from "./user.service.js";
 
 import {
@@ -73,27 +74,253 @@ interface SchedulingInterval {
     endAtUTC: Date;
 }
 
-function getWorkingDateTime(
+/**
+ * Returns the UTC offset, in milliseconds, that applies to the
+ * supplied instant in the supplied IANA timezone.
+ *
+ * Example:
+ *
+ * 2026-09-17T07:34:00Z
+ * Asia/Jerusalem
+ * -> +03:00
+ */
+function getTimeZoneOffset(
     date: Date,
-    time: string,
+    timeZone: string,
+): number {
+    const parts =
+        new Intl.DateTimeFormat(
+            "en-US",
+            {
+                timeZone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hourCycle: "h23",
+            },
+        ).formatToParts(date);
+
+    const values = Object.fromEntries(
+        parts
+            .filter(
+                part =>
+                    part.type !== "literal",
+            )
+            .map(
+                part => [
+                    part.type,
+                    Number(part.value),
+                ],
+            ),
+    );
+
+    const asUTC =
+        Date.UTC(
+            values.year,
+            values.month - 1,
+            values.day,
+            values.hour,
+            values.minute,
+            values.second,
+        );
+
+    return asUTC - date.getTime();
+}
+
+/**
+ * Converts a local date/time belonging to an IANA timezone
+ * into the corresponding UTC instant.
+ *
+ * Input:
+ *     2026-09-17T08:00
+ *     Asia/Jerusalem
+ *
+ * Result:
+ *     2026-09-17T05:00:00.000Z
+ */
+function organizationLocalToUTC(
+    localDateTime: string,
+    timeZone: string,
 ): Date {
+    const match =
+        localDateTime.match(
+            /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/,
+        );
+
+    if (!match) {
+        throw new Error(
+            `Invalid local date/time: ${localDateTime}`,
+        );
+    }
+
     const [
+        ,
+        year,
+        month,
+        day,
         hours,
         minutes,
         seconds = "0",
-    ] = time.split(":");
+    ] = match;
 
-    const result =
-        new Date(date);
+    /*
+     * Initially interpret the local components as if they were UTC.
+     *
+     * This gives us a "naive UTC" value from which the timezone
+     * offset can be calculated.
+     */
+    const naiveUTC =
+        new Date(
+            Date.UTC(
+                Number(year),
+                Number(month) - 1,
+                Number(day),
+                Number(hours),
+                Number(minutes),
+                Number(seconds),
+            ),
+        );
 
-    result.setUTCHours(
-        Number(hours),
-        Number(minutes),
-        Number(seconds),
-        0,
-    );
+    /*
+     * Apply the timezone offset.
+     */
+    let result =
+        new Date(
+            naiveUTC.getTime() -
+            getTimeZoneOffset(
+                naiveUTC,
+                timeZone,
+            ),
+        );
+
+    /*
+     * Recalculate after applying the first offset.
+     *
+     * This matters around DST transitions because the offset that
+     * applies to the resulting instant can differ from the offset
+     * calculated from the naive value.
+     */
+    result =
+        new Date(
+            naiveUTC.getTime() -
+            getTimeZoneOffset(
+                result,
+                timeZone,
+            ),
+        );
 
     return result;
+}
+
+/**
+ * Returns the calendar date represented by an instant
+ * in the organization's timezone.
+ *
+ * Example:
+ *
+ * 2026-09-16T22:30:00Z
+ * Asia/Jerusalem
+ * -> 2026-09-17
+ */
+function getLocalDate(
+    date: Date,
+    timeZone: string,
+): string {
+    const parts =
+        new Intl.DateTimeFormat(
+            "en-CA",
+            {
+                timeZone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            },
+        ).formatToParts(date);
+
+    const values = Object.fromEntries(
+        parts
+            .filter(
+                part =>
+                    part.type !== "literal",
+            )
+            .map(
+                part => [
+                    part.type,
+                    part.value,
+                ],
+            ),
+    );
+
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+/**
+ * Adds calendar days to a YYYY-MM-DD date.
+ *
+ * This is deliberately calendar based rather than millisecond based.
+ */
+function addCalendarDays(
+    dateString: string,
+    days: number,
+): string {
+    const date =
+        new Date(
+            `${dateString}T12:00:00.000Z`,
+        );
+
+    date.setUTCDate(
+        date.getUTCDate() + days,
+    );
+
+    return date
+        .toISOString()
+        .substring(0, 10);
+}
+
+/**
+ * Returns the weekday for a YYYY-MM-DD calendar date.
+ */
+function getDayOfWeek(
+    dateString: string,
+): DayOfWeek {
+    const date =
+        new Date(
+            `${dateString}T12:00:00.000Z`,
+        );
+
+    return DAY_NAMES[
+        date.getUTCDay()
+        ];
+}
+
+/**
+ * Converts an organization's local working-hour value into
+ * an actual UTC instant.
+ *
+ * The TIME column is a wall-clock value, not a UTC value.
+ */
+function getWorkingDateTime(
+    dateString: string,
+    time: string,
+    timeZone: string,
+): Date {
+    /*
+     * PostgreSQL TIME may be returned as HH:mm:ss.
+     *
+     * Keep only the HH:mm:ss portion.
+     */
+    const normalizedTime =
+        time.length >= 8
+            ? time.substring(0, 8)
+            : time;
+
+    return organizationLocalToUTC(
+        `${dateString}T${normalizedTime}`,
+        timeZone,
+    );
 }
 
 function addMinutes(
@@ -106,6 +333,9 @@ function addMinutes(
     );
 }
 
+/**
+ * Merges overlapping and touching blocking intervals.
+ */
 function mergeIntervals(
     intervals: SchedulingInterval[],
 ): SchedulingInterval[] {
@@ -122,6 +352,13 @@ function mergeIntervals(
     for (
         const interval of sortedIntervals
         ) {
+        if (
+            interval.endAtUTC.getTime() <=
+            interval.startAtUTC.getTime()
+        ) {
+            continue;
+        }
+
         const last =
             mergedIntervals[
             mergedIntervals.length - 1
@@ -159,40 +396,49 @@ function mergeIntervals(
                         interval.endAtUTC,
                     );
             }
-        } else {
-            mergedIntervals.push({
-                startAtUTC:
-                    new Date(
-                        interval.startAtUTC,
-                    ),
 
-                endAtUTC:
-                    new Date(
-                        interval.endAtUTC,
-                    ),
-            });
+            continue;
         }
+
+        mergedIntervals.push({
+            startAtUTC:
+                new Date(
+                    interval.startAtUTC,
+                ),
+
+            endAtUTC:
+                new Date(
+                    interval.endAtUTC,
+                ),
+        });
     }
 
     return mergedIntervals;
 }
 
 /**
- * Generates all continuous appointment candidates
- * inside the working period.
+ * Finds appointment candidates inside the free portions
+ * of a working interval.
+ *
+ * No artificial 5/15/30-minute calendar grid is used.
+ *
+ * The first candidate in each free interval starts at the
+ * beginning of that free interval. Subsequent candidates
+ * advance by the actual service duration.
  *
  * Example:
  *
- * working period: 08:00–10:00
- * duration: 30 minutes
+ * working period: 08:00–13:00
+ * blocked:        09:00–10:00
+ * duration:       30 minutes
  *
  * candidates:
+ *
  * 08:00–08:30
  * 08:30–09:00
- * 09:00–09:30
- * 09:30–10:00
- *
- * Blocking intervals are skipped.
+ * 10:00–10:30
+ * 10:30–11:00
+ * ...
  */
 function findAvailableCandidates(
     workingStart: Date,
@@ -200,6 +446,13 @@ function findAvailableCandidates(
     durationInMinutes: number,
     blockingIntervals: SchedulingInterval[],
 ): SchedulingInterval[] {
+    if (
+        durationInMinutes <= 0 ||
+        workingStart >= workingEnd
+    ) {
+        return [];
+    }
+
     const candidates:
         SchedulingInterval[] = [];
 
@@ -215,8 +468,7 @@ function findAvailableCandidates(
         const blockingInterval of mergedIntervals
         ) {
         /*
-         * If the blocking interval ends before
-         * the current candidate, it has no effect.
+         * Ignore blocks completely before the current pointer.
          */
         if (
             blockingInterval.endAtUTC <=
@@ -226,10 +478,13 @@ function findAvailableCandidates(
         }
 
         /*
-         * Generate all candidates between the
-         * current candidate and the next block.
+         * If the blocking interval starts after the current
+         * candidate pointer, generate candidates in the free gap.
          */
-        while (true) {
+        while (
+            candidateStart <
+            blockingInterval.startAtUTC
+            ) {
             const candidateEnd =
                 addMinutes(
                     candidateStart,
@@ -237,8 +492,7 @@ function findAvailableCandidates(
                 );
 
             /*
-             * Candidate no longer fits before
-             * the blocking interval.
+             * The service must fit completely before the block.
              */
             if (
                 candidateEnd >
@@ -264,8 +518,7 @@ function findAvailableCandidates(
         }
 
         /*
-         * Move the search pointer beyond the
-         * blocking interval.
+         * Move past the blocking interval.
          */
         if (
             candidateStart <
@@ -281,15 +534,17 @@ function findAvailableCandidates(
             candidateStart >=
             workingEnd
         ) {
-            return candidates;
+            break;
         }
     }
 
     /*
-     * Generate candidates after the final
-     * blocking interval.
+     * Generate candidates in the final free interval.
      */
-    while (true) {
+    while (
+        candidateStart <
+        workingEnd
+        ) {
         const candidateEnd =
             addMinutes(
                 candidateStart,
@@ -326,6 +581,12 @@ export async function getAvailableTimes(
     organizationUuid: string,
     request: SchedulingRequest,
 ): Promise<SchedulingResponse> {
+    /*
+     * Reuse the existing organization service.
+     *
+     * The organization response contains the location timezone,
+     * which is required to interpret working hours.
+     */
     const organization =
         await getOrganization(
             organizationUuid,
@@ -345,6 +606,17 @@ export async function getAvailableTimes(
         );
     }
 
+    const organizationTimeZone =
+        organization.location.timezone;
+
+    if (
+        !organizationTimeZone
+    ) {
+        throw new Error(
+            "Organization timezone is required for scheduling",
+        );
+    }
+
     const service =
         await getService(
             request.serviceUuid,
@@ -354,18 +626,30 @@ export async function getAvailableTimes(
     /*
      * WORKER:
      * Search only for the requested worker.
+     *
+     * NEAREST:
+     * Search all active workers in the organization.
      */
     let workers;
 
-    if (request.timeType === AppointmentTimeType.WORKER) {
-        workers = [await getUser(request.workerUuid as string)];
+    if (
+        request.timeType ===
+        AppointmentTimeType.WORKER
+    ) {
+        workers = [
+            await getUser(
+                request.workerUuid as string,
+            ),
+        ];
     } else {
         workers = await getUsers({
             filter: {
                 organizationUuid,
                 role: Role.WORKER,
-                status: ActivationStatus.ACTIVE,
+                status:
+                ActivationStatus.ACTIVE,
             },
+
             page: 1,
             limit: 100,
         });
@@ -387,6 +671,14 @@ export async function getAvailableTimes(
             limit: 100,
         });
 
+    /*
+     * fromAtUTC is an actual instant.
+     *
+     * For NEAREST mode the frontend already converts the
+     * organization's local input into UTC.
+     *
+     * If omitted, use the current instant.
+     */
     const fromAtUTC =
         request.fromAtUTC
             ? new Date(
@@ -405,7 +697,7 @@ export async function getAvailableTimes(
     }
 
     /*
-     * Store separate options for each worker.
+     * Store options independently for every worker.
      */
     const workerOptions =
         new Map<
@@ -423,35 +715,43 @@ export async function getAvailableTimes(
     }
 
     /*
-     * Search up to 30 days ahead.
+     * IMPORTANT:
+     *
+     * Convert the starting instant to the organization's
+     * local calendar date before searching calendar days.
+     *
+     * Do NOT use:
+     *
+     * fromAtUTC.toISOString().substring(0, 10)
+     *
+     * because that uses the UTC calendar date.
+     */
+    const firstDateString =
+        getLocalDate(
+            fromAtUTC,
+            organizationTimeZone,
+        );
+
+    /*
+     * Search up to 30 organization-local calendar days.
      */
     for (
         let dayOffset = 0;
-
         dayOffset < SEARCH_DAYS;
-
         dayOffset++
     ) {
-        const currentDate =
-            new Date(fromAtUTC);
-
-        currentDate.setUTCDate(
-            currentDate.getUTCDate() +
-            dayOffset,
-        );
+        const dateString =
+            addCalendarDays(
+                firstDateString,
+                dayOffset,
+            );
 
         /*
-         * PostgreSQL DATE format: YYYY-MM-DD.
+         * Skip organization-wide special days.
          */
-        const dateString =
-            currentDate
-                .toISOString()
-                .substring(0, 10);
-
         const specialDays =
             await getSpecialDays({
                 page: 1,
-
                 limit: 1,
 
                 filter: {
@@ -468,19 +768,20 @@ export async function getAvailableTimes(
                 },
             });
 
-        /*
-         * Skip organization-wide special days.
-         */
         if (
             specialDays.length > 0
         ) {
             continue;
         }
 
+        /*
+         * Working hours are defined by the organization's
+         * local weekday.
+         */
         const dayOfWeek =
-            DAY_NAMES[
-                currentDate.getUTCDay()
-                ];
+            getDayOfWeek(
+                dateString,
+            );
 
         const workingHours =
             await getWorkingHours({
@@ -503,31 +804,44 @@ export async function getAvailableTimes(
             continue;
         }
 
+        /*
+         * Convert local wall-clock working hours to UTC instants.
+         */
         const workingStart =
             getWorkingDateTime(
-                currentDate,
+                dateString,
                 todayWorkingHours.startTime,
+                organizationTimeZone,
             );
 
         const workingEnd =
             getWorkingDateTime(
-                currentDate,
+                dateString,
                 todayWorkingHours.endTime,
+                organizationTimeZone,
             );
 
+        if (
+            workingStart >=
+            workingEnd
+        ) {
+            continue;
+        }
+
         /*
-         * On the first day, don't return times
-         * before fromAtUTC.
+         * On the first organization-local day, never return an
+         * appointment beginning before fromAtUTC.
          */
         let searchStart =
-            workingStart;
+            new Date(workingStart);
 
         if (
             dayOffset === 0 &&
-            fromAtUTC > searchStart
+            fromAtUTC >
+            searchStart
         ) {
             searchStart =
-                fromAtUTC;
+                new Date(fromAtUTC);
         }
 
         if (
@@ -538,7 +852,7 @@ export async function getAvailableTimes(
         }
 
         /*
-         * Search each worker independently.
+         * Search every worker independently.
          */
         for (
             const worker of workers
@@ -549,8 +863,7 @@ export async function getAvailableTimes(
                 ) ?? [];
 
             /*
-             * This worker already has three
-             * available options.
+             * This worker already has enough options.
              */
             if (
                 currentWorkerOptions.length >=
@@ -559,6 +872,9 @@ export async function getAvailableTimes(
                 continue;
             }
 
+            /*
+             * Only rooms assigned to this worker can be used.
+             */
             const rooms =
                 organizationRooms.filter(
                     room =>
@@ -585,10 +901,7 @@ export async function getAvailableTimes(
             }
 
             /*
-             * A worker may have multiple rooms.
-             * We collect all available candidates
-             * and then choose the earliest three
-             * unique start times.
+             * Collect this day's candidates across all rooms.
              */
             const workerDayOptions:
                 SchedulingOption[] = [];
@@ -596,6 +909,13 @@ export async function getAvailableTimes(
             for (
                 const room of rooms
                 ) {
+                if (
+                    workerDayOptions.length >=
+                    OPTIONS_PER_WORKER
+                ) {
+                    break;
+                }
+
                 const roomId =
                     await getRoomIdByUuid(
                         room.uuid,
@@ -609,6 +929,10 @@ export async function getAvailableTimes(
                     continue;
                 }
 
+                /*
+                 * Get all known blocking intervals for this
+                 * worker/room/customer during this working period.
+                 */
                 const blockingIntervals =
                     await schedulingRepository
                         .findBlockingIntervals(
@@ -631,15 +955,33 @@ export async function getAvailableTimes(
                 for (
                     const candidate of candidates
                     ) {
-                    /*
-                     * Do not generate more than
-                     * necessary for this worker.
-                     */
                     if (
                         workerDayOptions.length >=
                         OPTIONS_PER_WORKER
                     ) {
                         break;
+                    }
+
+                    /*
+                     * The candidate has already been derived from
+                     * the blocking intervals, but perform the final
+                     * conflict check before returning it.
+                     */
+                    const conflict =
+                        await schedulingRepository
+                            .hasConflict(
+                                organizationId,
+                                workerId,
+                                roomId,
+                                request.userId,
+                                candidate.startAtUTC.toISOString(),
+                                candidate.endAtUTC.toISOString(),
+                            );
+
+                    if (
+                        conflict
+                    ) {
+                        continue;
                     }
 
                     const option:
@@ -683,8 +1025,8 @@ export async function getAvailableTimes(
                     };
 
                     /*
-                     * Avoid duplicate start times
-                     * from different rooms.
+                     * Do not return the same start time twice for
+                     * this worker, even if multiple rooms can provide it.
                      */
                     const duplicate =
                         workerDayOptions.some(
@@ -708,31 +1050,6 @@ export async function getAvailableTimes(
                         continue;
                     }
 
-                    /*
-                     * Final conflict check.
-                     */
-                    const conflict =
-                        await schedulingRepository
-                            .hasConflict(
-                                organizationId,
-                                workerId,
-                                roomId,
-                                request.userId,
-                                candidate
-                                    .startAtUTC
-                                    .toISOString(),
-
-                                candidate
-                                    .endAtUTC
-                                    .toISOString(),
-                            );
-
-                    if (
-                        conflict
-                    ) {
-                        continue;
-                    }
-
                     workerDayOptions.push(
                         option,
                     );
@@ -740,8 +1057,7 @@ export async function getAvailableTimes(
             }
 
             /*
-             * Sort this day's options before
-             * adding them to the worker list.
+             * Earliest options first.
              */
             workerDayOptions.sort(
                 (a, b) =>
@@ -754,8 +1070,7 @@ export async function getAvailableTimes(
             );
 
             /*
-             * Add only the earliest options
-             * needed to reach three.
+             * Add only enough options to reach three.
              */
             for (
                 const option of workerDayOptions
@@ -807,8 +1122,7 @@ export async function getAvailableTimes(
         }
 
         /*
-         * Stop when every worker has three
-         * available options.
+         * Stop as soon as every worker has three options.
          */
         const allWorkersComplete =
             workers.every(
@@ -831,7 +1145,7 @@ export async function getAvailableTimes(
     /*
      * Build the grouped response.
      *
-     * Workers without availability are excluded.
+     * Workers with no availability are excluded.
      */
     const groupedWorkers =
         workers

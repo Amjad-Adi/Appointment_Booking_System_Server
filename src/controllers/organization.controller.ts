@@ -33,10 +33,13 @@ export async function handleGetOrganizations(req: Request, res: Response) {
 export async function handleGetOrganization(req:Request,res:Response){
     const uuid:string=(req.params.organizationUuid)  as string;
     const organizationUuid=req.user?.organizationUuid;
+    let result:OrganizationResponse
     if(organizationUuid!==null){
-        return getOrganization(organizationUuid as string);
+        result=await getOrganization(organizationUuid as string)
     }
-    const result:OrganizationResponse=await getOrganization(uuid)
+    else{
+        result=await getOrganization(uuid)
+    }
     return res.status(200).json(result)
 }
 
