@@ -1,34 +1,44 @@
-import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
-import {
-    createServiceSchema,
-    queryServiceSchema,
-    updateServiceSchema
-} from "../middlewares/zod-schemas/service.schema.js"
-import {DataResponses} from "./query.model.js";
-import {ServiceCategory} from "./service-category.model";
+import type { z } from "zod";
+import type { schedulingSchema } from "../middlewares/zod-schemas/scheduling.schema.js";
 
+export interface SchedulingOption {
+    organization: {
+        uuid: string;
+        name: string;
+    };
 
-export interface Service{
-    uuid:string,
-    name:string,
-    description:string,
-    price:number,
-    durationInMinutes:number,
-    servicePicturePath:string,
-    createdAtUTC:Date,
-    updatedAtUTC:Date,
-    status:ActivationStatus
+    service: {
+        uuid: string;
+        name: string;
+        durationInMinutes: number;
+    };
+
+    worker: {
+        uuid: string;
+        firstName: string;
+        lastName: string;
+        profilePicturePath: string | null;
+    };
+
+    room: {
+        uuid: string;
+        name: string;
+    };
+
+    scheduledStartAtUTC: string;
+    scheduledEndAtUTC: string;
 }
 
-export interface ServiceResponse extends Service, DataResponses {
-    organizationUuid: string;
-    organizationName: string;
-    profilePicturePath: string;
-    categories: ServiceCategory[];
+export interface SchedulingWorkerOptions {
+    worker: SchedulingOption["worker"];
+    options: SchedulingOption[];
 }
 
-export type OrganizationServiceResponseService=Service;
-export type CreateService= z.infer<typeof createServiceSchema> & { organizationUuid:string, organizationId:number; };
-export type UpdateService= z.infer<typeof updateServiceSchema> & { uuid:string, organizationUuid:string, userUuid:string; };
-export type QueryService= z.infer<typeof queryServiceSchema> & { offset:number; };
+export interface SchedulingResponse {
+    workers: SchedulingWorkerOptions[];
+}
+
+export type SchedulingRequest =
+    z.infer<typeof schedulingSchema> & {
+    userId: number;
+};

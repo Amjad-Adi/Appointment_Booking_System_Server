@@ -2,11 +2,12 @@
   "name": "appointment_booking_system",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js","scripts": {
-  "dev": "tsx watch server.ts",
-  "build": "tsc",
-  "start": "node dist/server.js"
-},
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -20,6 +21,7 @@
     "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.5.4",
     "postcss": "^8.5.26",
+    "prettier": "^3.9.7",
     "tailwindcss": "^4.3.3",
     "ts-node": "^10.9.2",
     "tsx": "^4.23.12",

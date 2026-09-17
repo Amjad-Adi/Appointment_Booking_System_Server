@@ -22,7 +22,7 @@ import {
 
 import {
     getUsers,
-    getUserIdByUuid,
+    getUserIdByUuid, getUser,
 } from "./user.service.js";
 
 import {
@@ -33,7 +33,7 @@ import type {
     SchedulingOption,
     SchedulingRequest,
     SchedulingResponse,
-} from "../models/scheduling.model";
+} from "../models/scheduling.model.js";
 
 import {
     AppointmentTimeType,
@@ -55,8 +55,7 @@ import {
     NotFoundError,
 } from "../errors/not-found.error.js";
 
-
-const MAX_OPTIONS = 30;
+const OPTIONS_PER_WORKER = 3;
 const SEARCH_DAYS = 30;
 
 const DAY_NAMES: DayOfWeek[] = [
@@ -69,24 +68,10 @@ const DAY_NAMES: DayOfWeek[] = [
     DayOfWeek.SATURDAY,
 ];
 
-
-function getDayOfWeek(
-    date: Date,
-): DayOfWeek {
-    return DAY_NAMES[
-        date.getUTCDay()
-        ];
+interface SchedulingInterval {
+    startAtUTC: Date;
+    endAtUTC: Date;
 }
-
-
-function getUTCDateString(
-    date: Date,
-): string {
-    return date
-        .toISOString()
-        .slice(0, 10);
-}
-
 
 function getWorkingDateTime(
     date: Date,
@@ -111,7 +96,6 @@ function getWorkingDateTime(
     return result;
 }
 
-
 function addMinutes(
     date: Date,
     minutes: number,
@@ -122,42 +106,29 @@ function addMinutes(
     );
 }
 
-
-interface SchedulingInterval {
-    startAtUTC: Date;
-    endAtUTC: Date;
-}
-
-
-/**
- * Merges overlapping or touching
- * blocking intervals.
- *
- * The scheduling repository already
- * normalizes all intervals to Date.
- */
 function mergeIntervals(
     intervals: SchedulingInterval[],
 ): SchedulingInterval[] {
-    const sorted = [
-        ...intervals,
-    ].sort(
-        (a, b) =>
-            a.startAtUTC.getTime() -
-            b.startAtUTC.getTime(),
-    );
+    const sortedIntervals =
+        [...intervals].sort(
+            (a, b) =>
+                a.startAtUTC.getTime() -
+                b.startAtUTC.getTime(),
+        );
 
-    const merged: SchedulingInterval[] =
-        [];
+    const mergedIntervals:
+        SchedulingInterval[] = [];
 
-    for (const interval of sorted) {
+    for (
+        const interval of sortedIntervals
+        ) {
         const last =
-            merged[
-            merged.length - 1
+            mergedIntervals[
+            mergedIntervals.length - 1
                 ];
 
         if (!last) {
-            merged.push({
+            mergedIntervals.push({
                 startAtUTC:
                     new Date(
                         interval.startAtUTC,
@@ -173,8 +144,7 @@ function mergeIntervals(
         }
 
         /*
-         * Merge overlapping or touching
-         * intervals.
+         * Merge overlapping or touching intervals.
          */
         if (
             interval.startAtUTC.getTime() <=
@@ -189,129 +159,173 @@ function mergeIntervals(
                         interval.endAtUTC,
                     );
             }
+        } else {
+            mergedIntervals.push({
+                startAtUTC:
+                    new Date(
+                        interval.startAtUTC,
+                    ),
 
-            continue;
+                endAtUTC:
+                    new Date(
+                        interval.endAtUTC,
+                    ),
+            });
         }
-
-        merged.push({
-            startAtUTC:
-                new Date(
-                    interval.startAtUTC,
-                ),
-
-            endAtUTC:
-                new Date(
-                    interval.endAtUTC,
-                ),
-        });
     }
 
-    return merged;
+    return mergedIntervals;
 }
 
-
 /**
- * Finds the earliest appointment interval
- * that fits completely inside the working
- * hours and does not overlap a blocking
- * interval.
+ * Generates all continuous appointment candidates
+ * inside the working period.
+ *
+ * Example:
+ *
+ * working period: 08:00–10:00
+ * duration: 30 minutes
+ *
+ * candidates:
+ * 08:00–08:30
+ * 08:30–09:00
+ * 09:00–09:30
+ * 09:30–10:00
+ *
+ * Blocking intervals are skipped.
  */
-function findNextCandidate(
+function findAvailableCandidates(
     workingStart: Date,
     workingEnd: Date,
     durationInMinutes: number,
     blockingIntervals: SchedulingInterval[],
-): SchedulingInterval | null {
-    let candidate =
-        new Date(workingStart);
+): SchedulingInterval[] {
+    const candidates:
+        SchedulingInterval[] = [];
 
-    const merged =
+    const mergedIntervals =
         mergeIntervals(
             blockingIntervals,
         );
 
-    for (const interval of merged) {
-        const candidateEnd =
-            addMinutes(
-                candidate,
-                durationInMinutes,
-            );
+    let candidateStart =
+        new Date(workingStart);
 
+    for (
+        const blockingInterval of mergedIntervals
+        ) {
         /*
-         * The appointment fits completely
-         * before this blocking interval.
+         * If the blocking interval ends before
+         * the current candidate, it has no effect.
          */
         if (
-            candidateEnd <=
-            interval.startAtUTC
+            blockingInterval.endAtUTC <=
+            candidateStart
         ) {
-            return {
-                startAtUTC:
-                candidate,
-
-                endAtUTC:
-                candidateEnd,
-            };
+            continue;
         }
 
         /*
-         * The candidate overlaps the blocking
-         * interval, so move it to the end of
-         * that interval.
+         * Generate all candidates between the
+         * current candidate and the next block.
+         */
+        while (true) {
+            const candidateEnd =
+                addMinutes(
+                    candidateStart,
+                    durationInMinutes,
+                );
+
+            /*
+             * Candidate no longer fits before
+             * the blocking interval.
+             */
+            if (
+                candidateEnd >
+                blockingInterval.startAtUTC
+            ) {
+                break;
+            }
+
+            candidates.push({
+                startAtUTC:
+                    new Date(
+                        candidateStart,
+                    ),
+
+                endAtUTC:
+                    new Date(
+                        candidateEnd,
+                    ),
+            });
+
+            candidateStart =
+                candidateEnd;
+        }
+
+        /*
+         * Move the search pointer beyond the
+         * blocking interval.
          */
         if (
-            candidate <
-            interval.endAtUTC
+            candidateStart <
+            blockingInterval.endAtUTC
         ) {
-            candidate =
+            candidateStart =
                 new Date(
-                    interval.endAtUTC,
+                    blockingInterval.endAtUTC,
                 );
         }
 
-        /*
-         * There is no remaining working time.
-         */
         if (
-            candidate >=
+            candidateStart >=
             workingEnd
         ) {
-            return null;
+            return candidates;
         }
     }
 
     /*
-     * Check the remaining period after
-     * all blocking intervals.
+     * Generate candidates after the final
+     * blocking interval.
      */
-    const candidateEnd =
-        addMinutes(
-            candidate,
-            durationInMinutes,
-        );
+    while (true) {
+        const candidateEnd =
+            addMinutes(
+                candidateStart,
+                durationInMinutes,
+            );
 
-    if (
-        candidateEnd <=
-        workingEnd
-    ) {
-        return {
+        if (
+            candidateEnd >
+            workingEnd
+        ) {
+            break;
+        }
+
+        candidates.push({
             startAtUTC:
-            candidate,
+                new Date(
+                    candidateStart,
+                ),
 
             endAtUTC:
-            candidateEnd,
-        };
+                new Date(
+                    candidateEnd,
+                ),
+        });
+
+        candidateStart =
+            candidateEnd;
     }
 
-    return null;
+    return candidates;
 }
-
 
 export async function getAvailableTimes(
     organizationUuid: string,
     request: SchedulingRequest,
 ): Promise<SchedulingResponse> {
-
     const organization =
         await getOrganization(
             organizationUuid,
@@ -337,74 +351,34 @@ export async function getAvailableTimes(
             organizationUuid,
         );
 
-    let workers;
-
     /*
      * WORKER:
-     * Only search for the requested worker.
+     * Search only for the requested worker.
      */
-    if (
-        request.timeType ===
-        AppointmentTimeType.WORKER
-    ) {
-        const users =
-            await getUsers({
-                filter: {
-                    organizationUuid,
-                    role: Role.WORKER,
-                    status:
-                    ActivationStatus.ACTIVE,
-                },
+    let workers;
 
-                page: 1,
-                limit: 100,
-            });
-
-        workers =
-            users.filter(
-                user =>
-                    user.uuid ===
-                    request.workerUuid,
-            );
-
-        if (
-            workers.length === 0
-        ) {
-            throw new NotFoundError(
-                "Worker",
-            );
-        }
+    if (request.timeType === AppointmentTimeType.WORKER) {
+        workers = [await getUser(request.workerUuid as string)];
+    } else {
+        workers = await getUsers({
+            filter: {
+                organizationUuid,
+                role: Role.WORKER,
+                status: ActivationStatus.ACTIVE,
+            },
+            page: 1,
+            limit: 100,
+        });
     }
 
     /*
-     * NEAREST:
-     * Search all active workers in
-     * the organization.
-     */
-    else {
-        workers =
-            await getUsers({
-                filter: {
-                    organizationUuid,
-                    role: Role.WORKER,
-                    status:
-                    ActivationStatus.ACTIVE,
-                },
-
-                page: 1,
-                limit: 100,
-            });
-    }
-
-    /*
-     * Get all active organization rooms
-     * once instead of querying them for
-     * every candidate.
+     * Get active rooms once.
      */
     const organizationRooms =
         await getRooms({
             filter: {
                 organizationUuid,
+
                 status:
                 ActivationStatus.ACTIVE,
             },
@@ -430,8 +404,23 @@ export async function getAvailableTimes(
         );
     }
 
-    const options:
-        SchedulingOption[] = [];
+    /*
+     * Store separate options for each worker.
+     */
+    const workerOptions =
+        new Map<
+            string,
+            SchedulingOption[]
+        >();
+
+    for (
+        const worker of workers
+        ) {
+        workerOptions.set(
+            worker.uuid,
+            [],
+        );
+    }
 
     /*
      * Search up to 30 days ahead.
@@ -439,8 +428,7 @@ export async function getAvailableTimes(
     for (
         let dayOffset = 0;
 
-        dayOffset < SEARCH_DAYS &&
-        options.length < MAX_OPTIONS;
+        dayOffset < SEARCH_DAYS;
 
         dayOffset++
     ) {
@@ -452,14 +440,14 @@ export async function getAvailableTimes(
             dayOffset,
         );
 
-        const dateString =
-            getUTCDateString(
-                currentDate,
-            );
-
         /*
-         * Skip active special days.
+         * PostgreSQL DATE format: YYYY-MM-DD.
          */
+        const dateString =
+            currentDate
+                .toISOString()
+                .substring(0, 10);
+
         const specialDays =
             await getSpecialDays({
                 page: 1,
@@ -480,19 +468,19 @@ export async function getAvailableTimes(
                 },
             });
 
+        /*
+         * Skip organization-wide special days.
+         */
         if (
-            specialDays[0]
+            specialDays.length > 0
         ) {
             continue;
         }
 
-        /*
-         * Get working hours for this day.
-         */
         const dayOfWeek =
-            getDayOfWeek(
-                currentDate,
-            );
+            DAY_NAMES[
+                currentDate.getUTCDay()
+                ];
 
         const workingHours =
             await getWorkingHours({
@@ -528,8 +516,8 @@ export async function getAvailableTimes(
             );
 
         /*
-         * On the first day, don't return
-         * appointments before fromAtUTC.
+         * On the first day, don't return times
+         * before fromAtUTC.
          */
         let searchStart =
             workingStart;
@@ -550,22 +538,27 @@ export async function getAvailableTimes(
         }
 
         /*
-         * Search workers.
+         * Search each worker independently.
          */
         for (
             const worker of workers
             ) {
-            if (
-                options.length >=
-                MAX_OPTIONS
-            ) {
-                break;
-            }
+            const currentWorkerOptions =
+                workerOptions.get(
+                    worker.uuid,
+                ) ?? [];
 
             /*
-             * Only rooms assigned to this
-             * worker can be used.
+             * This worker already has three
+             * available options.
              */
+            if (
+                currentWorkerOptions.length >=
+                OPTIONS_PER_WORKER
+            ) {
+                continue;
+            }
+
             const rooms =
                 organizationRooms.filter(
                     room =>
@@ -592,19 +585,17 @@ export async function getAvailableTimes(
             }
 
             /*
-             * Search each room assigned
-             * to the worker.
+             * A worker may have multiple rooms.
+             * We collect all available candidates
+             * and then choose the earliest three
+             * unique start times.
              */
+            const workerDayOptions:
+                SchedulingOption[] = [];
+
             for (
                 const room of rooms
                 ) {
-                if (
-                    options.length >=
-                    MAX_OPTIONS
-                ) {
-                    break;
-                }
-
                 const roomId =
                     await getRoomIdByUuid(
                         room.uuid,
@@ -618,14 +609,6 @@ export async function getAvailableTimes(
                     continue;
                 }
 
-                /*
-                 * Get all appointments and
-                 * approved time blocks that
-                 * can block this candidate.
-                 *
-                 * The repository returns
-                 * Date-based intervals.
-                 */
                 const blockingIntervals =
                     await schedulingRepository
                         .findBlockingIntervals(
@@ -637,128 +620,263 @@ export async function getAvailableTimes(
                             workingEnd.toISOString(),
                         );
 
-                /*
-                 * Find the earliest interval
-                 * that fits.
-                 */
-                const candidate =
-                    findNextCandidate(
+                const candidates =
+                    findAvailableCandidates(
                         searchStart,
                         workingEnd,
                         service.durationInMinutes,
                         blockingIntervals,
                     );
 
-                if (
-                    !candidate
-                ) {
-                    continue;
-                }
+                for (
+                    const candidate of candidates
+                    ) {
+                    /*
+                     * Do not generate more than
+                     * necessary for this worker.
+                     */
+                    if (
+                        workerDayOptions.length >=
+                        OPTIONS_PER_WORKER
+                    ) {
+                        break;
+                    }
 
-                /*
-                 * Final conflict check.
-                 *
-                 * This protects against a conflict
-                 * appearing between the blocking
-                 * interval lookup and candidate
-                 * validation.
-                 */
-                const conflict =
-                    await schedulingRepository
-                        .hasConflict(
-                            organizationId,
-                            workerId,
-                            roomId,
-                            request.userId,
+                    const option:
+                        SchedulingOption = {
+                        organization: {
+                            uuid:
+                            organization.uuid,
+
+                            name:
+                            organization.name,
+                        },
+
+                        service: {
+                            uuid:
+                            service.uuid,
+
+                            name:
+                            service.name,
+
+                            durationInMinutes:
+                            service.durationInMinutes,
+                        },
+
+                        room: {
+                            uuid:
+                            room.uuid,
+
+                            name:
+                            room.name,
+                        },
+
+                        scheduledStartAtUTC:
                             candidate
                                 .startAtUTC
                                 .toISOString(),
 
+                        scheduledEndAtUTC:
                             candidate
                                 .endAtUTC
                                 .toISOString(),
+                    };
+
+                    /*
+                     * Avoid duplicate start times
+                     * from different rooms.
+                     */
+                    const duplicate =
+                        workerDayOptions.some(
+                            existing =>
+                                existing
+                                    .scheduledStartAtUTC ===
+                                option
+                                    .scheduledStartAtUTC,
+                        ) ||
+                        currentWorkerOptions.some(
+                            existing =>
+                                existing
+                                    .scheduledStartAtUTC ===
+                                option
+                                    .scheduledStartAtUTC,
                         );
 
+                    if (
+                        duplicate
+                    ) {
+                        continue;
+                    }
+
+                    /*
+                     * Final conflict check.
+                     */
+                    const conflict =
+                        await schedulingRepository
+                            .hasConflict(
+                                organizationId,
+                                workerId,
+                                roomId,
+                                request.userId,
+                                candidate
+                                    .startAtUTC
+                                    .toISOString(),
+
+                                candidate
+                                    .endAtUTC
+                                    .toISOString(),
+                            );
+
+                    if (
+                        conflict
+                    ) {
+                        continue;
+                    }
+
+                    workerDayOptions.push(
+                        option,
+                    );
+                }
+            }
+
+            /*
+             * Sort this day's options before
+             * adding them to the worker list.
+             */
+            workerDayOptions.sort(
+                (a, b) =>
+                    new Date(
+                        a.scheduledStartAtUTC,
+                    ).getTime() -
+                    new Date(
+                        b.scheduledStartAtUTC,
+                    ).getTime(),
+            );
+
+            /*
+             * Add only the earliest options
+             * needed to reach three.
+             */
+            for (
+                const option of workerDayOptions
+                ) {
                 if (
-                    conflict
+                    currentWorkerOptions.length >=
+                    OPTIONS_PER_WORKER
+                ) {
+                    break;
+                }
+
+                const duplicate =
+                    currentWorkerOptions.some(
+                        existing =>
+                            existing
+                                .scheduledStartAtUTC ===
+                            option
+                                .scheduledStartAtUTC,
+                    );
+
+                if (
+                    duplicate
                 ) {
                     continue;
                 }
 
-                options.push({
-                    organization: {
-                        uuid:
-                        organization.uuid,
-
-                        name:
-                        organization.name,
-                    },
-
-                    service: {
-                        uuid:
-                        service.uuid,
-
-                        name:
-                        service.name,
-
-                        durationInMinutes:
-                        service.durationInMinutes,
-                    },
-
-                    worker: {
-                        uuid:
-                        worker.uuid,
-
-                        firstName:
-                        worker.firstName,
-
-                        lastName:
-                        worker.lastName,
-
-                        profilePicturePath:
-                        worker.profilePicturePath,
-                    },
-
-                    room: {
-                        uuid:
-                        room.uuid,
-
-                        name:
-                        room.name,
-                    },
-
-                    scheduledStartAtUTC:
-                        candidate
-                            .startAtUTC
-                            .toISOString(),
-
-                    scheduledEndAtUTC:
-                        candidate
-                            .endAtUTC
-                            .toISOString(),
-                });
+                currentWorkerOptions.push(
+                    option,
+                );
             }
+
+            currentWorkerOptions.sort(
+                (a, b) =>
+                    new Date(
+                        a.scheduledStartAtUTC,
+                    ).getTime() -
+                    new Date(
+                        b.scheduledStartAtUTC,
+                    ).getTime(),
+            );
+
+            workerOptions.set(
+                worker.uuid,
+                currentWorkerOptions.slice(
+                    0,
+                    OPTIONS_PER_WORKER,
+                ),
+            );
+        }
+
+        /*
+         * Stop when every worker has three
+         * available options.
+         */
+        const allWorkersComplete =
+            workers.every(
+                worker =>
+                    (
+                        workerOptions.get(
+                            worker.uuid,
+                        )?.length ?? 0
+                    ) >=
+                    OPTIONS_PER_WORKER,
+            );
+
+        if (
+            allWorkersComplete
+        ) {
+            break;
         }
     }
 
     /*
-     * Always return results chronologically.
+     * Build the grouped response.
+     *
+     * Workers without availability are excluded.
      */
-    options.sort(
-        (a, b) =>
-            new Date(
-                a.scheduledStartAtUTC,
-            ).getTime() -
-            new Date(
-                b.scheduledStartAtUTC,
-            ).getTime(),
-    );
+    const groupedWorkers =
+        workers
+            .map(worker => ({
+                worker: {
+                    uuid:
+                    worker.uuid,
+
+                    firstName:
+                    worker.firstName,
+
+                    lastName:
+                    worker.lastName,
+
+                    profilePicturePath:
+                    worker.profilePicturePath,
+                },
+
+                options:
+                    (
+                        workerOptions.get(
+                            worker.uuid,
+                        ) ?? []
+                    )
+                        .sort(
+                            (a, b) =>
+                                new Date(
+                                    a.scheduledStartAtUTC,
+                                ).getTime() -
+                                new Date(
+                                    b.scheduledStartAtUTC,
+                                ).getTime(),
+                        )
+                        .slice(
+                            0,
+                            OPTIONS_PER_WORKER,
+                        ),
+            }))
+            .filter(
+                group =>
+                    group.options.length > 0,
+            );
 
     return {
-        options:
-            options.slice(
-                0,
-                MAX_OPTIONS,
-            ),
+        workers:
+        groupedWorkers,
     };
 }
