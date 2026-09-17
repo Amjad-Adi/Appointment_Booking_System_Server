@@ -30,6 +30,7 @@ id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 name varchar(1024) NOT NULL,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
+timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Jerusalem',
 location_on_map GEOMETRY(point,4326)
 );
 
@@ -59,6 +60,7 @@ status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIV
 FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL ON UPDATE CASCADE
 );
 ALTER TABLE organizations ALTER COLUMN profile_picture_path set NOT NULL;
+ALTER TABLE locations ADD COLUMN timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Jerusalem';
 DROP TABLE special_days;
 
 CREATE TABLE special_days(
