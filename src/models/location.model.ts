@@ -6,6 +6,7 @@ import {updateLocationSchema,createLocationSchema} from "../middlewares/zod-sche
 export interface LocationResponse{
     name:string|null,
     readonly locationOnMap:[longitude:number|null,latitude:number|null],
+    timezone:string,
     createdAtUTC:Date|null,
     updatedAtUTC:Date|null,
 }
@@ -14,6 +15,7 @@ export interface Location{
     id:number
     name:string,
     readonly locationOnMap:[longitude:number,latitude:number],
+    timezone:string,
     createdAtUTC:Date,
     updatedAtUTC:Date,
 }

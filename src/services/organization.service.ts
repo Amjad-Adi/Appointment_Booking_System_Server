@@ -30,6 +30,7 @@ export async function getOrganizations(query: QueryOrganization):Promise<Organiz
             profilePicturePath: row.profilePicturePath,
             location: {
                 name: row.locationName,
+                timezone:row.timezone,
                 locationOnMap:[row.longitude, row.latitude] as [number|null,number|null],
                 createdAtUTC: row.locationCreatedAtUTC,
                 updatedAtUTC: row.locationUpdatedAtUTC,
@@ -47,7 +48,8 @@ export async function getNumberOfOrganizations(query: QueryOrganization): Promis
 
 
 export async function getOrganization(uuid:string):Promise<OrganizationResponse>{
-    const result:OrganizationRow= await findByUuid(uuid)
+    const result:OrganizationRow | undefined= await findByUuid(uuid)
+    console.log("hi"+result)
     if(result===undefined){
         throw new NotFoundError("Organization");
     }
@@ -60,6 +62,7 @@ export async function getOrganization(uuid:string):Promise<OrganizationResponse>
         profilePicturePath: result.profilePicturePath,
         location: {
             name: result.locationName,
+            timezone:result.timezone,
             locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
             createdAtUTC: result.locationCreatedAtUTC,
             updatedAtUTC: result.locationUpdatedAtUTC,
@@ -116,6 +119,7 @@ export async function getUserOrganization(userUuid:string):Promise<OrganizationR
         profilePicturePath: result.profilePicturePath,
         location: {
             name: result.locationName,
+            timezone:result.timezone,
             locationOnMap: [result.longitude, result.latitude] as [number | null, number | null],
             createdAtUTC: result.locationCreatedAtUTC,
             updatedAtUTC: result.locationUpdatedAtUTC,

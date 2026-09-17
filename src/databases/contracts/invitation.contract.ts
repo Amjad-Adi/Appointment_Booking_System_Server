@@ -24,3 +24,5 @@ export const ALIAS_RECIPIENT_FIRST_NAME=`"recipientFirstName"`;
 export const ALIAS_RECIPIENT_LAST_NAME=`"recipientLastName"`;
 export const ALIAS_RECIPIENT_EMAIL=`"recipientEmail"`;
 export const ALIAS_RECIPIENT_PROFILE_PICTURE_PATH=`"recipientProfilePicturePath"`;
+export const SORT_BY_EXPIRES_AT_UC = 'expiresAtUTC';
+export const SORT_BY_CREATED_AT_UTC = 'createdAtUTC';

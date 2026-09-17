@@ -41,6 +41,7 @@ export interface OrganizationRow {
     bio: string;
     profilePicturePath: string;
     locationName: string|null;
+    timezone:string;
     longitude: number|null;
     latitude: number|null;
     locationCreatedAtUTC: Date|null;
