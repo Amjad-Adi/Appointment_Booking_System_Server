@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
-import { AppointmentTimeType } from '../../models/enums/appointment-time-type'
+import { AppointmentTimeType } from '../../models/enums/appointment-time-type';
 
 const uuidSchema = z.uuid('Invalid UUID');
 
-const fromAtUTCSchema = z.iso.datetime({
-    offset: true,
-});
+const fromAtUTCSchema = z
+    .string()
+    .datetime({ offset: true })
+    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/));
 
 export const schedulingSchema = z
     .object({
@@ -31,15 +32,25 @@ export const schedulingSchema = z
                 });
             }
 
+            if (data.fromAtUTC !== undefined) {
+                ctx.addIssue({
+                    code: 'custom',
+                    path: ['fromAtUTC'],
+                    message:
+                        'Start time is not allowed when a worker is selected.',
+                });
+            }
+
             return;
         }
 
         if (data.timeType === AppointmentTimeType.NEAREST) {
-            if (data.workerUuid) {
+            if (data.workerUuid !== undefined) {
                 ctx.addIssue({
                     code: 'custom',
                     path: ['workerUuid'],
-                    message: 'Worker is not allowed for nearest availability.',
+                    message:
+                        'Worker is not allowed for nearest availability.',
                 });
             }
 
@@ -47,7 +58,8 @@ export const schedulingSchema = z
                 ctx.addIssue({
                     code: 'custom',
                     path: ['fromAtUTC'],
-                    message: 'Start time is required for nearest availability.',
+                    message:
+                        'Start time is required for nearest availability.',
                 });
             }
         }

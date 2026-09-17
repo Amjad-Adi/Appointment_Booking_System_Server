@@ -85,7 +85,7 @@ export async function findAll(
         search,
         filter,
         sortBy = SORT_BY_DAY_DATE,
-        sortOrder = "asc",
+         order= "asc",
         limit,
         offset,
     } = query;
@@ -93,7 +93,7 @@ export async function findAll(
     const conditions = [
         eq(
             specialDaysTable.organizationId,
-            query.organizationId,
+            query.organizationId as number,
         ),
     ];
 
@@ -143,8 +143,8 @@ export async function findAll(
 
     const sortColumn = getSortColumn(sortBy);
 
-    const order =
-        sortOrder === "asc"
+    const sortOrder =
+        order === "asc"
             ? asc(sortColumn)
             : desc(sortColumn);
 
@@ -153,11 +153,11 @@ export async function findAll(
         .from(specialDaysTable)
         .where(and(...conditions))
         .orderBy(
-            order,
+            sortOrder,
             asc(specialDaysTable.uuid),
         )
         .limit(limit)
-        .offset(offset);
+        .offset(offset as number);
 
     return results.map(mapSpecialDay);
 }
@@ -173,7 +173,7 @@ export async function countAll(
     const conditions = [
         eq(
             specialDaysTable.organizationId,
-            query.organizationId,
+            query.organizationId as number,
         ),
     ];
 

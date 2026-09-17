@@ -1,6 +1,15 @@
-import type { z } from 'zod';
+import type { z } from "zod";
 
-import type { schedulingSchema } from '../middlewares/zod-schemas/scheduling.schema.js';
+import type {
+    schedulingSchema,
+} from "../middlewares/zod-schemas/scheduling.schema.js";
+
+export interface SchedulingWorker {
+    uuid: string;
+    firstName: string;
+    lastName: string;
+    profilePicturePath: string | null;
+}
 
 export interface SchedulingOption {
     organization: {
@@ -14,13 +23,6 @@ export interface SchedulingOption {
         durationInMinutes: number;
     };
 
-    worker: {
-        uuid: string;
-        firstName: string;
-        lastName: string;
-        profilePicturePath: string;
-    };
-
     room: {
         uuid: string;
         name: string;
@@ -30,10 +32,16 @@ export interface SchedulingOption {
     scheduledEndAtUTC: string;
 }
 
-export interface SchedulingResponse {
+export interface SchedulingWorkerOptions {
+    worker: SchedulingWorker;
     options: SchedulingOption[];
 }
 
-export type SchedulingRequest = z.infer<typeof schedulingSchema> & {
+export interface SchedulingResponse {
+    workers: SchedulingWorkerOptions[];
+}
+
+export type SchedulingRequest =
+    z.infer<typeof schedulingSchema> & {
     userId: number;
 };

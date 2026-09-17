@@ -55,15 +55,14 @@ export async function findAll(query: QueryWorkingHours): Promise<WorkingHoursRes
             orderBy = query.order?.toUpperCase() === "DESC" ? desc(workingHoursTable.dayOfWeek) : asc(workingHoursTable.dayOfWeek);
             break;
     }
-
     return drizzleConnection
         .select(workingHoursResponseSelect)
         .from(workingHoursTable)
         .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
-        .where(conditions.length > 0 ? and(...conditions) : undefined,)
+        .where(conditions.length > 0 ? and(...conditions) : undefined)
         .orderBy(orderBy, asc(workingHoursTable.uuid))
         .limit(query.limit)
-        .offset(query.offset);
+        .offset(query.offset as number);
 }
 
 export async function countAll(query: QueryWorkingHours): Promise<number> {
@@ -85,9 +84,10 @@ export async function countAll(query: QueryWorkingHours): Promise<number> {
     return Number(result[0]?.count ?? 0);
 }
 
-export async function findByUuid(organizationUuid: string, workingHoursUuid: string,): Promise<WorkingHoursResponse | undefined> {
+export async function findByUuid(organizationUuid: string, workingHoursUuid: string): Promise<WorkingHoursResponse | undefined> {
     return (await drizzleConnection
-            .select(workingHoursResponseSelect).from(workingHoursTable)
+            .select(workingHoursResponseSelect)
+            .from(workingHoursTable)
             .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
             .where(and(eq(organizationTable.uuid, organizationUuid,), eq(workingHoursTable.uuid, workingHoursUuid))))[0];
 }

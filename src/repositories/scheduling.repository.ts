@@ -8,15 +8,27 @@ import {
 } from "drizzle-orm";
 
 import { drizzleConnection } from "../databases/drizzle-connection.js";
-
 import { appointmentTable } from "../drizzle-schemas/appointment.db.js";
 import { timeBlockTable } from "../drizzle-schemas/time-block.db.js";
-
 import { TimeBlockStatus } from "../models/enums/time-block-status.js";
 import { ACTIVE_APPOINTMENT_STATUSES } from "../models/appointment.model.js";
 
-export const schedulingRepository = {
+interface SchedulingInterval {
+    startAtUTC: Date;
+    endAtUTC: Date;
+}
 
+function parseDate(value: string): Date {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        throw new Error(`Invalid UTC date: ${value}`);
+    }
+
+    return date;
+}
+
+export const schedulingRepository = {
     async findBlockingIntervals(
         organizationId: number,
         workerId: number,
@@ -24,125 +36,155 @@ export const schedulingRepository = {
         userId: number,
         startAtUTC: string,
         endAtUTC: string,
-    ): Promise<{
-        startAtUTC: Date;
-        endAtUTC: Date;
-    }[]> {
+    ): Promise<SchedulingInterval[]> {
+        const startDate = parseDate(startAtUTC);
+        const endDate = parseDate(endAtUTC);
 
-        const startDate = new Date(startAtUTC);
-        const endDate = new Date(endAtUTC);
+        /*
+         * Appointment timestamps use Date in the Drizzle schema,
+         * so comparisons use Date objects.
+         */
+        const appointments = await drizzleConnection
+            .select({
+                startAtUTC: appointmentTable.scheduledStartAtUTC,
+                endAtUTC: appointmentTable.scheduledEndAtUTC,
+            })
+            .from(appointmentTable)
+            .where(
+                and(
+                    eq(
+                        appointmentTable.organizationId,
+                        organizationId,
+                    ),
 
-        const appointments =
-            await drizzleConnection
-                .select({
-                    startAtUTC:
-                    appointmentTable.scheduledStartAtUTC,
+                    inArray(
+                        appointmentTable.appointmentStatus,
+                        ACTIVE_APPOINTMENT_STATUSES,
+                    ),
 
-                    endAtUTC:
-                    appointmentTable.scheduledEndAtUTC,
-                })
-                .from(appointmentTable)
-                .where(
-                    and(
+                    /*
+                     * Appointment starts before the searched
+                     * period ends.
+                     */
+                    lt(
+                        appointmentTable.scheduledStartAtUTC,
+                        endDate,
+                    ),
+
+                    /*
+                     * Appointment ends after the searched
+                     * period starts.
+                     */
+                    gt(
+                        appointmentTable.scheduledEndAtUTC,
+                        startDate,
+                    ),
+
+                    /*
+                     * The appointment blocks:
+                     *
+                     * - this worker
+                     * - this room
+                     * - this customer
+                     */
+                    or(
                         eq(
-                            appointmentTable.organizationId,
-                            organizationId,
+                            appointmentTable.workerId,
+                            workerId,
                         ),
 
-                        inArray(
-                            appointmentTable.appointmentStatus,
-                            ACTIVE_APPOINTMENT_STATUSES,
+                        eq(
+                            appointmentTable.roomId,
+                            roomId,
                         ),
 
-                        lt(
-                            appointmentTable.scheduledStartAtUTC,
-                            endDate,
-                        ),
-
-                        gt(
-                            appointmentTable.scheduledEndAtUTC,
-                            startDate,
-                        ),
-
-                        or(
-                            eq(
-                                appointmentTable.workerId,
-                                workerId,
-                            ),
-
-                            eq(
-                                appointmentTable.roomId,
-                                roomId,
-                            ),
-
-                            eq(
-                                appointmentTable.userId,
-                                userId,
-                            ),
+                        eq(
+                            appointmentTable.userId,
+                            userId,
                         ),
                     ),
-                )
-                .orderBy(
-                    appointmentTable.scheduledStartAtUTC,
-                );
+                ),
+            )
+            .orderBy(
+                appointmentTable.scheduledStartAtUTC,
+            );
 
-        const timeBlocks =
-            await drizzleConnection
-                .select({
-                    startAtUTC:
-                    timeBlockTable.startAtUTC,
-
-                    endAtUTC:
-                    timeBlockTable.endAtUTC,
-                })
-                .from(timeBlockTable)
-                .where(
-                    and(
-                        eq(
-                            timeBlockTable.organizationId,
-                            organizationId,
-                        ),
-
-                        eq(
-                            timeBlockTable.requestStatus,
-                            TimeBlockStatus.APPROVED,
-                        ),
-
-                        lt(
-                            timeBlockTable.startAtUTC,
-                            endAtUTC,
-                        ),
-
-                        gt(
-                            timeBlockTable.endAtUTC,
-                            startAtUTC,
-                        ),
+        /*
+         * timeBlockTable uses:
+         *
+         * timestamp(..., { mode: "string" })
+         *
+         * Therefore Drizzle expects strings here, not Date objects.
+         *
+         * A worker's approved time block blocks that worker.
+         * Since that worker cannot work during the block, the room
+         * assigned to that worker is also unavailable during it.
+         */
+        const timeBlocks = await drizzleConnection
+            .select({
+                startAtUTC: timeBlockTable.startAtUTC,
+                endAtUTC: timeBlockTable.endAtUTC,
+            })
+            .from(timeBlockTable)
+            .where(
+                and(
+                    eq(
+                        timeBlockTable.organizationId,
+                        organizationId,
                     ),
-                )
-                .orderBy(
-                    timeBlockTable.startAtUTC,
-                );
+
+                    eq(
+                        timeBlockTable.requestStatus,
+                        TimeBlockStatus.APPROVED,
+                    ),
+
+                    /*
+                     * The time block belongs to this worker.
+                     *
+                     * This indirectly blocks the worker's assigned
+                     * room as well.
+                     */
+                    eq(
+                        timeBlockTable.requestUserId,
+                        workerId,
+                    ),
+
+                    /*
+                     * timeBlockTable timestamps are strings.
+                     */
+                    lt(
+                        timeBlockTable.startAtUTC,
+                        endAtUTC,
+                    ),
+
+                    gt(
+                        timeBlockTable.endAtUTC,
+                        startAtUTC,
+                    ),
+                ),
+            )
+            .orderBy(
+                timeBlockTable.startAtUTC,
+            );
 
         return [
-            ...appointments.map(
-                appointment => ({
-                    startAtUTC:
+            ...appointments.map((appointment) => ({
+                startAtUTC: new Date(
                     appointment.startAtUTC,
-
-                    endAtUTC:
+                ),
+                endAtUTC: new Date(
                     appointment.endAtUTC,
-                }),
-            ),
+                ),
+            })),
 
-            ...timeBlocks.map(
-                timeBlock => ({
-                    startAtUTC:
-                        new Date(timeBlock.startAtUTC),
-
-                    endAtUTC:
-                        new Date(timeBlock.endAtUTC),
-                }),
-            ),
+            ...timeBlocks.map((timeBlock) => ({
+                startAtUTC: new Date(
+                    timeBlock.startAtUTC,
+                ),
+                endAtUTC: new Date(
+                    timeBlock.endAtUTC,
+                ),
+            })),
         ].sort(
             (a, b) =>
                 a.startAtUTC.getTime() -
@@ -158,92 +200,111 @@ export const schedulingRepository = {
         startAtUTC: string,
         endAtUTC: string,
     ): Promise<boolean> {
+        const startDate = parseDate(startAtUTC);
+        const endDate = parseDate(endAtUTC);
 
-        const startDate = new Date(startAtUTC);
-        const endDate = new Date(endAtUTC);
+        const appointment = await drizzleConnection
+            .select({
+                id: appointmentTable.id,
+            })
+            .from(appointmentTable)
+            .where(
+                and(
+                    eq(
+                        appointmentTable.organizationId,
+                        organizationId,
+                    ),
 
-        const appointment =
-            await drizzleConnection
-                .select({
-                    id: appointmentTable.id,
-                })
-                .from(appointmentTable)
-                .where(
-                    and(
+                    inArray(
+                        appointmentTable.appointmentStatus,
+                        ACTIVE_APPOINTMENT_STATUSES,
+                    ),
+
+                    lt(
+                        appointmentTable.scheduledStartAtUTC,
+                        endDate,
+                    ),
+
+                    gt(
+                        appointmentTable.scheduledEndAtUTC,
+                        startDate,
+                    ),
+
+                    /*
+                     * The appointment conflicts if it uses:
+                     *
+                     * - the worker
+                     * - the room
+                     * - the customer
+                     */
+                    or(
                         eq(
-                            appointmentTable.organizationId,
-                            organizationId,
+                            appointmentTable.workerId,
+                            workerId,
                         ),
 
-                        inArray(
-                            appointmentTable.appointmentStatus,
-                            ACTIVE_APPOINTMENT_STATUSES,
+                        eq(
+                            appointmentTable.roomId,
+                            roomId,
                         ),
 
-                        lt(
-                            appointmentTable.scheduledStartAtUTC,
-                            endDate,
-                        ),
-
-                        gt(
-                            appointmentTable.scheduledEndAtUTC,
-                            startDate,
-                        ),
-
-                        or(
-                            eq(
-                                appointmentTable.workerId,
-                                workerId,
-                            ),
-
-                            eq(
-                                appointmentTable.roomId,
-                                roomId,
-                            ),
-
-                            eq(
-                                appointmentTable.userId,
-                                userId,
-                            ),
+                        eq(
+                            appointmentTable.userId,
+                            userId,
                         ),
                     ),
-                )
-                .limit(1);
+                ),
+            )
+            .limit(1);
 
         if (appointment.length > 0) {
             return true;
         }
 
-        const timeBlock =
-            await drizzleConnection
-                .select({
-                    id: timeBlockTable.id,
-                })
-                .from(timeBlockTable)
-                .where(
-                    and(
-                        eq(
-                            timeBlockTable.organizationId,
-                            organizationId,
-                        ),
-
-                        eq(
-                            timeBlockTable.requestStatus,
-                            TimeBlockStatus.APPROVED,
-                        ),
-
-                        lt(
-                            timeBlockTable.startAtUTC,
-                            endAtUTC,
-                        ),
-
-                        gt(
-                            timeBlockTable.endAtUTC,
-                            startAtUTC,
-                        ),
+        /*
+         * An approved worker time block blocks the worker.
+         *
+         * Because the room is assigned to this worker, it also
+         * makes that worker's room unavailable during the block.
+         */
+        const timeBlock = await drizzleConnection
+            .select({
+                id: timeBlockTable.id,
+            })
+            .from(timeBlockTable)
+            .where(
+                and(
+                    eq(
+                        timeBlockTable.organizationId,
+                        organizationId,
                     ),
-                )
-                .limit(1);
+
+                    eq(
+                        timeBlockTable.requestStatus,
+                        TimeBlockStatus.APPROVED,
+                    ),
+
+                    eq(
+                        timeBlockTable.requestUserId,
+                        workerId,
+                    ),
+
+                    /*
+                     * These columns are mode: "string",
+                     * so compare against the original strings.
+                     */
+                    lt(
+                        timeBlockTable.startAtUTC,
+                        endAtUTC,
+                    ),
+
+                    gt(
+                        timeBlockTable.endAtUTC,
+                        startAtUTC,
+                    ),
+                ),
+            )
+            .limit(1);
 
         return timeBlock.length > 0;
     },
