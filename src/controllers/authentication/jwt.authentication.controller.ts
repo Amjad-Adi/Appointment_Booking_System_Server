@@ -21,7 +21,7 @@ export const ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT="12h";
 export const ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT="1d";
 export const REFRESH_TOKEN_EXPIRES_FOR_DEVELOPMENT =365*24*60*60*1000
 export const REFRESH_TOKEN_EXPIRES_FOR_DEPLOYMENT = 365*24*60*60*1000
-export const refreshTokenExpiresIn = process.env.NODE_ENV === "development" ? REFRESH_TOKEN_EXPIRES_FOR_DEVELOPMENT : REFRESH_TOKEN_EXPIRES_FOR_DEPLOYMENT;
+export const refreshTokenExpiresIn = process.env.NODE_ENV === "production" ? REFRESH_TOKEN_EXPIRES_FOR_DEVELOPMENT : REFRESH_TOKEN_EXPIRES_FOR_DEPLOYMENT;
 export async function authenticateToken(req:Request,res:Response,next:NextFunction){
     const token = req.cookies.accessToken;
     if (!token) {
@@ -67,7 +67,7 @@ export async function generateToken(userUid:string){
         sub: userUid
     };
     const signOptions:SignOptions={
-        expiresIn: process.env.NODE_ENV=="development"?ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT:ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT,
+        expiresIn: process.env.NODE_ENV=="production"?ACCESS_TOKEN_EXPIRES_FOR_DEVELOPMENT:ACCESS_TOKEN_EXPIRES_FOR_DEPLOYMENT,
         issuer:"appointment-booking-server",
         audience:"appointment-booking-api",
         jwtid:crypto.randomUUID()
