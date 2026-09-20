@@ -1,45 +1,79 @@
 import {
     type Auth,
+    createUserWithEmailAndPassword,
+    isSignInWithEmailLink,
     sendEmailVerification,
     signInWithEmailAndPassword,
+    signInWithEmailLink,
     signOut,
-    createUserWithEmailAndPassword,
-    getAuth,isSignInWithEmailLink, signInWithEmailLink
 } from "firebase/auth";
-import {mapFirebaseError} from "../middlewares/map-firebase-error";
-import firebase from "firebase/compat/app";
 
-export async function createUserByFireBase( email: string, password: string){
-    const result=await createUserWithEmailAndPassword(getAuth(),email, password);
-    sendEmailVerification(result.user)
-    const token=await result.user.getIdToken();
-    // await app.post("api/users/register", {
-    //     token,
-    //     firstName,
-    //     lastName,
-    //     role: "CUSTOMER"
-    // });
-}
-export async function fireBaseLogIn(auth:Auth,email:string,password:string) {
+import { mapFirebaseError } from "../middlewares/map-firebase-error";
+
+export async function createUserByFireBase(
+    auth: Auth,
+    email: string,
+    password: string,
+) {
     try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        return  result.user.uid;
-    }catch(e) {
-        mapFirebaseError(e)
+        const result = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password,
+        );
+
+        await sendEmailVerification(result.user);
+
+        return await result.user.getIdToken();
+    } catch (e) {
+        mapFirebaseError(e);
     }
 }
 
-export async function logOut(auth:Auth) {
+export async function fireBaseLogIn(
+    auth: Auth,
+    email: string,
+    password: string,
+) {
     try {
-        const result = await signOut(auth);
-    }catch(e) {
-        mapFirebaseError(e)
-    }
-}
+        const result = await signInWithEmailAndPassword(
+            auth,
+            email,
+            password,
+        );
 
-export async function invitationReceive(auth:Auth,email:string,signInLink:string) {
-    if(isSignInWithEmailLink(auth,signInLink)){
-        const result= await signInWithEmailLink(auth,email,signInLink);
         return result.user.uid;
+    } catch (e) {
+        mapFirebaseError(e);
+    }
+}
+
+export async function logOut(auth: Auth) {
+    try {
+        await signOut(auth);
+    } catch (e) {
+        mapFirebaseError(e);
+    }
+}
+
+export async function invitationReceive(
+    auth: Auth,
+    email: string,
+    signInLink: string,
+) {
+    try {
+        if (!isSignInWithEmailLink(auth, signInLink)) {
+            return undefined;
+        }
+
+        const result = await signInWithEmailLink(
+            auth,
+            email,
+            signInLink,
+        );
+
+        return result.user.uid;
+    } catch (e) {
+        mapFirebaseError(e);
     }
 }

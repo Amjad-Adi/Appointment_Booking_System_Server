@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "strict": true,
@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "outDir": "dist"
-  },
+  }
 }

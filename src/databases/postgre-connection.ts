@@ -1,20 +1,13 @@
-import { Pool } from 'pg';
-import dotenv from 'dotenv';
+import pg from "pg";
+import dotenv from "dotenv";
+
 dotenv.config();
 
+const { Pool } = pg;
+const connectionString=process.env.NODE_ENV === "production" ? process.env.DATABASE_DEPLOYMENT_URL :process.env.DATABASE_DEVELOPMENT_URL;
 export const pool = new Pool({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE,
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-});
-
-pool.connect((err, client, release) => {
-    if (err) {
-        console.error('Error connecting to the database', err);
-        return;
-    }
-    console.log('Connected to the database');
-    release();
+    connectionString:connectionString,
+    ssl: {
+        rejectUnauthorized: false,
+    },
 });

@@ -1,4 +1,4 @@
-import { transporter } from "../../server.js";
+import {transporter} from "../config/nodemail";
 
 const SENDER_EMAIL =
     "amjadqaher@gmail.com";
