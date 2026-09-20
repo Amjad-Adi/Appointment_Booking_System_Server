@@ -536,8 +536,8 @@ export async function confirmAppointmentService(
             appointmentUuid,
             organizationId,
             approvalUserId,
-            appointment.organizationColour,
-            appointment.organizationNote,
+            appointment.organizationColour as string,
+            appointment.organizationNote as string,
         );
 
     if (result === undefined) {

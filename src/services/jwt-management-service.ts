@@ -5,7 +5,7 @@ import {CreateRefreshToken, RefreshToken} from "../models/refresh-token.model";
 import {findBlacklistedToken,create as createBlacklistedTokenService} from "../repositories/blacklisted-token.repository";
 import {BlacklistedToken, CreateBlacklistedToken} from "../models/blacklisted-token.model";
 import {UnauthorizedError} from "../errors/unauthorized.error";
-import {hashRefreshToken} from "../utils/hash";
+import {generateHashToken} from "../utils/hash";
 
 export async function getBlackListedToken(jti:string):Promise<BlacklistedToken>{
     return  await findBlacklistedToken(jti)
@@ -29,7 +29,7 @@ export async function createRefreshToken(refreshToken:CreateRefreshToken):Promis
 }
 
 export async function getRefreshToken(token:string):Promise<RefreshToken>{
-    const hashedToken=hashRefreshToken(token)
+    const hashedToken=generateHashToken(token)
     let result =await findRefreshToken(hashedToken)
     if(result===undefined){
         throw new UnauthorizedError();
@@ -39,12 +39,12 @@ export async function getRefreshToken(token:string):Promise<RefreshToken>{
 
 
 export async function revokeToken(token:string):Promise<void>{
-    const hashedToken=hashRefreshToken(token)
+    const hashedToken=generateHashToken(token)
     await revoke(hashedToken)
 }
 
 export async function removeToken(token:string):Promise<void>{
-    const hashedToken=hashRefreshToken(token)
+    const hashedToken=generateHashToken(token)
     await remove(hashedToken)
 }
 

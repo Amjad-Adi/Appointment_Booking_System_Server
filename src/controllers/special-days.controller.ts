@@ -9,7 +9,6 @@ import {
     getNumberOfSpecialDays,
     createSpecialDay,
     updateSpecialDay,
-    isTodaySpecialDay,
 } from "../services/special-days.service.js";
 
 import type {
@@ -132,27 +131,6 @@ export async function handleUpdateOrganizationSpecialDay(
     const result: SpecialDay =
         await updateSpecialDay(
             specialDay,
-        );
-
-    return res
-        .status(200)
-        .json(result);
-}
-
-export async function handleIsTodaySpecialDay(
-    req: Request,
-    res: Response,
-) {
-    const organizationUuid =
-        req.params.organizationUuid as string;
-
-    const userUuid =
-        req.user?.uuid as string;
-
-    const result =
-        await isTodaySpecialDay(
-            organizationUuid,
-            userUuid,
         );
 
     return res

@@ -11,7 +11,6 @@ import {
     handleGetOrganizationSpecialDay,
     handleCreateOrganizationSpecialDay,
     handleUpdateOrganizationSpecialDay,
-    handleIsTodaySpecialDay,
 } from "../controllers/special-days.controller.js";
 
 import {
@@ -59,14 +58,6 @@ specialDaysRouter
         ),
         handleCreateOrganizationSpecialDay,
     );
-
-specialDaysRouter
-    .route("/today")
-    .get(
-        authenticateToken,
-        handleIsTodaySpecialDay,
-    );
-
 specialDaysRouter
     .route("/:specialDayUuid")
     .get(

@@ -1,44 +1,33 @@
-import type { z } from "zod";
-import type { schedulingSchema } from "../middlewares/zod-schemas/scheduling.schema.js";
+import {z} from "zod"
+import {ActivationStatus} from "./enums/activation-status.js";
+import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema.js"
+import {DataResponses} from "./query.model.js";
 
-export interface SchedulingOption {
-    organization: {
-        uuid: string;
-        name: string;
-    };
-
-    service: {
-        uuid: string;
-        name: string;
-        durationInMinutes: number;
-    };
-
-    worker: {
-        uuid: string;
-        firstName: string;
-        lastName: string;
-        profilePicturePath: string | null;
-    };
-
-    room: {
-        uuid: string;
-        name: string;
-    };
-
-    scheduledStartAtUTC: string;
-    scheduledEndAtUTC: string;
+export interface ServiceCategorySummary {
+    uuid:string,
+    name:string,
+    description:string,
 }
 
-export interface SchedulingWorkerOptions {
-    worker: SchedulingOption["worker"];
-    options: SchedulingOption[];
+export interface Service{
+    uuid:string,
+    name:string
+    description:string,
+    price:number,
+    durationInMinutes:number,
+    servicePicturePath:string,
+    createdAtUTC:Date,
+    updatedAtUTC:Date,
+    status:ActivationStatus
 }
 
-export interface SchedulingResponse {
-    workers: SchedulingWorkerOptions[];
+export interface ServiceResponse extends Service,DataResponses{
+    organizationUuid:string,
+    organizationName:string,
+    profilePicturePath:string,
+    categories: ServiceCategorySummary[];
 }
 
-export type SchedulingRequest =
-    z.infer<typeof schedulingSchema> & {
-    userId: number;
-};
+export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,organizationId:number;};
+export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string;};
+export type QueryService=z.infer<typeof queryServiceSchema>&{offset:number}
