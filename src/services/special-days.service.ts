@@ -13,8 +13,8 @@ import {
 } from "./user.service.js";
 
 import {
-    findIdByUuid,
-} from "../repositories/organizaiton.repository.js";
+    getOrganizationIdByUuid
+} from "./organization.service";
 
 import {
     NotFoundError,
@@ -42,7 +42,7 @@ export async function getSpecialDays(
     }
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             organizationUuid,
         );
 
@@ -67,7 +67,7 @@ export async function getNumberOfSpecialDays(
     }
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             organizationUuid,
         );
 
@@ -92,7 +92,7 @@ export async function getSpecialDay(
     );
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             organizationUuid,
         );
 
@@ -122,7 +122,7 @@ export async function createSpecialDay(
     );
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             specialDay.organizationUuid,
         );
 
@@ -178,7 +178,7 @@ export async function updateSpecialDay(
     );
 
     const organizationId =
-        await findIdByUuid(
+        await getOrganizationIdByUuid(
             specialDay.organizationUuid,
         );
 
@@ -218,81 +218,4 @@ export async function updateSpecialDay(
     }
 
     return result;
-}
-
-export async function isTodaySpecialDay(
-    organizationUuid: string,
-    userUuid: string,
-    organizationTimeZone: string,
-): Promise<SpecialDay | undefined> {
-    await AuthorizeOrganizationUser(
-        userUuid,
-        organizationUuid,
-    );
-
-    const organizationId =
-        await findIdByUuid(
-            organizationUuid,
-        );
-
-    if (organizationId === undefined) {
-        throw new NotFoundError("Organization");
-    }
-
-    const today =
-        getDateInTimeZone(
-            new Date(),
-            organizationTimeZone,
-        );
-
-    return await findByDate(
-        organizationId,
-        today,
-    );
-}
-
-function getDateInTimeZone(
-    date: Date,
-    timeZone: string,
-): string {
-    const parts =
-        new Intl.DateTimeFormat(
-            "en-CA",
-            {
-                timeZone,
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-            },
-        ).formatToParts(date);
-
-    const year =
-        parts.find(
-            (part) =>
-                part.type === "year",
-        )?.value;
-
-    const month =
-        parts.find(
-            (part) =>
-                part.type === "month",
-        )?.value;
-
-    const day =
-        parts.find(
-            (part) =>
-                part.type === "day",
-        )?.value;
-
-    if (
-        year === undefined ||
-        month === undefined ||
-        day === undefined
-    ) {
-        throw new BadRequestError(
-            "Unable to determine organization date.",
-        );
-    }
-
-    return `${year}-${month}-${day}`;
 }
