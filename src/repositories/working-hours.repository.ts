@@ -13,7 +13,7 @@ import { organizationTable } from "../drizzle-schemas/organizations.db.js";
 import type {
     CreateWorkingHours,
     QueryWorkingHours,
-    UpdateWorkingHours,
+    UpdateWorkingHours, UpdateWorkingHoursDay,
     WorkingHours,
     WorkingHoursResponse,
 } from "../models/working-hours.model.js";
@@ -123,6 +123,52 @@ export async function update(organizationId: number, workingHours: UpdateWorking
     return (updated as WorkingHours) ?? null;
 }
 
+
+export async function updateWeek(
+    organizationId: number,
+    days: UpdateWorkingHoursDay[],
+): Promise<WorkingHours[]> {
+    return await drizzleConnection.transaction(
+        async (tx) => {
+            const updatedDays: WorkingHours[] = [];
+
+            for (const day of days) {
+                const [updated] =
+                    await tx
+                        .update(workingHoursTable)
+                        .set({
+                            startTime: day.startTime,
+                            endTime: day.endTime,
+                        })
+                        .where(
+                            and(
+                                eq(
+                                    workingHoursTable.organizationId,
+                                    organizationId,
+                                ),
+                                eq(
+                                    workingHoursTable.dayOfWeek,
+                                    day.dayOfWeek,
+                                ),
+                            ),
+                        )
+                        .returning(
+                            workingHoursSelect,
+                        );
+
+                if (updated === undefined) {
+                    throw new Error(
+                        `Working hours for ${day.dayOfWeek} were not found`,
+                    );
+                }
+
+                updatedDays.push(updated);
+            }
+
+            return updatedDays;
+        },
+    );
+}
 
 export async function findTodayWorkingHours(
     organizationUuid: string,

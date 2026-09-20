@@ -10,7 +10,7 @@ import {ConflictError} from "../../errors/conflict.error.js";
 import {Role} from "../../models/enums/roles.js";
 export function authorize(permission:string) {
     return function (req: Request, res: Response, next: NextFunction) {
-        const role: string = req.user?.role;
+        const role: Role | undefined = req.user?.role;
         if(!role){
             throw new ForbiddenError()
         }

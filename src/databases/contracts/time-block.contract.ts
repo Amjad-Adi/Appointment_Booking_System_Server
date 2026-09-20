@@ -12,3 +12,8 @@ export const COLUMN_RESPONDED_AT_UTC = "responded_at_utc";
 export const COLUMN_REQUEST_STATUS = "request_status";
 
 export const COLUMN_ORGANIZATION_ID = "organization_id";
+export const SORT_BY_START_AT_UTC = "startAtUTC";
+export const SORT_BY_END_AT_UTC = "endAtUTC";
+export const SORT_BY_REQUESTED_AT_UTC = "requestedAtUTC";
+export const SORT_BY_RESPONDED_AT_UTC = "respondedAtUTC";
+export const SORT_BY_REQUEST_STATUS = "requestStatus";

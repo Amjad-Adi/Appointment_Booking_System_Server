@@ -19,6 +19,7 @@ export async function updateLocation(location: UpdateLocation, client:PoolClient
     if(location.locationOnMap!=null) {
         point = `POINT(${location.locationOnMap[0]} ${location.locationOnMap[1]})`;
     }
+    console.log(location);
     return (await client.query(
         `UPDATE ${TABLE_NAME}
          SET ${COLUMN_NAME}=COALESCE($1,${COLUMN_NAME}),

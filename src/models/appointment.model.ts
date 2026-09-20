@@ -15,27 +15,39 @@ import {
 import { AppointmentStatus } from "./enums/appointment-status.js";
 import { PaymentMethod } from "./enums/payment-method.js";
 import { PaymentStatus } from "./enums/payment-status.js";
-import { DataResponses } from "./query.model.js";
 
 
-export interface Appointment {
+export interface UserAppointment {
     uuid: string;
-    name: string;
-
-    userUuid: string;
-    organizationUuid: string;
-    serviceUuid: string;
-    workerUuid: string;
-    roomUuid: string;
-    approvalUserUuid: string | null;
 
     userTitle: string | null;
-    organizationTitle: string | null;
-
     userNote: string | null;
-    organizationNote: string | null;
-
     userColour: string;
+
+    scheduledStartAtUTC: string;
+    scheduledEndAtUTC: string;
+
+    actualStartAtUTC: string | null;
+    actualEndAtUTC: string | null;
+
+    appointmentStatus: AppointmentStatus;
+
+    rejectionReason: string | null;
+
+    paymentMethod: PaymentMethod | null;
+    paymentStatus: PaymentStatus;
+    paidAtUTC: string | null;
+
+    createdAtUTC: string;
+    updatedAtUTC: string;
+}
+
+
+export interface OrganizationAppointment {
+    uuid: string;
+
+    organizationTitle: string | null;
+    organizationNote: string | null;
     organizationColour: string;
 
     scheduledStartAtUTC: string;
@@ -57,24 +69,78 @@ export interface Appointment {
 }
 
 
-export interface AppointmentResponse
-    extends Appointment,
-        DataResponses {
+/**
+ * ORGANIZATION-SIDE appointment response.
+ *
+ * Contains the appointment's related entities
+ * as both UUIDs and display names.
+ */
+export interface OrganizationAppointmentResponse
+    extends OrganizationAppointment {
+    userUuid: string;
     userName: string;
+
+    organizationUuid: string;
     organizationName: string;
+
+    serviceUuid: string;
     serviceName: string;
+
+    workerUuid: string;
     workerName: string;
+
+    roomUuid: string;
     roomName: string;
+
+    approvalUserUuid: string | null;
     approvalUserName: string | null;
+}
+
+
+/**
+ * USER-SIDE appointment response.
+ *
+ * Organization-private fields are intentionally omitted.
+ *
+ * The user does not receive:
+ * - organizationName
+ * - organizationTitle
+ * - organizationNote
+ * - organizationColour
+ * - approvalUserUuid
+ * - approvalUserName
+ *
+ * Related entities that are visible to the user include
+ * their UUID and display name.
+ */
+export interface UserAppointmentResponse
+    extends UserAppointment {
+    userUuid: string;
+    userName: string;
+
+    organizationUuid: string;
+    organizationName: string;
+    serviceUuid: string;
+    serviceName: string;
+
+    workerUuid: string;
+    workerName: string;
+
+    roomUuid: string;
+    roomName: string;
 }
 
 
 /**
  * CUSTOMER / USER creates an appointment.
  *
- * UUIDs come from the request.
- * Numeric IDs and scheduledEndAtUTC are resolved
- * by the service layer.
+ * The service layer resolves:
+ * - organizationUuid -> organizationId
+ * - serviceUuid -> serviceId
+ * - workerUuid -> workerId
+ * - roomUuid -> roomId
+ *
+ * scheduledEndAtUTC is also resolved by the service layer.
  */
 export type CreateAppointment =
     Omit<
@@ -97,6 +163,15 @@ export type CreateAppointment =
 
 /**
  * ORGANIZATION creates an appointment.
+ *
+ * The service layer resolves:
+ * - organizationUuid -> organizationId
+ * - userUuid -> userId
+ * - serviceUuid -> serviceId
+ * - workerUuid -> workerId
+ * - roomUuid -> roomId
+ *
+ * scheduledEndAtUTC is resolved by the service layer.
  */
 export type CreateOrganizationAppointment =
     Omit<
@@ -107,7 +182,6 @@ export type CreateOrganizationAppointment =
     organizationId: number;
 
     userId: number;
-
     serviceId: number;
     workerId: number;
     roomId: number;

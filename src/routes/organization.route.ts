@@ -20,7 +20,7 @@ import {
 } from "../permissions/permissions.js";
 import {serviceRouter} from "./service.route.js";
 import {validateUuid} from "../middlewares/zod-schemas/parameters.schema.js";
-import {sendInvitationRouter} from "./sent-invitation.route.js";
+import { organizationInvitationsRouter} from "./invitation.route";
 import { Role } from "../models/enums/roles.js";
 import {roomRouter} from "./room.route.js";
 import {workingHoursRouter} from "./working-hours-route";
@@ -43,7 +43,7 @@ organizationRouter
     .post(authenticateToken, authorize(CREATE_ORGANIZATION), validateBodyByRole(createRoleSchemas), handleCreateOrganization);
 organizationRouter.use("/:organizationUuid/services",validateParameter(validateUuid,"organizationUuid"),serviceRouter)
 organizationRouter.use("/:organizationUuid/rooms",validateParameter(validateUuid,"organizationUuid"),roomRouter)
-organizationRouter.use("/:organizationUuid/invitations",validateParameter(validateUuid,"organizationUuid"),sendInvitationRouter)
+organizationRouter.use("/:organizationUuid/invitations",validateParameter(validateUuid,"organizationUuid"),organizationInvitationsRouter)
 organizationRouter.use("/:organizationUuid/working-hours",validateParameter(validateUuid,"organizationUuid"),workingHoursRouter)
 organizationRouter.use("/:organizationUuid/appointments", validateParameter(validateUuid, "organizationUuid"), organizationAppointmentRouter);
 organizationRouter.use("/:organizationUuid/time-blocks", validateParameter(validateUuid, "organizationUuid"), timeBlockRouter);

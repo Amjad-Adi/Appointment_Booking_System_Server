@@ -1,34 +1,58 @@
-import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
-import {InvitationStatus} from "./enums/invitation-status.js";
-import {createServiceSchema,updateServiceSchema} from "../middlewares/zod-schemas/service.schema.js"
+import { z } from "zod";
+
+import { InvitationStatus } from "./enums/invitation-status.js";
+import { Role } from "./enums/roles.js";
+
 import {
-    createInvitationSchema, queryInvitationSchema,
-    updateInvitationSchema
+    createInvitationSchema,
+    queryInvitationSchema,
+    updateInvitationSchema,
 } from "../middlewares/zod-schemas/invitations.schema.js";
-export interface Invitation{
-    uuid:string,
-    createdAtUTC:Date,
-    expiresAtUTC:Date,
-    invitationStatus:InvitationStatus
+
+export interface Invitation {
+    uuid: string;
+    recipientEmail: string;
+    role: Role;
+    createdAtUTC: Date;
+    expiresAtUTC: Date;
+    acceptedAtUTC?: Date;
+    invitationStatus: InvitationStatus;
 }
 
+export interface InvitationResponse
+    extends Invitation {
+    senderUuid: string;
+    senderFirstName: string;
+    senderLastName: string;
+    senderEmail: string;
+    senderProfilePicturePath: string | null;
 
-export interface InvitationResponse extends Invitation{
-    senderUuid:string,
-    senderFirstName:string,
-    senderLastName:string,
-    senderEmail:string,
-    senderProfilePicturePath:string,
-    organizationUuid:string,
-    organizationName:string,
-    recipientUuid:string,
-    recipientFirstName:string,
-    recipientLastName:string,
-    recipientEmail:string,
-    recipientProfilePicturePath:string,
+    organizationUuid: string;
+    organizationName: string;
+    organizationProfilePicturePath: string | null;
 }
 
-export type CreateInvitation= z.infer<typeof createInvitationSchema> & {organizationId:number,senderId:number};
-export type UpdateInvitation= z.infer<typeof updateInvitationSchema> & {uuid:string,organizationUuid:string,userUuid:string};
-export type QueryInvitation = z.infer<typeof queryInvitationSchema>;
+export type CreateInvitation =
+    z.infer<
+        typeof createInvitationSchema
+    > & {
+    organizationId: number;
+    senderId: number;
+    tokenHash:string
+};
+
+export type UpdateInvitation =
+    z.infer<
+        typeof updateInvitationSchema
+    > & {
+    uuid: string;
+    organizationUuid: string;
+    userUuid: string;
+};
+
+export type QueryInvitation =
+    z.infer<
+        typeof queryInvitationSchema
+    > & {
+    offset: number;
+};

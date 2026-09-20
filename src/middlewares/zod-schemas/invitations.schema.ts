@@ -1,32 +1,118 @@
-import { z} from "zod"
-import {ActivationStatus} from "../../models/enums/activation-status.js"
-import {Role} from "../../models/enums/roles.js"
-import {CreateLocation} from "../../models/location.model.js";
-import {InvitationStatus} from "../../models/enums/invitation-status.js";
-import {inviteUserSchema} from "./user.schema.js";
-import {CreateInvitation} from "../../models/invitation.model.js"
-import {querySchema} from "./query.schema";
+import { z } from "zod";
 
-export const createInvitationSchema = inviteUserSchema
-    .extend({
-        expiresAtUTC: z.iso.datetime({ offset: true }),
+import { Role } from "../../models/enums/roles.js";
+import { InvitationStatus } from "../../models/enums/invitation-status.js";
+
+import { querySchema } from "./query.schema.js";
+
+import {
+    SORT_BY_CREATED_AT_UTC,
+    SORT_BY_EXPIRES_AT_UTC,
+} from "../../databases/contracts/invitation.contract.js";
+
+export const createInvitationSchema = z
+    .object({
+        email: z
+            .string()
+            .trim()
+            .toLowerCase()
+            .email({
+                error: "Invalid email address",
+            }),
+
+        role: z.enum(
+            [
+                Role.OWNER,
+                Role.MANAGER,
+                Role.CRM,
+                Role.WORKER,
+            ],
+            {
+                error: "Invalid invitation role",
+            },
+        ),
+
+        expiresAtUTC: z
+            .string()
+            .trim()
+            .min(1, {
+                error: "Invitation expiration is required",
+            }),
     })
     .strict();
 
 export const updateInvitationSchema = z
     .object({
-        status: z.enum(InvitationStatus).optional(),
+        email: z
+            .string()
+            .trim()
+            .toLowerCase()
+            .email({
+                error: "Invalid email address",
+            })
+            .optional(),
+
+        role: z
+            .enum(
+                [
+                    Role.OWNER,
+                    Role.MANAGER,
+                    Role.CRM,
+                    Role.WORKER,
+                ],
+                {
+                    error: "Invalid invitation role",
+                },
+            )
+            .optional(),
+
+        expiresAtUTC: z
+            .string()
+            .trim()
+            .min(1, {
+                error: "Invitation expiration is required",
+            })
+            .optional(),
+
+        status: z
+            .enum([
+                InvitationStatus.CANCELLED,
+                InvitationStatus.EXPIRED,
+            ])
+            .optional(),
     })
     .strict();
 
 export const invitationFilterSchema = z
     .object({
-        status: z.enum(InvitationStatus).optional(),
+        organizationUuid: z
+            .uuid()
+            .optional(),
+
+        status: z
+            .enum(InvitationStatus)
+            .optional(),
     })
     .strict();
 
-export const queryInvitationSchema = querySchema.extend({
-    search: z.string().optional(),
-    filter: invitationFilterSchema.optional(),
-    sortBy: z.enum(['createdAtUTC', 'expiresAtUTC']).optional(),
-});
+export const queryInvitationSchema =
+    querySchema
+        .extend({
+            search: z
+                .string()
+                .trim()
+                .max(320)
+                .optional(),
+
+            filter:
+                invitationFilterSchema
+                    .optional(),
+
+            sortBy: z
+                .enum([
+                    SORT_BY_CREATED_AT_UTC,
+                    SORT_BY_EXPIRES_AT_UTC,
+                ])
+                .optional(),
+        })
+        .strict();

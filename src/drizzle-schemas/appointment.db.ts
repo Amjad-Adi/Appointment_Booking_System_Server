@@ -10,7 +10,6 @@ import {
     TABLE_NAME,
     COLUMN_ID,
     COLUMN_UUID,
-    COLUMN_NAME,
     COLUMN_USER_ID,
     COLUMN_ORGANIZATION_ID,
     COLUMN_SERVICE_ID,
@@ -64,13 +63,6 @@ export const appointmentTable = pgTable(
             .defaultRandom()
             .unique()
             .notNull(),
-
-        name: varchar(
-            COLUMN_NAME,
-            {
-                length: 256,
-            },
-        ).notNull(),
 
         userId: bigint(
             COLUMN_USER_ID,

@@ -166,12 +166,6 @@ function organizationLocalToUTC(
         seconds = "0",
     ] = match;
 
-    /*
-     * Initially interpret the local components as if they were UTC.
-     *
-     * This gives us a "naive UTC" value from which the timezone
-     * offset can be calculated.
-     */
     const naiveUTC =
         new Date(
             Date.UTC(
@@ -184,9 +178,6 @@ function organizationLocalToUTC(
             ),
         );
 
-    /*
-     * Apply the timezone offset.
-     */
     let result =
         new Date(
             naiveUTC.getTime() -
@@ -196,13 +187,6 @@ function organizationLocalToUTC(
             ),
         );
 
-    /*
-     * Recalculate after applying the first offset.
-     *
-     * This matters around DST transitions because the offset that
-     * applies to the resulting instant can differ from the offset
-     * calculated from the naive value.
-     */
     result =
         new Date(
             naiveUTC.getTime() -
@@ -218,12 +202,6 @@ function organizationLocalToUTC(
 /**
  * Returns the calendar date represented by an instant
  * in the organization's timezone.
- *
- * Example:
- *
- * 2026-09-16T22:30:00Z
- * Asia/Jerusalem
- * -> 2026-09-17
  */
 function getLocalDate(
     date: Date,
@@ -307,11 +285,6 @@ function getWorkingDateTime(
     time: string,
     timeZone: string,
 ): Date {
-    /*
-     * PostgreSQL TIME may be returned as HH:mm:ss.
-     *
-     * Keep only the HH:mm:ss portion.
-     */
     const normalizedTime =
         time.length >= 8
             ? time.substring(0, 8)
@@ -417,34 +390,58 @@ function mergeIntervals(
 }
 
 /**
- * Finds appointment candidates inside the free portions
+ * Finds absolute appointment candidates inside the free portions
  * of a working interval.
  *
- * No artificial 5/15/30-minute calendar grid is used.
+ * IMPORTANT:
  *
- * The first candidate in each free interval starts at the
- * beginning of that free interval. Subsequent candidates
- * advance by the actual service duration.
+ * There is NO artificial scheduling grid.
+ *
+ * The service duration only determines whether an appointment
+ * can fit inside a free interval.
+ *
+ * Candidate starts are:
+ *
+ * 1. The beginning of every free interval.
+ * 2. The preferred time, when it falls inside a free interval.
+ *
+ * The candidates are then sorted by their absolute distance
+ * from preferredStart.
  *
  * Example:
  *
- * working period: 08:00–13:00
- * blocked:        09:00–10:00
- * duration:       30 minutes
+ * working: 07:00–12:00
  *
- * candidates:
+ * blocked:
+ * 07:58–08:05
  *
- * 08:00–08:30
- * 08:30–09:00
- * 10:00–10:30
- * 10:30–11:00
+ * preferred:
+ * 08:00
+ *
+ * Possible candidates include:
+ *
+ * 07:00
+ * 08:05
  * ...
+ *
+ * The candidate closest to 08:00 is selected first.
+ *
+ * If another blocking interval ends at 07:58:
+ *
+ * 07:58
+ * 08:05
+ *
+ * then 07:58 is selected first because:
+ *
+ * |07:58 - 08:00| = 2 minutes
+ * |08:05 - 08:00| = 5 minutes
  */
 function findAvailableCandidates(
     workingStart: Date,
     workingEnd: Date,
     durationInMinutes: number,
     blockingIntervals: SchedulingInterval[],
+    preferredStart: Date,
 ): SchedulingInterval[] {
     if (
         durationInMinutes <= 0 ||
@@ -461,77 +458,135 @@ function findAvailableCandidates(
             blockingIntervals,
         );
 
-    let candidateStart =
+    let freeStart =
         new Date(workingStart);
 
     for (
         const blockingInterval of mergedIntervals
         ) {
         /*
-         * Ignore blocks completely before the current pointer.
+         * Ignore blocks completely before the working period.
          */
         if (
             blockingInterval.endAtUTC <=
-            candidateStart
+            workingStart
         ) {
             continue;
         }
 
         /*
-         * If the blocking interval starts after the current
-         * candidate pointer, generate candidates in the free gap.
+         * No more relevant blocks after the working period.
          */
-        while (
-            candidateStart <
-            blockingInterval.startAtUTC
-            ) {
-            const candidateEnd =
-                addMinutes(
-                    candidateStart,
-                    durationInMinutes,
-                );
-
-            /*
-             * The service must fit completely before the block.
-             */
-            if (
-                candidateEnd >
-                blockingInterval.startAtUTC
-            ) {
-                break;
-            }
-
-            candidates.push({
-                startAtUTC:
-                    new Date(
-                        candidateStart,
-                    ),
-
-                endAtUTC:
-                    new Date(
-                        candidateEnd,
-                    ),
-            });
-
-            candidateStart =
-                candidateEnd;
+        if (
+            blockingInterval.startAtUTC >=
+            workingEnd
+        ) {
+            break;
         }
 
         /*
-         * Move past the blocking interval.
+         * Clamp the blocking interval to the working period.
          */
-        if (
-            candidateStart <
-            blockingInterval.endAtUTC
-        ) {
-            candidateStart =
-                new Date(
+        const blockStart =
+            blockingInterval.startAtUTC <
+            workingStart
+                ? new Date(workingStart)
+                : new Date(
+                    blockingInterval.startAtUTC,
+                );
+
+        const blockEnd =
+            blockingInterval.endAtUTC >
+            workingEnd
+                ? new Date(workingEnd)
+                : new Date(
                     blockingInterval.endAtUTC,
                 );
+
+        /*
+         * There is a free interval before this block.
+         */
+        if (
+            freeStart <
+            blockStart
+        ) {
+            const freeEnd =
+                new Date(blockStart);
+
+            /*
+             * Candidate at the beginning of the free interval.
+             */
+            const freeStartCandidateEnd =
+                addMinutes(
+                    freeStart,
+                    durationInMinutes,
+                );
+
+            if (
+                freeStartCandidateEnd <=
+                freeEnd
+            ) {
+                candidates.push({
+                    startAtUTC:
+                        new Date(
+                            freeStart,
+                        ),
+
+                    endAtUTC:
+                    freeStartCandidateEnd,
+                });
+            }
+
+            /*
+             * If the preferred time is inside this free interval,
+             * use it as another candidate.
+             *
+             * This allows an exact request such as 08:00 to remain
+             * a valid candidate instead of forcing it onto a grid.
+             */
+            if (
+                preferredStart >=
+                freeStart &&
+                preferredStart <
+                freeEnd
+            ) {
+                const preferredEnd =
+                    addMinutes(
+                        preferredStart,
+                        durationInMinutes,
+                    );
+
+                if (
+                    preferredEnd <=
+                    freeEnd
+                ) {
+                    candidates.push({
+                        startAtUTC:
+                            new Date(
+                                preferredStart,
+                            ),
+
+                        endAtUTC:
+                        preferredEnd,
+                    });
+                }
+            }
+        }
+
+        /*
+         * The next free interval begins exactly when
+         * this blocking interval ends.
+         */
+        if (
+            blockEnd >
+            freeStart
+        ) {
+            freeStart =
+                new Date(blockEnd);
         }
 
         if (
-            candidateStart >=
+            freeStart >=
             workingEnd
         ) {
             break;
@@ -539,42 +594,146 @@ function findAvailableCandidates(
     }
 
     /*
-     * Generate candidates in the final free interval.
+     * Process the final free interval.
      */
-    while (
-        candidateStart <
+    if (
+        freeStart <
         workingEnd
-        ) {
-        const candidateEnd =
+    ) {
+        const freeEnd =
+            new Date(workingEnd);
+
+        /*
+         * Candidate at the beginning of the final free interval.
+         */
+        const freeStartCandidateEnd =
             addMinutes(
-                candidateStart,
+                freeStart,
                 durationInMinutes,
             );
 
         if (
-            candidateEnd >
-            workingEnd
+            freeStartCandidateEnd <=
+            freeEnd
         ) {
-            break;
+            candidates.push({
+                startAtUTC:
+                    new Date(
+                        freeStart,
+                    ),
+
+                endAtUTC:
+                freeStartCandidateEnd,
+            });
         }
 
-        candidates.push({
-            startAtUTC:
-                new Date(
-                    candidateStart,
-                ),
+        /*
+         * Preferred time inside the final free interval.
+         */
+        if (
+            preferredStart >=
+            freeStart &&
+            preferredStart <
+            freeEnd
+        ) {
+            const preferredEnd =
+                addMinutes(
+                    preferredStart,
+                    durationInMinutes,
+                );
 
-            endAtUTC:
-                new Date(
-                    candidateEnd,
-                ),
-        });
+            if (
+                preferredEnd <=
+                freeEnd
+            ) {
+                candidates.push({
+                    startAtUTC:
+                        new Date(
+                            preferredStart,
+                        ),
 
-        candidateStart =
-            candidateEnd;
+                    endAtUTC:
+                    preferredEnd,
+                });
+            }
+        }
     }
 
-    return candidates;
+    /*
+     * Remove duplicate start times.
+     *
+     * This can happen when preferredStart is exactly the
+     * beginning of a free interval.
+     */
+    const uniqueCandidates =
+        new Map<
+            number,
+            SchedulingInterval
+        >();
+
+    for (
+        const candidate of candidates
+        ) {
+        const startTime =
+            candidate.startAtUTC.getTime();
+
+        if (
+            !uniqueCandidates.has(
+                startTime,
+            )
+        ) {
+            uniqueCandidates.set(
+                startTime,
+                candidate,
+            );
+        }
+    }
+
+    /*
+     * Nearest absolute time first.
+     *
+     * Example:
+     *
+     * requested = 08:00
+     *
+     * 07:58 -> 2 minutes
+     * 08:05 -> 5 minutes
+     *
+     * Therefore 07:58 comes first.
+     *
+     * If two candidates have exactly the same distance,
+     * prefer the earlier candidate.
+     */
+    return Array.from(
+        uniqueCandidates.values(),
+    ).sort((a, b) => {
+        const distanceA =
+            Math.abs(
+                a.startAtUTC.getTime() -
+                preferredStart.getTime(),
+            );
+
+        const distanceB =
+            Math.abs(
+                b.startAtUTC.getTime() -
+                preferredStart.getTime(),
+            );
+
+        if (
+            distanceA !==
+            distanceB
+        ) {
+            return (
+                distanceA -
+                distanceB
+            );
+        }
+
+        return (
+            a.startAtUTC.getTime() -
+            b.startAtUTC.getTime()
+        );
+    });
 }
 
 export async function getAvailableTimes(
@@ -672,12 +831,21 @@ export async function getAvailableTimes(
         });
 
     /*
-     * fromAtUTC is an actual instant.
+     * fromAtUTC is an actual instant and acts as the
+     * preferred scheduling time.
      *
-     * For NEAREST mode the frontend already converts the
-     * organization's local input into UTC.
+     * IMPORTANT:
      *
-     * If omitted, use the current instant.
+     * It is NOT a lower bound anymore.
+     *
+     * A valid appointment before fromAtUTC can be returned.
+     *
+     * Example:
+     *
+     * requested: 08:00
+     * available: 07:58, 08:05
+     *
+     * 07:58 is selected first.
      */
     const fromAtUTC =
         request.fromAtUTC
@@ -715,8 +883,6 @@ export async function getAvailableTimes(
     }
 
     /*
-     * IMPORTANT:
-     *
      * Convert the starting instant to the organization's
      * local calendar date before searching calendar days.
      *
@@ -829,20 +995,17 @@ export async function getAvailableTimes(
         }
 
         /*
-         * On the first organization-local day, never return an
-         * appointment beginning before fromAtUTC.
+         * IMPORTANT:
+         *
+         * Search the WHOLE working interval.
+         *
+         * fromAtUTC is only the preferred/reference time.
+         *
+         * This is what allows a candidate such as 07:58 to
+         * compete with 08:05 when the requested time is 08:00.
          */
-        let searchStart =
+        const searchStart =
             new Date(workingStart);
-
-        if (
-            dayOffset === 0 &&
-            fromAtUTC >
-            searchStart
-        ) {
-            searchStart =
-                new Date(fromAtUTC);
-        }
 
         if (
             searchStart >=
@@ -909,13 +1072,6 @@ export async function getAvailableTimes(
             for (
                 const room of rooms
                 ) {
-                if (
-                    workerDayOptions.length >=
-                    OPTIONS_PER_WORKER
-                ) {
-                    break;
-                }
-
                 const roomId =
                     await getRoomIdByUuid(
                         room.uuid,
@@ -950,11 +1106,20 @@ export async function getAvailableTimes(
                         workingEnd,
                         service.durationInMinutes,
                         blockingIntervals,
+                        fromAtUTC,
                     );
 
+                /*
+                 * Candidates are already ordered by absolute
+                 * distance from the requested time.
+                 */
                 for (
                     const candidate of candidates
                     ) {
+                    /*
+                     * We may have enough candidates after
+                     * considering this room.
+                     */
                     if (
                         workerDayOptions.length >=
                         OPTIONS_PER_WORKER
@@ -963,9 +1128,7 @@ export async function getAvailableTimes(
                     }
 
                     /*
-                     * The candidate has already been derived from
-                     * the blocking intervals, but perform the final
-                     * conflict check before returning it.
+                     * Final database conflict check.
                      */
                     const conflict =
                         await schedulingRepository
@@ -1025,8 +1188,9 @@ export async function getAvailableTimes(
                     };
 
                     /*
-                     * Do not return the same start time twice for
-                     * this worker, even if multiple rooms can provide it.
+                     * Do not return the same start time twice
+                     * for this worker, even if multiple rooms
+                     * can provide it.
                      */
                     const duplicate =
                         workerDayOptions.some(
@@ -1057,16 +1221,50 @@ export async function getAvailableTimes(
             }
 
             /*
-             * Earliest options first.
+             * Combine all room candidates and order them by
+             * absolute distance from the requested time.
+             *
+             * Earlier time wins when the distance is equal.
              */
             workerDayOptions.sort(
-                (a, b) =>
-                    new Date(
-                        a.scheduledStartAtUTC,
-                    ).getTime() -
-                    new Date(
-                        b.scheduledStartAtUTC,
-                    ).getTime(),
+                (a, b) => {
+                    const startA =
+                        new Date(
+                            a.scheduledStartAtUTC,
+                        ).getTime();
+
+                    const startB =
+                        new Date(
+                            b.scheduledStartAtUTC,
+                        ).getTime();
+
+                    const distanceA =
+                        Math.abs(
+                            startA -
+                            fromAtUTC.getTime(),
+                        );
+
+                    const distanceB =
+                        Math.abs(
+                            startB -
+                            fromAtUTC.getTime(),
+                        );
+
+                    if (
+                        distanceA !==
+                        distanceB
+                    ) {
+                        return (
+                            distanceA -
+                            distanceB
+                        );
+                    }
+
+                    return (
+                        startA -
+                        startB
+                    );
+                },
             );
 
             /*
@@ -1102,14 +1300,52 @@ export async function getAvailableTimes(
                 );
             }
 
+            /*
+             * Keep the worker's accumulated options ordered
+             * by absolute distance from the requested time.
+             *
+             * This is important when options come from multiple
+             * calendar days.
+             */
             currentWorkerOptions.sort(
-                (a, b) =>
-                    new Date(
-                        a.scheduledStartAtUTC,
-                    ).getTime() -
-                    new Date(
-                        b.scheduledStartAtUTC,
-                    ).getTime(),
+                (a, b) => {
+                    const startA =
+                        new Date(
+                            a.scheduledStartAtUTC,
+                        ).getTime();
+
+                    const startB =
+                        new Date(
+                            b.scheduledStartAtUTC,
+                        ).getTime();
+
+                    const distanceA =
+                        Math.abs(
+                            startA -
+                            fromAtUTC.getTime(),
+                        );
+
+                    const distanceB =
+                        Math.abs(
+                            startB -
+                            fromAtUTC.getTime(),
+                        );
+
+                    if (
+                        distanceA !==
+                        distanceB
+                    ) {
+                        return (
+                            distanceA -
+                            distanceB
+                        );
+                    }
+
+                    return (
+                        startA -
+                        startB
+                    );
+                },
             );
 
             workerOptions.set(
@@ -1171,13 +1407,44 @@ export async function getAvailableTimes(
                         ) ?? []
                     )
                         .sort(
-                            (a, b) =>
-                                new Date(
-                                    a.scheduledStartAtUTC,
-                                ).getTime() -
-                                new Date(
-                                    b.scheduledStartAtUTC,
-                                ).getTime(),
+                            (a, b) => {
+                                const startA =
+                                    new Date(
+                                        a.scheduledStartAtUTC,
+                                    ).getTime();
+
+                                const startB =
+                                    new Date(
+                                        b.scheduledStartAtUTC,
+                                    ).getTime();
+
+                                const distanceA =
+                                    Math.abs(
+                                        startA -
+                                        fromAtUTC.getTime(),
+                                    );
+
+                                const distanceB =
+                                    Math.abs(
+                                        startB -
+                                        fromAtUTC.getTime(),
+                                    );
+
+                                if (
+                                    distanceA !==
+                                    distanceB
+                                ) {
+                                    return (
+                                        distanceA -
+                                        distanceB
+                                    );
+                                }
+
+                                return (
+                                    startA -
+                                    startB
+                                );
+                            },
                         )
                         .slice(
                             0,

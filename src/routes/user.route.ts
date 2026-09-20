@@ -21,7 +21,6 @@ import {
     UPDATE_USER_AS_ADMIN,
 } from "../permissions/permissions.js";
 import {validateUuid} from "../middlewares/zod-schemas/parameters.schema.js";
-import {receiveInvitationRouter} from "./receive-invitation.route.js";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller.js";
 export const userRouter=express.Router()
 userRouter.route("/")
@@ -31,8 +30,6 @@ userRouter.route("/")
 userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)
     .patch(authenticateToken,validateBody(updateUserSchema),handleUpdateCurrentUser)
-
-userRouter.use("/me/invitations", receiveInvitationRouter)
 
 userRouter.route("/:userUuid")
     .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)

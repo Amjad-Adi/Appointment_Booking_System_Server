@@ -1,50 +1,203 @@
+import type {
+    Request,
+    Response,
+} from "express";
+
 import {
-    getInvitation,
     getInvitations,
+    getNumberOfInvitations,
     createInvitation,
     updateInvitation,
-} from "../services/invitation.service.js"
-import { type Request, type Response } from "express";
-import {getOrganization, getOrganizationIdByUuid, getUserOrganization} from "../services/organization.service.js";
-import {} from "../utils/Request"
-import {CreateInvitation, Invitation, InvitationResponse, UpdateInvitation} from "../models/invitation.model.js";
-import {inviteFireBaseUser} from "../services/firebase-admin.service.js";
-import {getUserByFireBaseUid, getUserById, getUserIdByUuid} from "../services/user.service.js";
-import {OrganizationResponse} from "../models/organization.model.js";
-import {InvitationStatus} from "../models/enums/invitation-status.js";
-export async function handleGetOrganizationInvitations(req:Request,res:Response){
-    const organizationUuid:string=req.params.organizationUuid  as string;
-    const userUuid:string=req.user?.uuid as string;
-    const result:InvitationResponse[]=await getInvitations(organizationUuid,userUuid)
-    return res.status(200).json(result)
+    getPublicInvitationByToken,
+    acceptInvitation, getInvitation,
+} from "../services/invitation.service.js";
+
+import { getOrganization } from "../services/organization.service.js";
+
+
+import { QueryResponse } from "../models/query.model.js";
+
+import type {
+    QueryInvitation,
+} from "../models/invitation.model.js";
+import { sendInvitationEmail } from '../services/smtp-nodemailer.service';
+
+export async function handleGetOrganizationInvitations(
+    req: Request,
+    res: Response,
+) {
+    const query =
+        req.validatedQuery as unknown as QueryInvitation;
+
+    query.offset =
+        (query.page - 1) *
+        query.limit;
+
+    const organizationUuid =
+        req.params.organizationUuid as string;
+
+    query.filter = {
+        ...query.filter,
+        organizationUuid,
+    };
+
+    const userUuid =
+        req.user?.uuid as string;
+
+    const [
+        invitations,
+        totalInvitations,
+    ] = await Promise.all([
+        getInvitations(
+            query,
+            userUuid,
+        ),
+
+        getNumberOfInvitations(
+            query,
+        ),
+    ]);
+
+    const baseUrl =
+        req.originalUrl?.split("?")[0];
+
+    const responseResult =
+        new QueryResponse(
+            invitations,
+            totalInvitations,
+            baseUrl,
+            query.page,
+            query.limit,
+        );
+
+    return res
+        .status(200)
+        .json(responseResult);
+}
+export async function handleGetOrganizationInvitation(
+    req: Request,
+    res: Response,
+) {
+    const organizationUuid =
+        req.params.organizationUuid as string;
+
+    const invitationUuid =
+        req.params.invitationUuid as string;
+
+    const userUuid =
+        req.user?.uuid as string;
+
+    const result =
+        await getInvitation(
+            organizationUuid,
+            invitationUuid,
+            userUuid,
+        );
+
+    return res
+        .status(200)
+        .json(result);
 }
 
-export async function handleGetOrganizationInvitation(req:Request,res:Response){
-    const invitationUuid:string=req.params.invitationUuid as string;
-    const userUuid:string=req.user?.uuid as string;
-    const organizationUuid:string=req.params.organizationUuid  as string;
-    const result:InvitationResponse=await getInvitation(invitationUuid,organizationUuid,userUuid)
-    return res.status(200).json(result)
+export async function handleCreateOrganizationInvitation(
+    req: Request,
+    res: Response,
+) {
+    const invitationData =
+        req.body;
+
+    const currentUserUuid =
+        req.user?.uuid as string;
+    const organizationUuid =
+        req.params.organizationUuid as string;
+
+    const organization =
+        await getOrganization(
+            organizationUuid,
+        );
+
+    const {
+        invitation,
+        rawToken,
+    } = await createInvitation(
+        invitationData,
+        organizationUuid,
+        currentUserUuid,
+    );
+    await sendInvitationEmail(
+        organization.name,
+        invitationData.email,
+        rawToken,
+    );
+
+    return res
+        .status(201)
+        .json(invitation);
 }
 
-export async function handleCreateOrganizationInvitation(req:Request,res:Response){
-    const userToInvite:CreateInvitation=(req.body)
-    const currentUserUuid:string | undefined =req.user?.uuid as string
-    const organizationUuid=req.params.organizationUuid as string;
-    const organization:OrganizationResponse=await getOrganization(organizationUuid)
-    userToInvite.senderId= await getUserIdByUuid(currentUserUuid)
-    userToInvite.organizationId=await getOrganizationIdByUuid(organizationUuid)
-    const invitation:Invitation=await createInvitation(userToInvite,organizationUuid,currentUserUuid)
-    await inviteFireBaseUser(invitation.uuid,organization.name,req.user?.email as string,userToInvite.email)
-    return res.status(201).json(invitation)
+export async function handleUpdateOrganizationInvitation(
+    req: Request,
+    res: Response,
+) {
+    const invitationData = {
+        ...req.body,
+
+        uuid:
+        req.params.invitationUuid,
+
+        organizationUuid:
+        req.params.organizationUuid,
+
+        userUuid:
+            req.user?.uuid as string,
+    };
+
+    const result =
+        await updateInvitation(
+            invitationData,
+        );
+
+    return res
+        .status(200)
+        .json(result);
 }
 
-export async function handleReceiveOrganizationInvitation(req:Request,res:Response){
-    const invitation:UpdateInvitation=req.body
-    invitation.uuid=req.params.invitationUuid as string;
-    invitation.userUuid=req.user?.uuid as string;
-    invitation.organizationUuid=req.params.organizationUuid  as string;
-    invitation.status=InvitationStatus.ACCEPTED
-    const result:Invitation=await updateInvitation(invitation)
-    return res.status(200).json(result)
+export async function handleGetPublicInvitation(
+    req: Request,
+    res: Response,
+) {
+    const token =
+        req.params.token as string;
+
+    const invitation =
+        await getPublicInvitationByToken(
+            token,
+        );
+
+    return res
+        .status(200)
+        .json(invitation);
+}
+
+export async function handleAcceptInvitation(
+    req: Request,
+    res: Response,
+) {
+    const token =
+        req.params.token as string;
+
+    const acceptedData =
+        await acceptInvitation(
+            token,
+        );
+
+    return res
+        .status(200)
+        .json({
+            message:
+                "Invitation accepted",
+
+            data:
+            acceptedData,
+        });
 }

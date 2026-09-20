@@ -3,8 +3,6 @@ export const TABLE_NAME = "appointments";
 export const COLUMN_ID = "id";
 export const COLUMN_UUID = "uuid";
 
-export const COLUMN_NAME = "name";
-
 export const COLUMN_USER_ID = "user_id";
 export const COLUMN_ORGANIZATION_ID = "organization_id";
 export const COLUMN_SERVICE_ID = "service_id";

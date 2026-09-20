@@ -3,10 +3,12 @@ import express from "express";
 import {
     handleGetOrganizationAppointments,
     handleGetOrganizationAppointment,
+    handleCreateOrganizationAppointment,
     handleUpdateAppointmentByOrganization,
+    handleConfirmAppointment,
     handleApproveAppointment,
     handleRejectAppointment,
-    handleUpdateAppointmentStatus, handleCreateAppointment,
+    handleUpdateAppointmentStatus,
 } from "../controllers/appointment.controller.js";
 
 import {
@@ -24,10 +26,12 @@ import {
 } from "../middlewares/validaiton.js";
 
 import {
+    createOrganizationAppointmentSchema,
     updateAppointmentSchemaByOrganization,
+    confirmAppointmentSchema,
     rejectAppointmentSchemaBy,
     updateAppointmentSchemaStatus,
-    queryAppointmentSchema, createAppointmentSchema,createOrganizationAppointmentSchema
+    queryAppointmentSchema,
 } from "../middlewares/zod-schemas/appointment.schema.js";
 
 import {
@@ -37,19 +41,23 @@ import {
 import {
     validateUuid,
 } from "../middlewares/zod-schemas/parameters.schema.js";
-import {appointmentRouter} from "./apppointment.route";
 
 
-export const organizationAppointmentRouter = express.Router({
-    mergeParams: true,
-});
+export const organizationAppointmentRouter =
+    express.Router({
+        mergeParams: true,
+    });
 
 
 organizationAppointmentRouter.get(
     "/",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateQuery(queryAppointmentSchema),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateQuery(
+        queryAppointmentSchema,
+    ),
     handleGetOrganizationAppointments,
 );
 
@@ -57,36 +65,74 @@ organizationAppointmentRouter.get(
 organizationAppointmentRouter.get(
     "/:appointmentUuid",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateParameter(validateUuid, "appointmentUuid"),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
     handleGetOrganizationAppointment,
 );
 
 
 organizationAppointmentRouter.post(
-        "/",
-        authenticateToken,
-        validateBody(createOrganizationAppointmentSchema),
-        handleCreateAppointment,
+    "/",
+    authenticateToken,
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateBody(
+        createOrganizationAppointmentSchema,
+    ),
+    handleCreateOrganizationAppointment,
 );
-
 
 
 organizationAppointmentRouter.patch(
     "/:appointmentUuid",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(updateAppointmentSchemaByOrganization),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        updateAppointmentSchemaByOrganization,
+    ),
     handleUpdateAppointmentByOrganization,
+);
+
+
+organizationAppointmentRouter.patch(
+    "/:appointmentUuid/confirm",
+    authenticateToken,
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        confirmAppointmentSchema,
+    ),
+    handleConfirmAppointment,
 );
 
 
 organizationAppointmentRouter.patch(
     "/:appointmentUuid/approve",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateParameter(validateUuid, "appointmentUuid"),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
     handleApproveAppointment,
 );
 
@@ -94,9 +140,16 @@ organizationAppointmentRouter.patch(
 organizationAppointmentRouter.patch(
     "/:appointmentUuid/reject",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(rejectAppointmentSchemaBy),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        rejectAppointmentSchemaBy,
+    ),
     handleRejectAppointment,
 );
 
@@ -104,8 +157,15 @@ organizationAppointmentRouter.patch(
 organizationAppointmentRouter.patch(
     "/:appointmentUuid/status",
     authenticateToken,
-    authorize(ORGANIZATION_APPOINTMENT_MANAGEMENT),
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(updateAppointmentSchemaStatus),
+    authorize(
+        ORGANIZATION_APPOINTMENT_MANAGEMENT,
+    ),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        updateAppointmentSchemaStatus,
+    ),
     handleUpdateAppointmentStatus,
 );

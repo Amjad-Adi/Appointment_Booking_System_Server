@@ -1,12 +1,18 @@
-import { z } from "zod";
+import type { DayOfWeek } from "./enums/day-of-week.js";
+import { queryWorkingHoursSchema, updateWorkingHoursSchema } from '../middlewares/zod-schemas/working-hours.schema';
+import { z } from 'zod';
 
-import {
-    queryWorkingHoursSchema,
-    updateWorkingHoursSchema,
-} from "../middlewares/zod-schemas/working-hours.schema.js";
+export interface UpdateWorkingHoursDay {
+    dayOfWeek: DayOfWeek;
+    startTime: string | null;
+    endTime: string | null;
+}
 
-import { DayOfWeek } from "./enums/day-of-week.js";
-import { DataResponses } from "./query.model.js";
+export interface UpdateOrganizationWorkingHours {
+    organizationUuid: string;
+    userUuid: string;
+    days: UpdateWorkingHoursDay[];
+}
 
 export interface WorkingHours {
     uuid: string;
@@ -15,9 +21,10 @@ export interface WorkingHours {
     endTime: string | null;
 }
 
-export interface WorkingHoursResponse extends WorkingHours, DataResponses {
+export interface WorkingHoursResponse extends WorkingHours {
     organizationUuid: string;
     organizationName: string;
+
 }
 export type CreateWorkingHours = {
     dayOfWeek: DayOfWeek;

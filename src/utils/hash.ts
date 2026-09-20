@@ -1,5 +1,8 @@
 import crypto from "crypto";
+export function generateRawToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+}
 
-export function hashRefreshToken(token: string): string {
+export function generateHashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
 }

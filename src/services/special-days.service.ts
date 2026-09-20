@@ -42,13 +42,16 @@ export async function getSpecialDays(
     }
 
     const organizationId =
-        await findIdByUuid(organizationUuid);
+        await findIdByUuid(
+            organizationUuid,
+        );
 
     if (organizationId === undefined) {
         throw new NotFoundError("Organization");
     }
 
-    query.organizationId = organizationId;
+    query.organizationId =
+        organizationId;
 
     return await findAll(query);
 }
@@ -64,13 +67,16 @@ export async function getNumberOfSpecialDays(
     }
 
     const organizationId =
-        await findIdByUuid(organizationUuid);
+        await findIdByUuid(
+            organizationUuid,
+        );
 
     if (organizationId === undefined) {
         throw new NotFoundError("Organization");
     }
 
-    query.organizationId = organizationId;
+    query.organizationId =
+        organizationId;
 
     return await countAll(query);
 }
@@ -133,11 +139,28 @@ export async function createSpecialDay(
         throw new NotFoundError("User");
     }
 
-    const result = await create({
-        ...specialDay,
-        organizationId,
-        userUuid: specialDay.userUuid,
-    });
+    /*
+     * Only one special-day record should exist for an
+     * organization on a particular calendar date.
+     */
+    const existingSpecialDay =
+        await findByDate(
+            organizationId,
+            specialDay.dayDate,
+        );
+
+    if (existingSpecialDay !== undefined) {
+        throw new BadRequestError(
+            "A special day already exists for this date.",
+        );
+    }
+
+    const result =
+        await create({
+            ...specialDay,
+            organizationId,
+            userUuid: specialDay.userUuid,
+        });
 
     if (result === undefined) {
         throw new BadRequestError();
@@ -163,10 +186,32 @@ export async function updateSpecialDay(
         throw new NotFoundError("Organization");
     }
 
-    const result = await update(
-        specialDay,
-        organizationId,
-    );
+    /*
+     * If the date changes, don't allow the new date to
+     * collide with another special-day record.
+     */
+    if (specialDay.dayDate !== undefined) {
+        const existingSpecialDay =
+            await findByDate(
+                organizationId,
+                specialDay.dayDate,
+            );
+
+        if (
+            existingSpecialDay !== undefined &&
+            existingSpecialDay.uuid !== specialDay.uuid
+        ) {
+            throw new BadRequestError(
+                "A special day already exists for this date.",
+            );
+        }
+    }
+
+    const result =
+        await update(
+            specialDay,
+            organizationId,
+        );
 
     if (result === undefined) {
         throw new NotFoundError("Special Day");
@@ -178,6 +223,7 @@ export async function updateSpecialDay(
 export async function isTodaySpecialDay(
     organizationUuid: string,
     userUuid: string,
+    organizationTimeZone: string,
 ): Promise<SpecialDay | undefined> {
     await AuthorizeOrganizationUser(
         userUuid,
@@ -194,12 +240,59 @@ export async function isTodaySpecialDay(
     }
 
     const today =
-        new Date()
-            .toISOString()
-            .slice(0, 10);
+        getDateInTimeZone(
+            new Date(),
+            organizationTimeZone,
+        );
 
     return await findByDate(
         organizationId,
         today,
     );
+}
+
+function getDateInTimeZone(
+    date: Date,
+    timeZone: string,
+): string {
+    const parts =
+        new Intl.DateTimeFormat(
+            "en-CA",
+            {
+                timeZone,
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+            },
+        ).formatToParts(date);
+
+    const year =
+        parts.find(
+            (part) =>
+                part.type === "year",
+        )?.value;
+
+    const month =
+        parts.find(
+            (part) =>
+                part.type === "month",
+        )?.value;
+
+    const day =
+        parts.find(
+            (part) =>
+                part.type === "day",
+        )?.value;
+
+    if (
+        year === undefined ||
+        month === undefined ||
+        day === undefined
+    ) {
+        throw new BadRequestError(
+            "Unable to determine organization date.",
+        );
+    }
+
+    return `${year}-${month}-${day}`;
 }
