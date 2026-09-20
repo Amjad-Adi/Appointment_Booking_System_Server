@@ -5,7 +5,7 @@ import {getAuth} from "firebase-admin/auth"
 import {ForbiddenError} from "../../errors/forbidden.error";
 import bcrypt from 'bcrypt';
 import crypto from "crypto";
-import {hashRefreshToken} from "../../utils/hash";
+import { generateRawToken, generateHashToken} from "../../utils/hash";
 import {createRefreshToken} from "../../services/jwt-management-service";
 import {CreateRefreshToken, RefreshToken} from "../../models/refresh-token.model";
 import {UserRecord} from "firebase-admin/auth";
@@ -73,8 +73,8 @@ export async function generateToken(userUid:string){
         jwtid:crypto.randomUUID()
     }
     const accessToken:string=jwt.sign(payload,JWT_SECRET,signOptions)
-    const refreshToken:string=crypto.randomBytes(32).toString('hex')
-    const refreshHashedToken:string=hashRefreshToken(refreshToken)
+    const refreshToken:string=generateRawToken()
+    const refreshHashedToken:string=generateHashToken(refreshToken)
     const currentUser:UserResponse = await getUserByFireBaseUid(userUid);
     const currentUserId:number=await getUserIdByUuid(currentUser.uuid);
 

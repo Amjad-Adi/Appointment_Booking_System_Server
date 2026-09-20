@@ -192,8 +192,9 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
         if(location!==undefined) {
             location.id = (await pool.query(
                 `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
-                 FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
-                JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} = ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}`)).rows[0].uuid
+                FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
+                JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} = ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
+                WHERE ${ALIAS}.${COLUMN_UUID} = $1`,[organization.uuid])).rows[0].id
             await updateLocation(location, client)
         }
         const result= await client.query(

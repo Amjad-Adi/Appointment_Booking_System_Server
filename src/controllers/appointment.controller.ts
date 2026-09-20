@@ -4,12 +4,13 @@ import type {
 } from "express";
 
 import {
-    getAppointments,
+    getUserAppointments,
+    getOrganizationAppointments,
     getNumberOfAppointments,
-    getAppointment,
     getOrganizationAppointment,
     getUserAppointment,
     createAppointmentService,
+    createOrganizationAppointmentService,
     updateAppointmentByOrganizationService,
     updateAppointmentByUserService,
     confirmAppointmentService,
@@ -23,6 +24,7 @@ import {
 import type {
     QueryAppointment,
     CreateAppointment,
+    CreateOrganizationAppointment,
     UpdateAppointmentByUser,
     UpdateAppointmentByOrganization,
     ConfirmAppointment,
@@ -36,6 +38,9 @@ import {
 } from "../models/query.model.js";
 
 
+/*
+ * USER / CUSTOMER appointments.
+ */
 export async function handleGetAppointments(
     req: Request,
     res: Response,
@@ -44,23 +49,21 @@ export async function handleGetAppointments(
         req.validatedQuery as unknown as QueryAppointment;
 
     query.offset =
-        (query.page - 1) * query.limit;
+        (query.page - 1) *
+        query.limit;
 
-    const organizationUuid =
-        req.user?.organizationUuid;
+    query.filter = {
+        ...query.filter,
 
-    if (organizationUuid) {
-        query.filter = {
-            ...query.filter,
-            organizationUuid,
-        };
-    }
+        userUuid:
+            req.user?.uuid as string,
+    };
 
     const [
         appointments,
         totalNumberOfAppointments,
     ] = await Promise.all([
-        getAppointments(query),
+        getUserAppointments(query),
         getNumberOfAppointments(query),
     ]);
 
@@ -82,6 +85,9 @@ export async function handleGetAppointments(
 }
 
 
+/*
+ * ORGANIZATION appointments.
+ */
 export async function handleGetOrganizationAppointments(
     req: Request,
     res: Response,
@@ -93,10 +99,12 @@ export async function handleGetOrganizationAppointments(
         req.validatedQuery as unknown as QueryAppointment;
 
     query.offset =
-        (query.page - 1) * query.limit;
+        (query.page - 1) *
+        query.limit;
 
     query.filter = {
         ...query.filter,
+
         organizationUuid,
     };
 
@@ -104,7 +112,7 @@ export async function handleGetOrganizationAppointments(
         appointments,
         totalNumberOfAppointments,
     ] = await Promise.all([
-        getAppointments(query),
+        getOrganizationAppointments(query),
         getNumberOfAppointments(query),
     ]);
 
@@ -126,28 +134,9 @@ export async function handleGetOrganizationAppointments(
 }
 
 
-export async function handleGetAppointment(
-    req: Request,
-    res: Response,
-) {
-    const appointmentUuid =
-        req.params.appointmentUuid as string;
-
-    const organizationUuid =
-        req.user?.organizationUuid;
-
-    const result =
-        await getAppointment(
-            appointmentUuid,
-            organizationUuid,
-        );
-
-    return res
-        .status(200)
-        .json(result);
-}
-
-
+/*
+ * ORGANIZATION appointment.
+ */
 export async function handleGetOrganizationAppointment(
     req: Request,
     res: Response,
@@ -170,6 +159,9 @@ export async function handleGetOrganizationAppointment(
 }
 
 
+/*
+ * USER / CUSTOMER appointment.
+ */
 export async function handleGetUserAppointment(
     req: Request,
     res: Response,
@@ -192,6 +184,9 @@ export async function handleGetUserAppointment(
 }
 
 
+/*
+ * CUSTOMER / USER creates an appointment.
+ */
 export async function handleCreateAppointment(
     req: Request,
     res: Response,
@@ -217,6 +212,40 @@ export async function handleCreateAppointment(
 }
 
 
+/*
+ * ORGANIZATION creates an appointment.
+ */
+export async function handleCreateOrganizationAppointment(
+    req: Request,
+    res: Response,
+) {
+    const appointment =
+        req.body as CreateOrganizationAppointment;
+
+    const organizationUuid =
+        req.params.organizationUuid as string;
+
+    appointment.organizationUuid =
+        organizationUuid;
+
+    const organizationUserUuid =
+        req.user?.uuid as string;
+
+    const result =
+        await createOrganizationAppointmentService(
+            appointment,
+            organizationUserUuid,
+        );
+
+    return res
+        .status(201)
+        .json(result);
+}
+
+
+/*
+ * USER updates appointment.
+ */
 export async function handleUpdateAppointmentByUser(
     req: Request,
     res: Response,
@@ -243,6 +272,9 @@ export async function handleUpdateAppointmentByUser(
 }
 
 
+/*
+ * ORGANIZATION updates appointment.
+ */
 export async function handleUpdateAppointmentByOrganization(
     req: Request,
     res: Response,
@@ -269,6 +301,9 @@ export async function handleUpdateAppointmentByOrganization(
 }
 
 
+/*
+ * Confirm appointment.
+ */
 export async function handleConfirmAppointment(
     req: Request,
     res: Response,
@@ -299,6 +334,9 @@ export async function handleConfirmAppointment(
 }
 
 
+/*
+ * Approve appointment.
+ */
 export async function handleApproveAppointment(
     req: Request,
     res: Response,
@@ -325,6 +363,9 @@ export async function handleApproveAppointment(
 }
 
 
+/*
+ * Reject appointment.
+ */
 export async function handleRejectAppointment(
     req: Request,
     res: Response,
@@ -355,6 +396,9 @@ export async function handleRejectAppointment(
 }
 
 
+/*
+ * Update appointment status.
+ */
 export async function handleUpdateAppointmentStatus(
     req: Request,
     res: Response,
@@ -381,6 +425,9 @@ export async function handleUpdateAppointmentStatus(
 }
 
 
+/*
+ * USER cancels appointment.
+ */
 export async function handleCancelAppointment(
     req: Request,
     res: Response,
@@ -403,6 +450,9 @@ export async function handleCancelAppointment(
 }
 
 
+/*
+ * USER pays appointment.
+ */
 export async function handlePayAppointment(
     req: Request,
     res: Response,

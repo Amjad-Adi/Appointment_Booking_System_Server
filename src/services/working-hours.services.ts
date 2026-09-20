@@ -4,7 +4,7 @@ import {
     update,
     countAll,
     createWorkingDays,
-    findTodayWorkingHours,
+    findTodayWorkingHours, updateWeek,
 } from "../repositories/working-hours.repository.js";
 import {findIdByUuid,} from "../repositories/organizaiton.repository.js";
 import {AuthorizeOrganizationUser,} from "./user.service.js";
@@ -12,7 +12,7 @@ import {NotFoundError,} from "../errors/not-found.error.js";
 import {BadRequestError,} from "../errors/bad-request.error.js";
 import type {
     CreateWorkingHours,
-    QueryWorkingHours,
+    QueryWorkingHours, UpdateOrganizationWorkingHours,
     UpdateWorkingHours,
     WorkingHours,
     WorkingHoursResponse,
@@ -46,6 +46,16 @@ export async function updateWorkingHours(workingHours: UpdateWorkingHours,): Pro
         throw new NotFoundError("Working Hours");
     }
     return result;
+}
+
+
+export async function updateOrganizationWorkingHours(workingHours: UpdateOrganizationWorkingHours,): Promise<WorkingHours[]> {
+    await AuthorizeOrganizationUser(workingHours.userUuid, workingHours.organizationUuid,);
+    const organizationId = await findIdByUuid(workingHours.organizationUuid,);
+    if (organizationId === undefined) {
+        throw new NotFoundError("Organization");
+    }
+    return await updateWeek(organizationId, workingHours.days,);
 }
 
 export async function createWorkingDaysService(organizationId: number,): Promise<void> {

@@ -1,6 +1,6 @@
 import {
-    findAll,
-    findByUuid,
+    findAllOrganization,
+    findAllUser,
     findByUuidAndOrganization,
     findByUuidAndUser,
     countAll,
@@ -43,8 +43,8 @@ import {
 } from "../errors/bad-request.error.js";
 
 import type {
-    Appointment,
-    AppointmentResponse,
+    UserAppointmentResponse,
+    OrganizationAppointmentResponse,
     CreateAppointment,
     CreateOrganizationAppointment,
     QueryAppointment,
@@ -57,13 +57,29 @@ import type {
 } from "../models/appointment.model.js";
 
 
-export async function getAppointments(
+/*
+ * USER / CUSTOMER appointments.
+ */
+export async function getUserAppointments(
     query: QueryAppointment,
-): Promise<AppointmentResponse[]> {
-    return findAll(query);
+): Promise<UserAppointmentResponse[]> {
+    return findAllUser(query);
 }
 
 
+/*
+ * ORGANIZATION appointments.
+ */
+export async function getOrganizationAppointments(
+    query: QueryAppointment,
+): Promise<OrganizationAppointmentResponse[]> {
+    return findAllOrganization(query);
+}
+
+
+/*
+ * Appointment count.
+ */
 export async function getNumberOfAppointments(
     query: QueryAppointment,
 ): Promise<number> {
@@ -71,30 +87,13 @@ export async function getNumberOfAppointments(
 }
 
 
-export async function getAppointment(
-    appointmentUuid: string,
-    organizationUuid: string | undefined,
-): Promise<AppointmentResponse> {
-    const result =
-        await findByUuid(
-            appointmentUuid,
-            organizationUuid,
-        );
-
-    if (result === undefined) {
-        throw new NotFoundError(
-            "Appointment",
-        );
-    }
-
-    return result;
-}
-
-
+/*
+ * ORGANIZATION appointment.
+ */
 export async function getOrganizationAppointment(
     appointmentUuid: string,
     organizationUuid: string,
-): Promise<AppointmentResponse> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -122,10 +121,13 @@ export async function getOrganizationAppointment(
 }
 
 
+/*
+ * USER / CUSTOMER appointment.
+ */
 export async function getUserAppointment(
     appointmentUuid: string,
     userUuid: string,
-): Promise<AppointmentResponse> {
+): Promise<UserAppointmentResponse> {
     const userId =
         await getUserIdByUuid(
             userUuid,
@@ -156,8 +158,6 @@ export async function getUserAppointment(
 /*
  * CUSTOMER / USER creates an appointment.
  *
- * The request data comes from createAppointmentSchema.
- *
  * The service resolves:
  * - user ID
  * - organization ID
@@ -165,14 +165,11 @@ export async function getUserAppointment(
  * - worker ID
  * - room ID
  * - scheduled end time
- *
- * The resolved CreateAppointment model is then
- * passed to createByUser().
  */
 export async function createAppointmentService(
     appointment: CreateAppointment,
     userUuid: string,
-): Promise<Appointment> {
+): Promise<UserAppointmentResponse> {
     const userId =
         await getUserIdByUuid(
             userUuid,
@@ -298,25 +295,11 @@ export async function createAppointmentService(
 
 /*
  * ORGANIZATION creates an appointment for a customer.
- *
- * The request data comes from
- * createOrganizationAppointmentSchema.
- *
- * The service resolves:
- * - customer ID
- * - organization ID
- * - service ID
- * - worker ID
- * - room ID
- * - scheduled end time
- *
- * The resolved CreateOrganizationAppointment model
- * is then passed to createByOrganization().
  */
 export async function createOrganizationAppointmentService(
     appointment: CreateOrganizationAppointment,
     organizationUserUuid: string,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     await AuthorizeOrganizationUser(
         organizationUserUuid,
         appointment.organizationUuid,
@@ -445,11 +428,14 @@ export async function createOrganizationAppointmentService(
 }
 
 
+/*
+ * USER updates appointment.
+ */
 export async function updateAppointmentByUserService(
     appointmentUuid: string,
     userUuid: string,
     appointment: UpdateAppointmentByUser,
-): Promise<Appointment> {
+): Promise<UserAppointmentResponse> {
     const userId =
         await getUserIdByUuid(
             userUuid,
@@ -478,11 +464,14 @@ export async function updateAppointmentByUserService(
 }
 
 
+/*
+ * ORGANIZATION updates appointment.
+ */
 export async function updateAppointmentByOrganizationService(
     appointmentUuid: string,
     organizationUuid: string,
     appointment: UpdateAppointmentByOrganization,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -511,12 +500,15 @@ export async function updateAppointmentByOrganizationService(
 }
 
 
+/*
+ * Confirm appointment.
+ */
 export async function confirmAppointmentService(
     appointmentUuid: string,
     organizationUuid: string,
     approvalUserUuid: string,
     appointment: ConfirmAppointment,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -544,7 +536,6 @@ export async function confirmAppointmentService(
             appointmentUuid,
             organizationId,
             approvalUserId,
-            appointment.name,
             appointment.organizationColour,
             appointment.organizationNote,
         );
@@ -559,11 +550,14 @@ export async function confirmAppointmentService(
 }
 
 
+/*
+ * Approve appointment.
+ */
 export async function approveAppointmentService(
     appointmentUuid: string,
     organizationUuid: string,
     approvalUserUuid: string,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -603,12 +597,15 @@ export async function approveAppointmentService(
 }
 
 
+/*
+ * Reject appointment.
+ */
 export async function rejectAppointmentService(
     appointmentUuid: string,
     organizationUuid: string,
     approvalUserUuid: string,
     appointment: RejectAppointment,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -649,11 +646,14 @@ export async function rejectAppointmentService(
 }
 
 
+/*
+ * Organization updates appointment status.
+ */
 export async function updateAppointmentStatusService(
     appointmentUuid: string,
     organizationUuid: string,
     appointment: UpdateAppointmentStatus,
-): Promise<Appointment> {
+): Promise<OrganizationAppointmentResponse> {
     const organizationId =
         await getOrganizationIdByUuid(
             organizationUuid,
@@ -682,10 +682,13 @@ export async function updateAppointmentStatusService(
 }
 
 
+/*
+ * USER cancels appointment.
+ */
 export async function cancelAppointmentByUserService(
     appointmentUuid: string,
     userUuid: string,
-): Promise<Appointment> {
+): Promise<UserAppointmentResponse> {
     const userId =
         await getUserIdByUuid(
             userUuid,
@@ -713,11 +716,14 @@ export async function cancelAppointmentByUserService(
 }
 
 
+/*
+ * USER pays appointment.
+ */
 export async function payAppointmentService(
     appointmentUuid: string,
     userUuid: string,
     appointment: PayAppointment,
-): Promise<Appointment> {
+): Promise<UserAppointmentResponse> {
     const userId =
         await getUserIdByUuid(
             userUuid,

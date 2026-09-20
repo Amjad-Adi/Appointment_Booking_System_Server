@@ -103,7 +103,6 @@ export const querySpecialDaySchema =querySchema
         ],
         {
             error: "Invalid sort field",
-        },
-    ).default(SORT_BY_DAY_DATE).optional(),
+        }).optional(),
 
 }).strict();

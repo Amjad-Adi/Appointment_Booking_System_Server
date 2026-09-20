@@ -49,49 +49,6 @@ const scheduledStartSchema = z.iso.datetime({
  * - workerUuid
  * - fromAtUTC
  */
-export const schedulingSchema = z
-    .object({
-        userUuid: uuidSchema,
-
-        serviceUuid: uuidSchema,
-
-        timeType: z.enum(AppointmentTimeType),
-
-        workerUuid: uuidSchema.optional(),
-
-        fromAtUTC: z
-            .iso
-            .datetime({
-                offset: true,
-            })
-            .optional(),
-    })
-    .strict()
-    .superRefine((data, ctx) => {
-        if (
-            data.timeType === AppointmentTimeType.WORKER &&
-            !data.workerUuid
-        ) {
-            ctx.addIssue({
-                code: 'custom',
-                path: ['workerUuid'],
-                message:
-                    'workerUuid is required when timeType is WORKER',
-            });
-        }
-
-        if (
-            data.timeType === AppointmentTimeType.NEAREST &&
-            data.workerUuid !== undefined
-        ) {
-            ctx.addIssue({
-                code: 'custom',
-                path: ['workerUuid'],
-                message:
-                    'workerUuid is not allowed when timeType is NEAREST',
-            });
-        }
-    });
 
 
 /*
@@ -118,15 +75,14 @@ export const schedulingSchema = z
  */
 export const createAppointmentSchema = z
     .object({
-        name: appointmentNameSchema,
-
+        userTitle:z.string().min(1).optional(),
         serviceUuid: uuidSchema,
 
         timeType: z.enum(AppointmentTimeType),
 
         workerUuid: uuidSchema,
 
-        scheduledStartAtUTC: scheduledStartSchema,
+        scheduledStartAtUTC: z.string().datetime({ offset: true }),
 
         userNote: z
             .string()
@@ -174,7 +130,7 @@ export const createAppointmentSchema = z
  */
 export const createOrganizationAppointmentSchema = z
     .object({
-        name: appointmentNameSchema,
+        organizationTitle:z.string().min(1),
 
         userUuid: uuidSchema,
 
@@ -182,23 +138,15 @@ export const createOrganizationAppointmentSchema = z
 
         workerUuid: uuidSchema,
 
-        scheduledStartAtUTC: scheduledStartSchema,
+        scheduledStartAtUTC: z.string().datetime({ offset: true }),
 
-        organizationNote: z
-            .string()
-            .trim()
-            .max(4096)
-            .nullable()
-            .optional(),
+        organizationNote: z.string().optional(),
 
-        organizationColour: colourSchema.optional(),
+        organizationColour: z.string().optional(),
 
-        paymentMethod: z
-            .enum(PaymentMethod)
-            .nullable()
-            .optional(),
+        paymentMethod: z.enum(PaymentMethod),
     })
-    .strict();
+    .strict()
 
 
 /*
@@ -206,6 +154,7 @@ export const createOrganizationAppointmentSchema = z
  */
 export const updateAppointmentSchemaByUser = z
     .object({
+        userTitle:z.string().min(1).optional(),
         userNote: z
             .string()
             .trim()
@@ -223,6 +172,7 @@ export const updateAppointmentSchemaByUser = z
  */
 export const updateAppointmentSchemaByOrganization = z
     .object({
+        organizationTitle:z.string().min(1).optional(),
         organizationNote: z
             .string()
             .trim()
@@ -377,12 +327,9 @@ export const queryAppointmentSchema = querySchema
 
         sortBy: z
             .enum([
-                SORT_BY_NAME,
                 SORT_BY_SCHEDULED_START_AT_UTC,
                 SORT_BY_SCHEDULED_END_AT_UTC,
                 SORT_BY_CREATED_AT_UTC,
-                SORT_BY_APPOINTMENT_STATUS,
-                SORT_BY_PAYMENT_STATUS,
             ])
             .optional(),
     })

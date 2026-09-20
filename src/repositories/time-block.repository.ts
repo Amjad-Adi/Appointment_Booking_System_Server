@@ -1,10 +1,20 @@
-import { and, asc, count, desc, eq, gte, ilike, lte, or } from "drizzle-orm";
+import {
+    and,
+    asc,
+    count,
+    desc,
+    eq,
+    gt,
+    ilike,
+    lt,
+    or,
+} from "drizzle-orm";
+
 import { alias } from "drizzle-orm/pg-core";
 
 import { drizzleConnection } from "../databases/drizzle-connection.js";
 
 import { timeBlockTable } from "../drizzle-schemas/time-block.db.js";
-import { organizationTable } from "../drizzle-schemas/organizations.db.js";
 import { usersTable } from "../drizzle-schemas/users.db.js";
 
 import {
@@ -18,50 +28,110 @@ import type {
     TimeBlock,
     TimeBlockResponse,
     UpdateTimeBlock,
-} from "../models/time-block.model";
+} from "../models/time-block.model.js";
 
-const requestUsersTable = alias(usersTable, ALIAS);
-const respondUsersTable = alias(usersTable, SECONDARY_ALIAS);
+const requestUsersTable =
+    alias(
+        usersTable,
+        ALIAS,
+    );
+
+const respondUsersTable =
+    alias(
+        usersTable,
+        SECONDARY_ALIAS,
+    );
 
 function selectTimeBlock(
-    requestUsersTable: typeof usersTable | ReturnType<typeof alias>,
-    respondUsersTable: typeof usersTable | ReturnType<typeof alias>,
+    requestUsersTable:
+        | typeof usersTable
+        | ReturnType<typeof alias>,
+    respondUsersTable:
+        | typeof usersTable
+        | ReturnType<typeof alias>,
 ) {
     return {
-        uuid: timeBlockTable.uuid,
-        reason: timeBlockTable.reason,
-        startAtUTC: timeBlockTable.startAtUTC,
-        endAtUTC: timeBlockTable.endAtUTC,
-        requestedAtUTC: timeBlockTable.requestedAtUTC,
-        respondedAtUTC: timeBlockTable.respondedAtUTC,
-        requestStatus: timeBlockTable.requestStatus,
+        uuid:
+        timeBlockTable.uuid,
 
-        requestUserUuid: requestUsersTable.uuid,
-        requestUserFirstName: requestUsersTable.firstName,
-        requestUserLastName: requestUsersTable.lastName,
+        reason:
+        timeBlockTable.reason,
+
+        startAtUTC:
+        timeBlockTable.startAtUTC,
+
+        endAtUTC:
+        timeBlockTable.endAtUTC,
+
+        requestedAtUTC:
+        timeBlockTable.requestedAtUTC,
+
+        respondedAtUTC:
+        timeBlockTable.respondedAtUTC,
+
+        requestStatus:
+        timeBlockTable.requestStatus,
+
+        requestUserUuid:
+        requestUsersTable.uuid,
+
+        requestUserFirstName:
+        requestUsersTable.firstName,
+
+        requestUserLastName:
+        requestUsersTable.lastName,
+
         requestUserProfilePicturePath:
         requestUsersTable.profilePicturePath,
 
-        respondUserUuid: respondUsersTable.uuid,
-        respondUserFirstName: respondUsersTable.firstName,
-        respondUserLastName: respondUsersTable.lastName,
+        respondUserUuid:
+        respondUsersTable.uuid,
+
+        respondUserFirstName:
+        respondUsersTable.firstName,
+
+        respondUserLastName:
+        respondUsersTable.lastName,
+
         respondUserProfilePicturePath:
         respondUsersTable.profilePicturePath,
     };
 }
 
-export async function findAll(
+function buildDateRangeConditions(
     query: QueryTimeBlock,
-): Promise<TimeBlockResponse[]> {
-    const {
-        search,
-        filter,
-        sortBy = "requestedAtUTC",
-        sortOrder = "desc",
-        limit,
-        offset,
-    } = query;
+) {
+    if (
+        query.filter?.fromDate === undefined ||
+        query.filter?.toDate === undefined
+    ) {
+        return undefined;
+    }
 
+    /*
+     * Interval overlap:
+     *
+     * block.start < requestedEnd
+     * AND
+     * block.end > requestedStart
+     *
+     * This also finds blocks that cross midnight.
+     */
+    return and(
+        lt(
+            timeBlockTable.startAtUTC,
+            query.filter.toDate,
+        ),
+        gt(
+            timeBlockTable.endAtUTC,
+            query.filter.fromDate,
+        ),
+    );
+}
+
+function buildConditions(
+    query: QueryTimeBlock,
+) {
     const conditions = [
         eq(
             timeBlockTable.organizationId,
@@ -69,16 +139,27 @@ export async function findAll(
         ),
     ];
 
+    const {
+        search,
+        filter,
+    } = query;
+
     if (search) {
-        const searchValue = `%${search}%`;
+        const searchValue =
+            `%${search}%`;
 
         conditions.push(
             or(
-                ilike(timeBlockTable.reason, searchValue),
+                ilike(
+                    timeBlockTable.reason,
+                    searchValue,
+                ),
+
                 ilike(
                     requestUsersTable.firstName,
                     searchValue,
                 ),
+
                 ilike(
                     requestUsersTable.lastName,
                     searchValue,
@@ -114,35 +195,52 @@ export async function findAll(
         );
     }
 
-    if (filter?.fromDate) {
-        conditions.push(
-            gte(
-                timeBlockTable.startAtUTC,
-                `${filter.fromDate}T00:00:00.000Z`,
-            ),
+    const dateRange =
+        buildDateRangeConditions(
+            query,
         );
+
+    if (dateRange) {
+        conditions.push(dateRange);
     }
 
-    if (filter?.toDate) {
-        conditions.push(
-            lte(
-                timeBlockTable.startAtUTC,
-                `${filter.toDate}T23:59:59.999Z`,
-            ),
-        );
-    }
+    return conditions;
+}
+
+export async function findAll(
+    query: QueryTimeBlock,
+): Promise<TimeBlockResponse[]> {
+    const {
+        sortBy = "requestedAtUTC",
+        order = "desc",
+        limit,
+        offset,
+    } = query;
+
+    const conditions =
+        buildConditions(query);
 
     const sortColumn = {
-        startAtUTC: timeBlockTable.startAtUTC,
-        endAtUTC: timeBlockTable.startAtUTC,
-        requestedAtUTC: timeBlockTable.requestedAtUTC,
-        respondedAtUTC: timeBlockTable.respondedAtUTC,
-        requestStatus: timeBlockTable.requestStatus,
+        startAtUTC:
+        timeBlockTable.startAtUTC,
+
+        endAtUTC:
+        timeBlockTable.endAtUTC,
+
+        requestedAtUTC:
+        timeBlockTable.requestedAtUTC,
+
+        respondedAtUTC:
+        timeBlockTable.respondedAtUTC,
+
+        requestStatus:
+        timeBlockTable.requestStatus,
     }[sortBy];
 
-    const order = sortOrder === "asc"
-        ? asc(sortColumn)
-        : desc(sortColumn);
+    const sortOrder =
+        order === "asc"
+            ? asc(sortColumn)
+            : desc(sortColumn);
 
     return await drizzleConnection
         .select(
@@ -166,8 +264,13 @@ export async function findAll(
                 timeBlockTable.respondUserId,
             ),
         )
-        .where(and(...conditions))
-        .orderBy(order, asc(timeBlockTable.uuid))
+        .where(
+            and(...conditions),
+        )
+        .orderBy(
+            sortOrder,
+            asc(timeBlockTable.uuid),
+        )
         .limit(limit)
         .offset(offset);
 }
@@ -175,99 +278,32 @@ export async function findAll(
 export async function countAll(
     query: QueryTimeBlock,
 ): Promise<number> {
-    const {
-        search,
-        filter,
-    } = query;
+    const conditions =
+        buildConditions(query);
 
-    const conditions = [
-        eq(
-            timeBlockTable.organizationId,
-            query.organizationId,
-        ),
-    ];
-
-    if (search) {
-        const searchValue = `%${search}%`;
-
-        conditions.push(
-            or(
-                ilike(timeBlockTable.reason, searchValue),
-                ilike(
-                    requestUsersTable.firstName,
-                    searchValue,
+    const [result] =
+        await drizzleConnection
+            .select({
+                count: count(),
+            })
+            .from(timeBlockTable)
+            .innerJoin(
+                requestUsersTable,
+                eq(
+                    requestUsersTable.id,
+                    timeBlockTable.requestUserId,
                 ),
-                ilike(
-                    requestUsersTable.lastName,
-                    searchValue,
+            )
+            .leftJoin(
+                respondUsersTable,
+                eq(
+                    respondUsersTable.id,
+                    timeBlockTable.respondUserId,
                 ),
-            )!,
-        );
-    }
-
-    if (filter?.requestStatus) {
-        conditions.push(
-            eq(
-                timeBlockTable.requestStatus,
-                filter.requestStatus,
-            ),
-        );
-    }
-
-    if (filter?.requestUserUuid) {
-        conditions.push(
-            eq(
-                requestUsersTable.uuid,
-                filter.requestUserUuid,
-            ),
-        );
-    }
-
-    if (filter?.respondUserUuid) {
-        conditions.push(
-            eq(
-                respondUsersTable.uuid,
-                filter.respondUserUuid,
-            ),
-        );
-    }
-
-    if (filter?.fromDate) {
-        conditions.push(
-            gte(
-                timeBlockTable.startAtUTC,
-                `${filter.fromDate}T00:00:00.000Z`,
-            ),
-        );
-    }
-
-    if (filter?.toDate) {
-        conditions.push(
-            lte(
-                timeBlockTable.startAtUTC,
-                `${filter.toDate}T23:59:59.999Z`,
-            ),
-        );
-    }
-
-    const [result] = await drizzleConnection
-        .select({ count: count() })
-        .from(timeBlockTable)
-        .innerJoin(
-            requestUsersTable,
-            eq(
-                requestUsersTable.id,
-                timeBlockTable.requestUserId,
-            ),
-        )
-        .leftJoin(
-            respondUsersTable,
-            eq(
-                respondUsersTable.id,
-                timeBlockTable.respondUserId,
-            ),
-        )
-        .where(and(...conditions));
+            )
+            .where(
+                and(...conditions),
+            );
 
     return result?.count ?? 0;
 }
@@ -301,8 +337,15 @@ export async function findByUuid(
             )
             .where(
                 and(
-                    eq(timeBlockTable.uuid, timeBlockUuid),
-                    eq(timeBlockTable.organizationId, organizationId),
+                    eq(
+                        timeBlockTable.uuid,
+                        timeBlockUuid,
+                    ),
+
+                    eq(
+                        timeBlockTable.organizationId,
+                        organizationId,
+                    ),
                 ),
             )
     )[0];
@@ -315,20 +358,42 @@ export async function create(
         await drizzleConnection
             .insert(timeBlockTable)
             .values({
-                reason: timeBlock.reason,
-                startAtUTC: timeBlock.startAtUTC,
-                endAtUTC: timeBlock.endAtUTC,
-                requestUserId: timeBlock.requestUserId,
-                organizationId: timeBlock.organizationId,
+                reason:
+                timeBlock.reason,
+
+                startAtUTC:
+                timeBlock.startAtUTC,
+
+                endAtUTC:
+                timeBlock.endAtUTC,
+
+                requestUserId:
+                timeBlock.requestUserId,
+
+                organizationId:
+                timeBlock.organizationId,
             })
             .returning({
-                uuid: timeBlockTable.uuid,
-                reason: timeBlockTable.reason,
-                startAtUTC: timeBlockTable.startAtUTC,
-                endAtUTC: timeBlockTable.endAtUTC,
-                requestedAtUTC: timeBlockTable.requestedAtUTC,
-                respondedAtUTC: timeBlockTable.respondedAtUTC,
-                requestStatus: timeBlockTable.requestStatus,
+                uuid:
+                timeBlockTable.uuid,
+
+                reason:
+                timeBlockTable.reason,
+
+                startAtUTC:
+                timeBlockTable.startAtUTC,
+
+                endAtUTC:
+                timeBlockTable.endAtUTC,
+
+                requestedAtUTC:
+                timeBlockTable.requestedAtUTC,
+
+                respondedAtUTC:
+                timeBlockTable.respondedAtUTC,
+
+                requestStatus:
+                timeBlockTable.requestStatus,
             })
     )[0];
 }
@@ -341,24 +406,49 @@ export async function update(
         await drizzleConnection
             .update(timeBlockTable)
             .set({
-                respondUserId: timeBlock.respondUserId,
-                respondedAtUTC: new Date().toISOString(),
-                requestStatus: timeBlock.requestStatus,
+                respondUserId:
+                timeBlock.respondUserId,
+
+                respondedAtUTC:
+                    new Date().toISOString(),
+
+                requestStatus:
+                timeBlock.requestStatus,
             })
             .where(
                 and(
-                    eq(timeBlockTable.uuid, timeBlock.uuid),
-                    eq(timeBlockTable.organizationId, organizationId),
+                    eq(
+                        timeBlockTable.uuid,
+                        timeBlock.uuid,
+                    ),
+
+                    eq(
+                        timeBlockTable.organizationId,
+                        organizationId,
+                    ),
                 ),
             )
             .returning({
-                uuid: timeBlockTable.uuid,
-                reason: timeBlockTable.reason,
-                startAtUTC: timeBlockTable.startAtUTC,
-                endAtUTC: timeBlockTable.endAtUTC,
-                requestedAtUTC: timeBlockTable.requestedAtUTC,
-                respondedAtUTC: timeBlockTable.respondedAtUTC,
-                requestStatus: timeBlockTable.requestStatus,
+                uuid:
+                timeBlockTable.uuid,
+
+                reason:
+                timeBlockTable.reason,
+
+                startAtUTC:
+                timeBlockTable.startAtUTC,
+
+                endAtUTC:
+                timeBlockTable.endAtUTC,
+
+                requestedAtUTC:
+                timeBlockTable.requestedAtUTC,
+
+                respondedAtUTC:
+                timeBlockTable.respondedAtUTC,
+
+                requestStatus:
+                timeBlockTable.requestStatus,
             })
     )[0];
 }

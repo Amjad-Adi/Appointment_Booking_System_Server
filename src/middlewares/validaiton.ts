@@ -9,6 +9,7 @@ import { Request, Response, NextFunction } from "express";
 export function validateBody(schema:z.ZodSchema) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
         const result = schema.safeParse(req.body);
+        console.log(req.body);
         if (!result.success) {
             console.log(result);
             throw new BadRequestError();
@@ -31,6 +32,7 @@ export function validateParameter(schema:z.ZodSchema,parameterName:string) {
 export function validateQuery(schema: z.ZodSchema) {
     return (req: Request, res: Response, next: NextFunction) => {
         const result = schema.safeParse(req.query);
+        console.log(result)
         if (!result.success) {
             throw new BadRequestError();
         }

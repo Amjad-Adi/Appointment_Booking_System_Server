@@ -2,11 +2,9 @@ import express from "express";
 
 import {
     handleGetAppointments,
-    handleGetAppointment,
     handleGetUserAppointment,
     handleCreateAppointment,
     handleUpdateAppointmentByUser,
-    handleConfirmAppointment,
     handleCancelAppointment,
     handlePayAppointment,
 } from "../controllers/appointment.controller.js";
@@ -14,10 +12,6 @@ import {
 import {
     authenticateToken,
 } from "../controllers/authentication/jwt.authentication.controller.js";
-
-import {
-    authorize,
-} from "../middlewares/authorization/authorization.js";
 
 import {
     validateBody,
@@ -28,7 +22,6 @@ import {
 import {
     createAppointmentSchema,
     updateAppointmentSchemaByUser,
-    confirmAppointmentSchema,
     payAppointmentSchema,
     queryAppointmentSchema,
 } from "../middlewares/zod-schemas/appointment.schema.js";
@@ -38,13 +31,16 @@ import {
 } from "../middlewares/zod-schemas/parameters.schema.js";
 
 
-export const appointmentRouter = express.Router();
+export const appointmentRouter =
+    express.Router();
 
 
 appointmentRouter.get(
     "/me",
     authenticateToken,
-    validateQuery(queryAppointmentSchema),
+    validateQuery(
+        queryAppointmentSchema,
+    ),
     handleGetAppointments,
 );
 
@@ -52,7 +48,10 @@ appointmentRouter.get(
 appointmentRouter.get(
     "/:appointmentUuid",
     authenticateToken,
-    validateParameter(validateUuid, "appointmentUuid"),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
     handleGetUserAppointment,
 );
 
@@ -60,7 +59,9 @@ appointmentRouter.get(
 appointmentRouter.post(
     "/",
     authenticateToken,
-    validateBody(createAppointmentSchema),
+    validateBody(
+        createAppointmentSchema,
+    ),
     handleCreateAppointment,
 );
 
@@ -68,25 +69,24 @@ appointmentRouter.post(
 appointmentRouter.patch(
     "/:appointmentUuid",
     authenticateToken,
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(updateAppointmentSchemaByUser),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        updateAppointmentSchemaByUser,
+    ),
     handleUpdateAppointmentByUser,
-);
-
-
-appointmentRouter.patch(
-    "/:appointmentUuid/confirm",
-    authenticateToken,
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(confirmAppointmentSchema),
-    handleConfirmAppointment,
 );
 
 
 appointmentRouter.patch(
     "/:appointmentUuid/cancel",
     authenticateToken,
-    validateParameter(validateUuid, "appointmentUuid"),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
     handleCancelAppointment,
 );
 
@@ -94,7 +94,12 @@ appointmentRouter.patch(
 appointmentRouter.patch(
     "/:appointmentUuid/pay",
     authenticateToken,
-    validateParameter(validateUuid, "appointmentUuid"),
-    validateBody(payAppointmentSchema),
+    validateParameter(
+        validateUuid,
+        "appointmentUuid",
+    ),
+    validateBody(
+        payAppointmentSchema,
+    ),
     handlePayAppointment,
 );

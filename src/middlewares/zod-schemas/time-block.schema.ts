@@ -1,6 +1,10 @@
 import { z } from "zod";
 
 import { TimeBlockStatus } from "../../models/enums/time-block-status.js";
+import { querySchema } from './query.schema';
+import {
+    SORT_BY_END_AT_UTC,
+    SORT_BY_REQUEST_STATUS, SORT_BY_REQUESTED_AT_UTC, SORT_BY_RESPONDED_AT_UTC, SORT_BY_START_AT_UTC } from '../../databases/contracts/time-block.contract';
 
 export const createTimeBlockSchema = z.object({
     reason: z
@@ -59,22 +63,15 @@ export const timeBlockFilterSchema = z.object({
         }
     });
 
-export const queryTimeBlockSchema = z.object({
-    page: z.coerce.number().int().positive().default(1),
-
-    limit: z.coerce.number().int().positive().max(100).default(20),
-
+export const queryTimeBlockSchema =querySchema.extend({
     search: z.string().trim().max(256).optional(),
 
     filter: timeBlockFilterSchema.optional(),
-
     sortBy: z.enum([
-        "startAtUTC",
-        "endAtUTC",
-        "requestedAtUTC",
-        "respondedAtUTC",
-        "requestStatus",
-    ]).default("requestedAtUTC"),
-
-    sortOrder: z.enum(["asc", "desc"]).default("desc"),
+        SORT_BY_START_AT_UTC,
+        SORT_BY_END_AT_UTC,
+        SORT_BY_REQUESTED_AT_UTC,
+        SORT_BY_RESPONDED_AT_UTC,
+        SORT_BY_REQUEST_STATUS,
+    ]),
 }).strict();

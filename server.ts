@@ -21,14 +21,26 @@ initializeAppServer({
     credential: cert(serviceAccount as ServiceAccount),
 });
 
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+console.log("[SMTP] Configuration:");
+console.log("[SMTP] service: gmail");
+console.log("[SMTP] user:", SMTP_USER);
+console.log("[SMTP] password configured:", Boolean(SMTP_PASS));
+
 export const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: false, // use STARTTLS (upgrade connection to TLS after connecting)
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+
+    logger: true,
+    debug: true,
 });
 
 const server = http.createServer(app);
@@ -36,4 +48,3 @@ server.setTimeout(30000)
 server.listen(process.env.SERVER_PORT, () => {
     console.log(`Server is running at http://localhost:${process.env.SERVER_PORT}`);
 });
-
