@@ -163,10 +163,11 @@ FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON
 
 DROP TABLE time_block;
 
+ALTER TABLE appointments DROP COLUMN name;
+
 CREATE TABLE appointments (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     uuid UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-    name VARCHAR(256) NOT NULL,
     user_id BIGINT NOT NULL,
     organization_id BIGINT NOT NULL,
     service_id BIGINT NOT NULL,
@@ -282,12 +283,17 @@ reason VARCHAR(4096)
 CREATE TABLE invitations(
 id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 uuid UUID DEFAULT gen_random_uuid() UNIQUE,
+organization_id BIGINT,
 sender_id BIGINT,
 recipient_email VARCHAR(320),
+token_hash VARCHAR(255) UNIQUE,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 expires_at_utc TIMESTAMPTZ NOT NULL,
-invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status IN('PENDING','REJECTED','ACCEPTED','FAILED','EXPIRED')) DEFAULT 'PENDING',
-FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
+accepted_at_utc TIMESTAMPTZ,
+role VARCHAR(16) NOT NULL CHECK (role IN('WORKER','OWNER','MANAGER','SUPER ADMIN', 'CRM', 'CUSTOMER')) DEFAULT 'WORKER',
+invitation_status VARCHAR(16) NOT NULL CHECK (invitation_status IN('PENDING', 'ACCEPTED', 'EXPIRED', 'CANCELLED')) DEFAULT 'PENDING',
+FOREIGN KEY (sender_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE,
+FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 DROP TABLE invitations;
