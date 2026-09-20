@@ -1,12 +1,7 @@
 import express from "express";
-import type {} from "../utils/Request";
-import {validateBody, validateParameter, validateQuery} from "../middlewares/validaiton";
-import {
-    createUserSchema,
-    updateUserSchema,
-    updateUserByAdminSchema,
-    queryUserSchema
-} from "../middlewares/zod-schemas/user.schema"
+import type {} from "../utils/UserRequest";
+import {validateBody, validateParameter} from "../middlewares/validaiton";
+import {createUserSchema, updateUserSchema,updateUserByAdminSchema} from "../middlewares/schemas/user.schema"
 import {
     handleGetUser,
     handleCreateUser,
@@ -14,25 +9,26 @@ import {
     handleGetUsers,
     handleGetCurrentUser, handleUpdateCurrentUser
 } from "../controllers/user.controller";
-import {authorize} from "../middlewares/authorization/authorization";
+import {authorize} from "../middlewares/authoraization/autoraization";
 import {
     READ_USERS,
+    READ_USER,
     CREATE_USER,
-    UPDATE_USER_AS_ADMIN,
+    WRITE_USER_AS_ADMIN,
 } from "../permissions/permissions";
 import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
-import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
-import {receiveInvitationRouter} from "./receive-invitation.route";
+import {validateUuid} from "../middlewares/schemas/parameters.schema";
 export let userRouter=express.Router()
 userRouter.route("/")
-    .get(authenticateToken,authorize(READ_USERS),validateQuery(queryUserSchema),handleGetUsers)
+    .get(authenticateToken,authorize(READ_USERS),handleGetUsers)
 
 userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)
     .patch(authenticateToken,validateBody(updateUserSchema),handleUpdateCurrentUser)
 
-userRouter.use("/me/invitations", receiveInvitationRouter)
+userRouter.route("/register")
+    .post(validateBody(createUserSchema),handleCreateUser)
 
 userRouter.route("/:userUuid")
-    .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)
-    .patch(authenticateToken,authorize(UPDATE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
+    .get(authenticateToken,authorize(READ_USER),validateParameter(validateUuid,"userUuid"),handleGetUser)
+    .patch(authenticateToken,authorize(WRITE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
