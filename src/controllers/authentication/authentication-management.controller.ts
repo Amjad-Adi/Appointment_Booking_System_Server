@@ -22,7 +22,7 @@ const cookieOptions:CookieOptions = {
     sameSite:'strict',
 }
 const accessCookieOptions: CookieOptions = cookieOptions&& {maxAge:
-        process.env.NODE_ENV === "development"
+        process.env.NODE_ENV === "production"
             ? 25 * 60 * 60 * 1000
             : 13 * 60 * 60 * 1000,
 };
