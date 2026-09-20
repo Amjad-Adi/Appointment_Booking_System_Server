@@ -8,7 +8,7 @@ import {publicServiceRoute} from "./service.route";
 import {serviceCategoryRouter} from "./service-category.route";
 import {publicRoomRoute} from "./room.route";
 import {appointmentRouter} from "./apppointment.route";
-import { invitationRouter } from '../../routes/invitation.route';
+import {publicInvitationsRouter} from "./invitation.route";
 
 export const mainRouter=express.Router()
 
@@ -16,7 +16,7 @@ mainRouter.use(rateLimit(rateLimiterFactory(RATE_LIMIT_FOR_GENERAL)));
 mainRouter.use("/users",userRouter)
 mainRouter.use("/organizations",organizationRouter)
 mainRouter.use("/auth",authenticationRouter)
-mainRouter.use("/invitations", invitationRouter)
+mainRouter.use("/invitations", publicInvitationsRouter)
 mainRouter.use("/services/categories",serviceCategoryRouter)
 mainRouter.use("/services",publicServiceRoute)
 mainRouter.use("/rooms",publicRoomRoute)

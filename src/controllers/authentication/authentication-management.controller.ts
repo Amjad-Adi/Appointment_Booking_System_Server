@@ -1,12 +1,13 @@
 import type {CookieOptions, NextFunction, Request, Response} from "express";
 import {fireBaseLogIn, invitationReceive} from "../../services/firebase-client.service.js";
-import {getAuth} from "firebase/auth";
 import {UnauthorizedError} from "../../errors/unauthorized.error.js";
 import {generateToken, refreshTokenExpiresIn} from "./jwt.authentication.controller.js";
 import {UserResponse} from "../../models/user.model.js";
 import {getUserUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/user.service.js";
 import {mapFirebaseError} from "../../middlewares/map-firebase-error.js";
 import {findRefreshToken, remove} from "../../repositories/refresh-token.repository.js";
+import { firebaseAuth } from "../../config/firebase.js";
+
 import {} from "../../utils/Request"
 import {RefreshToken} from "../../models/refresh-token.model.js";
 import {
@@ -33,7 +34,7 @@ const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:refreshTokenExp
 export async function login(req: Request, res: Response, next: NextFunction){
     const email=req.body.email
     const password=req.body.password
-    const uid= await fireBaseLogIn(getAuth(), email, password) as string;
+    const uid= await fireBaseLogIn( firebaseAuth, email, password) as string;
         if(uid==undefined){
             throw new UnauthorizedError()
         }

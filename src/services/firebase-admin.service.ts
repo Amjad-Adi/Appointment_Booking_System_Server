@@ -1,6 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
 import {mapFirebaseError} from "../middlewares/map-firebase-error.js";
-import {inviteEmail} from "./smtp-nodemailer.service.js";
+
 export async function createFireBaseUser(email:string,password:string) {
     try{
     return await getAuth().createUser({
