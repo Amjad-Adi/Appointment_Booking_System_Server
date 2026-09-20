@@ -118,20 +118,20 @@ export async function sendInvitationEmail(
     rawToken: string,
 ): Promise<void> {
     try {
-        const host =
-            process.env.DEVELOPMENT_HOST;
+        const frontendUrl =
+            process.env.NODE_ENV === "production"
+                ? process.env.FRONTEND_PRODUCTION_URL
+                : process.env.FRONTEND_DEVELOPMENT_URL;
 
-        const serverPort =
-            process.env.SERVER_PORT;
-
-        if (!host || !serverPort) {
+        if (!frontendUrl) {
             throw new Error(
-                "DEVELOPMENT_HOST and SERVER_PORT must be configured.",
+                "Frontend URL is not configured.",
             );
         }
 
         const inviteLink =
-            `${process.env.FRONTEND_URL}/invitations/accept?token=${encodeURIComponent(rawToken)}`;
+            `${frontendUrl}/invitations/accept?token=${encodeURIComponent(rawToken)}`;
+
 
         await inviteEmail(
             organizationName,
