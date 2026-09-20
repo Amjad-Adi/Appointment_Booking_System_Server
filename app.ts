@@ -18,7 +18,7 @@ const logger = pino();
 export const app = express();
 app.set("query parser", "extended");
 const corsOptions = {
-    origin: process.env.NODE_ENV=="production"?"https://myserver":"http://localhost:8080",
+    origin: process.env.NODE_ENV=="production"?process.env.FRONTEND_PRODUCTION_URL:process.env.FRONTEND_DEVELOPMENT_URL,
     credentials: true
 };
 app.use((req, res, next) => {
