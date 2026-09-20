@@ -1,0 +1,19 @@
+export const TABLE_NAME = "time_block";
+
+export const COLUMN_START_AT_UTC = "start_at_utc";
+export const COLUMN_END_AT_UTC = "end_at_utc";
+
+export const COLUMN_REQUEST_USER_ID = "request_user_id";
+export const COLUMN_RESPOND_USER_ID = "respond_user_id";
+
+export const COLUMN_REQUESTED_AT_UTC = "requested_at_utc";
+export const COLUMN_RESPONDED_AT_UTC = "responded_at_utc";
+
+export const COLUMN_REQUEST_STATUS = "request_status";
+
+export const COLUMN_ORGANIZATION_ID = "organization_id";
+export const SORT_BY_START_AT_UTC = "startAtUTC";
+export const SORT_BY_END_AT_UTC = "endAtUTC";
+export const SORT_BY_REQUESTED_AT_UTC = "requestedAtUTC";
+export const SORT_BY_RESPONDED_AT_UTC = "respondedAtUTC";
+export const SORT_BY_REQUEST_STATUS = "requestStatus";
