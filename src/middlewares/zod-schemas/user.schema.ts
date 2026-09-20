@@ -204,28 +204,16 @@ export const updateUserSchema = z
             path: ['confirmPassword'],
         },
     );
-
 export const loginUserSchema = z
     .object({
-        email: z.email({
-            error: 'Invalid email address',
-        }),
-
-        password: z
+        idToken: z
             .string()
             .trim()
             .nonempty({
-                error: 'Password is required',
-            })
-            .min(8, {
-                error: 'Password must be at least 8 characters',
-            })
-            .max(64, {
-                error: 'Password must be at most 64 characters',
+                error: 'Firebase ID token is required',
             }),
     })
     .strict();
-
 export const updateUserByAdminSchema = z
     .object({
         role: z

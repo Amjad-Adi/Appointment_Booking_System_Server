@@ -22,11 +22,9 @@ const serviceAccount = JSON.parse(
     fs.readFileSync(serviceAccountPath, "utf-8"),
 ) as ServiceAccount;
 
-const firebaseAdminApp =
+export const firebaseAdminApp =
     getApps().length > 0
         ? getApps()[0]
         : initializeApp({
             credential: cert(serviceAccount),
         });
-
-export default firebaseAdminApp;
