@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ActivationStatus } from './enums/activation-status.js';
+import { ActivationStatus } from './enums/activation-status';
 
 import {
     createServiceCategorySchema,
@@ -12,7 +12,7 @@ import {
 import {
     DataResponses,
     Filter,
-} from './query.model.js';
+} from './query.model';
 
 export interface ServiceCategory {
     uuid: string;
@@ -25,6 +25,6 @@ export interface ServiceCategory {
 }
 
 export interface ServiceCategoryResponse extends ServiceCategory, DataResponses {}
-export type CreateServiceCategory = z.infer<typeof createServiceCategorySchema>;
-export type UpdateServiceCategory = z.infer<typeof updateServiceCategorySchema> & { uuid: string; };
+export type CreateServiceCategory = z.infer<typeof createServiceCategorySchema>&{picturePath?:string,picturePathId?:string};
+export type UpdateServiceCategory = z.infer<typeof updateServiceCategorySchema> & { uuid: string,picturePath?:string,picturePathId?:string};
 export type QueryServiceCategory = z.infer<typeof queryServiceCategorySchema> & { offset: number; };

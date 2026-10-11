@@ -1,193 +1,76 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-import { querySchema } from "./query.schema.js";
+import { querySchema } from './query.schema';
 
 import {
     SORT_BY_DAY_OF_WEEK,
     SORT_BY_START_TIME,
     SORT_BY_END_TIME,
-} from "../../databases/contracts/working-hours.contract.js";
+} from '../../databases/contracts/working-hours.contract';
 
-import { DayOfWeek } from "../../models/enums/day-of-week.js";
+import { DayOfWeek } from '../../models/enums/day-of-week';
 
-const timeSchema = z
-    .string()
-    .regex(
-        /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/,
-        "Invalid time",
-    );
-
-export const updateWorkingHoursDaySchema = z
-    .object({
-        dayOfWeek: z.enum(DayOfWeek),
-
-        startTime: timeSchema.nullable(),
-
-        endTime: timeSchema.nullable(),
-    })
-    .strict()
-    .superRefine((data, ctx) => {
-        const { startTime, endTime } = data;
-
-        const startIsSet = startTime !== null;
-        const endIsSet = endTime !== null;
-
-        if (startIsSet !== endIsSet) {
-            if (!startIsSet) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["startTime"],
-                    message:
-                        "Start time is required when end time is set",
-                });
-            }
-
-            if (!endIsSet) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["endTime"],
-                    message:
-                        "End time is required when start time is set",
-                });
-            }
-
-            return;
-        }
-
-        if (
-            startTime !== null &&
-            endTime !== null &&
-            startTime >= endTime
-        ) {
+export const updateDayWorkingHoursSchema = z.object({
+    startTime: z.iso.time({ precision: -1, error: 'Start time must be a valid time'}).nullable(),
+    endTime: z.iso.time({ precision: -1, error: 'End time must be a valid time'}).nullable(),
+}).strict().superRefine((data, ctx) => {
+    const { startTime, endTime } = data;
+    const startIsSet = startTime !== null;
+    const endIsSet = endTime !== null;
+    if (startIsSet !== endIsSet) {
+        if (!startIsSet) {
             ctx.addIssue({
-                code: "custom",
-                path: ["endTime"],
-                message: "End time must be after start time",
-            });
-        }
-    });
-
-/**
- * Existing single-day update schema.
- *
- * Used when updating one working-hours row by UUID.
- */
-export const updateWorkingHoursSchema = z
-    .object({
-        startTime: timeSchema.nullable().optional(),
-
-        endTime: timeSchema.nullable().optional(),
-    })
-    .strict()
-    .superRefine((data, ctx) => {
-        const { startTime, endTime } = data;
-
-        if (
-            startTime !== undefined &&
-            endTime !== undefined
-        ) {
-            const startIsSet = startTime !== null;
-            const endIsSet = endTime !== null;
-
-            if (startIsSet !== endIsSet) {
-                if (!startIsSet) {
-                    ctx.addIssue({
-                        code: "custom",
-                        path: ["startTime"],
-                        message:
-                            "Start time is required when end time is set",
-                    });
-                }
-
-                if (!endIsSet) {
-                    ctx.addIssue({
-                        code: "custom",
-                        path: ["endTime"],
-                        message:
-                            "End time is required when start time is set",
-                    });
-                }
-
-                return;
-            }
-
-            if (
-                startTime !== null &&
-                endTime !== null &&
-                startTime >= endTime
-            ) {
-                ctx.addIssue({
-                    code: "custom",
-                    path: ["endTime"],
-                    message: "End time must be after start time",
-                });
-            }
-        }
-    });
-
-/**
- * Updates one or more days of an organization's working hours.
- */
-export const updateOrganizationWorkingHoursSchema = z
-    .object({
-        days: z
-            .array(updateWorkingHoursDaySchema)
-            .min(
-                1,
-                "At least one working-hours day is required",
-            )
-            .max(
-                7,
-                "A maximum of 7 working-hours days can be updated",
-            ),
-    })
-    .strict()
-    .superRefine((data, ctx) => {
-        const days = data.days.map(
-            (day) => day.dayOfWeek,
-        );
-
-        const uniqueDays = new Set(days);
-
-        if (uniqueDays.size !== days.length) {
-            ctx.addIssue({
-                code: "custom",
-                path: ["days"],
+                code: 'custom',
+                path: ['startTime'],
                 message:
-                    "Each day of the week can only be included once",
+                    'Start time is required when end time is set',
             });
         }
-    });
+        if (!endIsSet) {
+            ctx.addIssue({
+                code: 'custom',
+                path: ['endTime'],
+                message:
+                    'End time is required when start time is set',
+            });
+        }
+        return;
+    }
+    if (startIsSet && endIsSet && startTime >= endTime) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['endTime'],
+            message: 'End time must be after start time',
+        });
+    }
+});
 
-export const workingHoursFilterSchema = z
-    .object({
-        organizationUuid: z
-            .uuid("Invalid organization UUID")
-            .optional(),
+const updateWorkingHours = updateDayWorkingHoursSchema.extend({
+    dayOfWeek: z.enum(DayOfWeek, { error: 'Day of week is required'})
+}).strict()
 
-        dayOfWeek: z
-            .enum(DayOfWeek)
-            .optional(),
-    })
-    .strict();
 
-export const queryWorkingHoursSchema = querySchema
-    .extend({
-        search: z
-            .string()
-            .trim()
-            .nonempty()
-            .max(256)
-            .optional(),
+export const updateWorkingHoursSchema = z.object({
+    days: z.array(updateWorkingHours).min(1, { error: 'At least one working-hours day is required'}).max(7, { error: 'A maximum of 7 working-hours days can be updated'})
+}).strict().superRefine((data, ctx) => {
+    const uniqueDays = new Set(data.days.map(day => day.dayOfWeek));
+    if (uniqueDays.size !== data.days.length) {
+        ctx.addIssue({
+            code: 'custom',
+            path: ['days'],
+            message:
+                'Each day of the week can only be included once',
+        });
+    }
+});
 
+export const workingHoursFilterSchema = z.object({
+    organizationUuid: z.uuid({ error: 'Invalid organization UUID'}).optional(),
+    dayOfWeek: z.enum(DayOfWeek, { error: 'Invalid day of week filter'}).optional(),
+}).strict();
+
+export const queryWorkingHoursSchema = querySchema.extend({
+        search: z.string().trim().nonempty({ error: 'Search cannot be empty'}).max(256, { error: 'Search must be at most 256 characters'}).optional(),
         filter: workingHoursFilterSchema.optional(),
-
-        sortBy: z
-            .enum([
-                SORT_BY_DAY_OF_WEEK,
-                SORT_BY_START_TIME,
-                SORT_BY_END_TIME,
-            ])
-            .optional(),
-    })
-    .strict();
+        sortBy: z.enum([SORT_BY_DAY_OF_WEEK, SORT_BY_START_TIME, SORT_BY_END_TIME], { error: 'Invalid sort field'}).optional(),
+}).strict();

@@ -1,20 +1,14 @@
-import type {CookieOptions, NextFunction, Request, Response} from "express";
-import {UnauthorizedError} from "../../errors/unauthorized.error.js";
-import {generateToken, refreshTokenExpiresIn} from "./jwt.authentication.controller.js";
-import {UserResponse} from "../../models/user.model.js";
-import {getUserUidByUuid, getUser, getUserByFireBaseUid, getUserById} from "../../services/user.service.js";
-import {  firebaseAdminApp } from "../../config/firebase.js";
-
-import {} from "../../utils/Request"
-import {RefreshToken} from "../../models/refresh-token.model.js";
-import {
-    createBlacklistedToken,
-    revokeToken,
-    getRefreshToken,
-    removeToken
-} from "../../services/jwt-management-service.js";
-import {BlacklistedToken, CreateBlacklistedToken} from "../../models/blacklisted-token.model.js";
+import type {CookieOptions, Request, Response} from "express";
+import {UnauthorizedError} from "../../errors/unauthorized.error";
+import {generateToken, refreshTokenExpiresIn} from "./jwt.authentication.controller";
+import {UserResponse} from "../../models/user.model";
+import {getUserUidByUuid, getUserByFireBaseUid, getUserById} from "../../services/user.service";
+import {  firebaseAdminApp } from "../../config/firebase";
+import {RefreshToken} from "../../models/refresh-token.model";
+import { CreateBlacklistedToken} from "../../models/blacklisted-token.model";
 import {getAuth} from "firebase-admin/auth";
+import { createBlacklistedToken, getRefreshToken, removeToken, revokeToken } from '../../services/jwt-management-service';
+
 //Cookie options look up best practises
 const cookieOptions:CookieOptions = {
     httpOnly:true,
@@ -26,37 +20,33 @@ const accessCookieOptions: CookieOptions = cookieOptions&& {maxAge:
             ? 25 * 60 * 60 * 1000
             : 13 * 60 * 60 * 1000,
 };
-
 const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:refreshTokenExpiresIn+60*60*1000}
 
-export async function login(req: Request, res: Response, next: NextFunction,){
-    try {
-        const { idToken } = req.body;
-        if (!idToken) {
-            throw new UnauthorizedError();
-        }
-        const decodedToken = await getAuth(firebaseAdminApp).verifyIdToken(
-            idToken,
-        );
-        const uid = decodedToken.uid;
-        const user: UserResponse = await getUserByFireBaseUid(uid);
-        const tokens = await generateToken(uid);
-        res.cookie(
-            'accessToken',
-            tokens.accessToken,
-            accessCookieOptions,
-        );
-        res.cookie(
-            'refreshToken',
-            tokens.refreshToken,
-            refreshCookieOptions,
-        );
-        res.status(200).json(user);
-    } catch (error) {
-        next(error);
+export async function login(req: Request, res: Response, ){
+    const { idToken } = req.body;
+    if (!idToken) {
+        throw new UnauthorizedError();
     }
+    const decodedToken = await getAuth(firebaseAdminApp).verifyIdToken(
+        idToken,
+    );
+    const uid = decodedToken.uid;
+    const user: UserResponse = await getUserByFireBaseUid(uid);
+    const tokens = await generateToken(uid);
+    res.cookie(
+        'accessToken',
+        tokens.accessToken,
+        accessCookieOptions,
+    );
+    res.cookie(
+        'refreshToken',
+        tokens.refreshToken,
+        refreshCookieOptions,
+    );
+    res.status(200).json(user);
 }
-export async function refreshToken(req: Request, res: Response, next: NextFunction){
+
+export async function refreshToken(req: Request, res: Response){
     const refreshTokenString=req.cookies.refreshToken as string;
     if(refreshTokenString===undefined){
         throw new UnauthorizedError()
@@ -81,7 +71,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
     res.status(200).json({user});
 }
 
-export async function logOut(req: Request, res: Response, next: NextFunction){
+export async function logOut(req: Request, res: Response){
     const blackListedToken:CreateBlacklistedToken={
         jti:req.user?.jti as string,
         expiresAtUTC:req.user?.exp as Date,

@@ -1,183 +1,126 @@
-import {
-    and,
-    asc,
-    desc,
-    eq,
-    ilike,
-    or,
-    sql,
-} from "drizzle-orm";
-import { drizzleConnection } from "../databases/drizzle-connection.js";
-import { workingHoursTable } from "../drizzle-schemas/working-hours.db.js";
-import { organizationTable } from "../drizzle-schemas/organizations.db.js";
+import { and, asc, count, desc, eq, ilike } from "drizzle-orm";
+import { drizzleConnection } from "../databases/drizzle-connection";
+import { workingHoursTable } from "../drizzle-schemas/working-hours.db";
+import { organizationTable } from "../drizzle-schemas/organizations.db";
 import type {
     CreateWorkingHours,
     QueryWorkingHours,
-    UpdateWorkingHours, UpdateWorkingHoursDay,
+    UpdateWorkingHours,
+    UpdateDayWorkingHours,
     WorkingHours,
     WorkingHoursResponse,
-} from "../models/working-hours.model.js";
-import { DayOfWeek } from "../models/enums/day-of-week.js";
-const workingHoursSelect = {
-    uuid: workingHoursTable.uuid,
-    dayOfWeek: workingHoursTable.dayOfWeek,
-    startTime: workingHoursTable.startTime,
-    endTime: workingHoursTable.endTime,
-};
-const workingHoursResponseSelect = {
-    ...workingHoursSelect,
-
-    organizationUuid: organizationTable.uuid,
-    organizationName: organizationTable.name,
-};
+} from "../models/working-hours.model";
+import { Order } from "../models/enums/order";
+import { PoolClient } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { SORT_BY_DAY_OF_WEEK, SORT_BY_END_TIME, SORT_BY_START_TIME } from '../databases/contracts/working-hours.contract';
+import { mapDatabaseError } from '../utils/map/map-database-error';
 
 export async function findAll(query: QueryWorkingHours): Promise<WorkingHoursResponse[]> {
-    const conditions = [];
-    if (query.filter?.organizationUuid) {
-        conditions.push(eq(organizationTable.uuid, query.filter.organizationUuid));
+    const { search, filter, sortBy, order, limit, offset } = query;
+    const conditions = [eq(organizationTable.uuid, query.filter?.organizationUuid as string)];
+    const sortColumnsDefinition = {
+        [SORT_BY_DAY_OF_WEEK]: workingHoursTable.dayOfWeek,
+        [SORT_BY_START_TIME]: workingHoursTable.startTime,
+        [SORT_BY_END_TIME]: workingHoursTable.endTime,
+    };
+    if (search) {
+        const searchValue = `%${search}%`;
+        conditions.push(ilike(workingHoursTable.dayOfWeek, searchValue));
     }
-    if (query.filter?.dayOfWeek) {
-        conditions.push(eq(workingHoursTable.dayOfWeek, query.filter.dayOfWeek));
+    if (filter?.dayOfWeek) {
+        conditions.push(eq(workingHoursTable.dayOfWeek, filter.dayOfWeek));
     }
-    if (query.search) {
-        conditions.push(ilike(workingHoursTable.dayOfWeek, `%${query.search}%`));
-    }
-    let orderBy;
-    switch (query.sortBy) {
-        case "startTime":
-            orderBy = query.order?.toUpperCase() === "DESC" ? desc(workingHoursTable.startTime) : asc(workingHoursTable.startTime);
-            break;
-        case "endTime":
-            orderBy = query.order?.toUpperCase() === "DESC" ? desc(workingHoursTable.endTime) : asc(workingHoursTable.endTime);
-            break;
-        case "dayOfWeek":
-        default:
-            orderBy = query.order?.toUpperCase() === "DESC" ? desc(workingHoursTable.dayOfWeek) : asc(workingHoursTable.dayOfWeek);
-            break;
-    }
-    return drizzleConnection
-        .select(workingHoursResponseSelect)
+    const sortColumn = sortColumnsDefinition[sortBy ?? SORT_BY_DAY_OF_WEEK];
+    const sortOrder = order?.toUpperCase() === Order.DESC ? desc(sortColumn) : asc(sortColumn);
+    return await drizzleConnection
+        .select({ uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime, organizationUuid: organizationTable.uuid,organizationName: organizationTable.name })
         .from(workingHoursTable)
-        .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(orderBy, asc(workingHoursTable.uuid))
-        .limit(query.limit)
-        .offset(query.offset as number);
+        .innerJoin(organizationTable, eq(organizationTable.id, workingHoursTable.organizationId))
+        .where(and(...conditions))
+        .orderBy(sortOrder, asc(workingHoursTable.uuid))
+        .limit(limit)
+        .offset(offset as number);
 }
 
 export async function countAll(query: QueryWorkingHours): Promise<number> {
-    const conditions = [];
-    if (query.filter?.organizationUuid) {
-        conditions.push(eq(organizationTable.uuid, query.filter.organizationUuid));
+    const { search, filter} = query;
+    const conditions = [eq(organizationTable.uuid, query.filter?.organizationUuid as string)];
+    if (search) {
+        const searchValue = `%${search}%`;
+        conditions.push(ilike(workingHoursTable.dayOfWeek, searchValue));
     }
-    if (query.filter?.dayOfWeek) {
-        conditions.push(eq(workingHoursTable.dayOfWeek, query.filter.dayOfWeek));
+    if (filter?.dayOfWeek) {
+        conditions.push(eq(workingHoursTable.dayOfWeek, filter.dayOfWeek));
     }
-    if (query.search) {
-        conditions.push(ilike(workingHoursTable.dayOfWeek, `%${query.search}%`));
-    }
-    const result = await drizzleConnection
-        .select({count: sql<number>`count(*)`,})
+    const [result] = await drizzleConnection
+        .select({ totalNumberOfWorkingHours: count(), })
         .from(workingHoursTable)
-        .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id,))
-        .where(conditions.length > 0 ? and(...conditions) : undefined,)
-    return Number(result[0]?.count ?? 0);
+        .innerJoin(organizationTable, eq(organizationTable.id, workingHoursTable.organizationId),)
+        .where(and(...conditions));
+    return result.totalNumberOfWorkingHours;
 }
 
-export async function findByUuid(organizationUuid: string, workingHoursUuid: string): Promise<WorkingHoursResponse | undefined> {
-    return (await drizzleConnection
-            .select(workingHoursResponseSelect)
-            .from(workingHoursTable)
-            .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
-            .where(and(eq(organizationTable.uuid, organizationUuid,), eq(workingHoursTable.uuid, workingHoursUuid))))[0];
+export async function findByUuid(workingHoursUuid: string, organizationUuid: string): Promise<WorkingHoursResponse> {
+    const [result] = await drizzleConnection
+        .select({ uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime, organizationUuid: organizationTable.uuid,organizationName: organizationTable.name })
+        .from(workingHoursTable)
+        .innerJoin(organizationTable, eq(organizationTable.id, workingHoursTable.organizationId))
+        .where(and(eq(workingHoursTable.uuid, workingHoursUuid), eq(organizationTable.uuid, organizationUuid)),);
+    return result;
 }
 
-export async function createWorkingDays(workingDays: CreateWorkingHours[]): Promise<WorkingHours[]> {
-    if (workingDays.length === 0) {
-        return [];
+export async function createWorkingDays(workingDays: CreateWorkingHours[], client?: PoolClient): Promise<WorkingHours[]> {
+    const db = client ? drizzle(client) : drizzleConnection;
+    try{
+        return await db
+            .insert(workingHoursTable)
+            .values(workingDays)
+            .onConflictDoNothing({ target: [workingHoursTable.organizationId,workingHoursTable.dayOfWeek]})
+            .returning({uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime})
+    } catch (error) {
+        mapDatabaseError(error)
     }
-    return await drizzleConnection
-        .insert(workingHoursTable)
-        .values(workingDays)
-        .onConflictDoNothing({target: [workingHoursTable.organizationId,workingHoursTable.dayOfWeek]})
-        .returning(workingHoursSelect);
 }
 
-
-export async function update(organizationId: number, workingHours: UpdateWorkingHours,): Promise<WorkingHours|null> {
-    const updateValues: Partial<typeof workingHoursTable.$inferInsert> = {};
-    if (workingHours.startTime !== undefined) {
-        updateValues.startTime = workingHours.startTime;
+export async function updateDay(workingHours: UpdateDayWorkingHours): Promise<WorkingHours> {
+    try{
+        const [result] = await drizzleConnection
+            .update(workingHoursTable)
+            .set({
+                ...(workingHours.startTime !== undefined && { startTime: workingHours.startTime}),
+                ...(workingHours.endTime !== undefined && { endTime: workingHours.endTime})
+            })
+            .where(and(eq(workingHoursTable.uuid, workingHours.uuid), eq(workingHoursTable.organizationId, workingHours.organizationId)))
+            .returning({uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime})
+        return result;
+    }catch (error) {
+        mapDatabaseError(error)
     }
-    if (workingHours.endTime !== undefined) {
-        updateValues.endTime = workingHours.endTime ;
-    }
-    if (Object.keys(updateValues).length === 0) {
-        return null;
-    }
-    const [updated] = await drizzleConnection
-        .update(workingHoursTable)
-        .set(updateValues)
-        .where(and(eq(workingHoursTable.uuid, workingHours.uuid), eq(workingHoursTable.organizationId, organizationId,),),)
-        .returning(workingHoursSelect);
-    return (updated as WorkingHours) ?? null;
 }
 
-
-export async function updateWeek(
-    organizationId: number,
-    days: UpdateWorkingHoursDay[],
-): Promise<WorkingHours[]> {
-    return await drizzleConnection.transaction(
-        async (tx) => {
-            const updatedDays: WorkingHours[] = [];
-
-            for (const day of days) {
-                const [updated] =
-                    await tx
+export async function updateDays(workingHours: UpdateWorkingHours): Promise<WorkingHours[]> {
+    try{
+        return await drizzleConnection.transaction(
+            async (client) => {
+                const updatedDays: WorkingHours[] = [];
+                for (const day of workingHours.days) {
+                    const [result] = await client
                         .update(workingHoursTable)
                         .set({
-                            startTime: day.startTime,
-                            endTime: day.endTime,
+                            ...(day.startTime !== undefined && { startTime: day.startTime}),
+                            ...(day.endTime !== undefined && { endTime: day.endTime})
                         })
-                        .where(
-                            and(
-                                eq(
-                                    workingHoursTable.organizationId,
-                                    organizationId,
-                                ),
-                                eq(
-                                    workingHoursTable.dayOfWeek,
-                                    day.dayOfWeek,
-                                ),
-                            ),
-                        )
-                        .returning(
-                            workingHoursSelect,
-                        );
-
-                if (updated === undefined) {
-                    throw new Error(
-                        `Working hours for ${day.dayOfWeek} were not found`,
-                    );
+                        .where(and(eq(workingHoursTable.organizationId, workingHours.organizationId), eq(workingHoursTable.dayOfWeek, day.dayOfWeek)))
+                        .returning({uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime})
+                    if (result === undefined) {
+                        return updatedDays;
+                    }
+                    updatedDays.push(result);
                 }
-
-                updatedDays.push(updated);
-            }
-
-            return updatedDays;
-        },
-    );
-}
-
-export async function findTodayWorkingHours(
-    organizationUuid: string,
-    day: DayOfWeek,
-): Promise<WorkingHours | undefined> {
-    return (
-        await drizzleConnection
-            .select(workingHoursSelect)
-            .from(workingHoursTable)
-            .innerJoin(organizationTable, eq(workingHoursTable.organizationId, organizationTable.id))
-            .where(and(eq(organizationTable.uuid, organizationUuid), eq(workingHoursTable.dayOfWeek, day))))[0];
+                return updatedDays;
+            });
+    }catch (error){
+        mapDatabaseError(error)
+    }
 }

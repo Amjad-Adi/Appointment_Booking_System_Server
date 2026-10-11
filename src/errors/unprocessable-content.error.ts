@@ -1,4 +1,4 @@
-import {AppError} from "./app-error.js";
+import {AppError} from "./app-error";
 export class UnprocessableContentError extends AppError {
     code:string;
     constructor() {

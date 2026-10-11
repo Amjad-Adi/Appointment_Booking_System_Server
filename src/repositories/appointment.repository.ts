@@ -1,1477 +1,392 @@
-import {
-    and,
-    asc,
-    desc,
-    eq,
-    ilike,
-    or,
-    sql,
-    type SQL,
-} from "drizzle-orm";
-
+import { and, asc, count, desc, eq, gte, ilike, inArray, lt, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { drizzleConnection } from "../databases/drizzle-connection";
+import { appointmentTable } from "../drizzle-schemas/appointment.db";
+import { organizationTable } from "../drizzle-schemas/organizations.db";
+import { usersTable } from "../drizzle-schemas/users.db";
+import { serviceTable } from "../drizzle-schemas/services.db";
+import { roomTable } from "../drizzle-schemas/rooms.db";
+import { UserAppointmentResponse, OrganizationAppointmentResponse, CreateAppointment, CreateOrganizationAppointment, QueryAppointment, UpdateAppointmentByUserValues, UpdateAppointmentByOrganizationValues, ACTIVE_APPOINTMENT_STATUSES } from "../models/appointment.model";
+import { AppointmentStatus } from "../models/enums/appointment-status";
+import { PaymentStatus } from "../models/enums/payment-status";
+import { PaymentMethod } from "../models/enums/payment-method";
+import { Order } from '../models/enums/order';
 
-import { drizzleConnection } from "../databases/drizzle-connection.js";
+const workerUsersTable = alias(usersTable, "worker");
+const approvalUsersTable = alias(usersTable, "approvalUser");
 
-import { appointmentTable } from "../drizzle-schemas/appointment.db.js";
-import { organizationTable } from "../drizzle-schemas/organizations.db.js";
-import { usersTable } from "../drizzle-schemas/users.db.js";
-import { serviceTable } from "../drizzle-schemas/service.db.js";
-import { roomTable } from "../drizzle-schemas/room.db.js";
+function organizationIdSubquery(organizationUuid: string) {
+    return sql<number>`(select ${organizationTable.id} from ${organizationTable} where ${organizationTable.uuid} = ${organizationUuid})`;
+}
 
-import type {
-    UserAppointmentResponse,
-    OrganizationAppointmentResponse,
-    CreateAppointment,
-    CreateOrganizationAppointment,
-    QueryAppointment,
-} from "../models/appointment.model.js";
+function userIdSubquery(userUuid: string) {
+    return sql<number>`(select ${usersTable.id} from ${usersTable} where ${usersTable.uuid} = ${userUuid})`;
+}
 
-import { AppointmentStatus } from "../models/enums/appointment-status.js";
-import { PaymentStatus } from "../models/enums/payment-status.js";
-import { PaymentMethod } from "../models/enums/payment-method.js";
+function approvalUserIdSubquery(approvalUserUuid: string) {
+    return sql<number>`(select ${approvalUsersTable.id} from ${approvalUsersTable} where ${approvalUsersTable.uuid} = ${approvalUserUuid})`;
+}
 
-
-const workerUsersTable =
-    alias(
-        usersTable,
-        "worker",
-    );
-
-const approvalUsersTable =
-    alias(
-        usersTable,
-        "approvalUser",
-    );
-
-
-/*
- * Organization-side appointment select.
- *
- * Includes organization-owned information and
- * related entity names.
- */
-const organizationAppointmentSelect = {
-    uuid:
-    appointmentTable.uuid,
-
-    userUuid:
-    usersTable.uuid,
-
-    userName:
-        sql<string>`
-            ${usersTable.firstName}
-            || ' '
-            || ${usersTable.lastName}
-        `,
-
-    organizationUuid:
-    organizationTable.uuid,
-
-    organizationName:
-    organizationTable.name,
-
-    serviceUuid:
-    serviceTable.uuid,
-
-    serviceName:
-    serviceTable.name,
-
-    workerUuid:
-    workerUsersTable.uuid,
-
-    workerName:
-        sql<string>`
-            ${workerUsersTable.firstName}
-            || ' '
-            || ${workerUsersTable.lastName}
-        `,
-
-    roomUuid:
-    roomTable.uuid,
-
-    roomName:
-    roomTable.name,
-
-    approvalUserUuid:
-    approvalUsersTable.uuid,
-
-    approvalUserName:
-        sql<string | null>`
-            ${approvalUsersTable.firstName}
-            || ' '
-            || ${approvalUsersTable.lastName}
-        `,
-
-    organizationTitle:
-    appointmentTable.organizationTitle,
-
-    organizationNote:
-    appointmentTable.organizationNote,
-
-    organizationColour:
-    appointmentTable.organizationColour,
-
-    scheduledStartAtUTC:
-        sql<string>`
-            ${appointmentTable.scheduledStartAtUTC}
-        `,
-
-    scheduledEndAtUTC:
-        sql<string>`
-            ${appointmentTable.scheduledEndAtUTC}
-        `,
-
-    actualStartAtUTC:
-        sql<string | null>`
-            ${appointmentTable.actualStartAtUTC}
-        `,
-
-    actualEndAtUTC:
-        sql<string | null>`
-            ${appointmentTable.actualEndAtUTC}
-        `,
-
-    appointmentStatus:
-    appointmentTable.appointmentStatus,
-
-    rejectionReason:
-    appointmentTable.rejectionReason,
-
-    paymentMethod:
-    appointmentTable.paymentMethod,
-
-    paymentStatus:
-    appointmentTable.paymentStatus,
-
-    paidAtUTC:
-        sql<string | null>`
-            ${appointmentTable.paidAtUTC}
-        `,
-
-    createdAtUTC:
-        sql<string>`
-            ${appointmentTable.createdAtUTC}
-        `,
-
-    updatedAtUTC:
-        sql<string>`
-            ${appointmentTable.updatedAtUTC}
-        `,
-};
-
-
-/*
- * User-side appointment select.
- *
- * Organization-private fields are intentionally
- * excluded:
- *
- * - organizationName
- * - organizationTitle
- * - organizationNote
- * - organizationColour
- * - approvalUserUuid
- * - approvalUserName
- */
-const userAppointmentSelect = {
-    uuid:
-    appointmentTable.uuid,
-
-    userUuid:
-    usersTable.uuid,
-
-    userName:
-        sql<string>`
-            ${usersTable.firstName}
-            || ' '
-            || ${usersTable.lastName}
-        `,
-
-    organizationUuid:
-    organizationTable.uuid,
-
-    organizationName:
-    organizationTable.name,
-    serviceUuid:
-    serviceTable.uuid,
-
-    serviceName:
-    serviceTable.name,
-
-    workerUuid:
-    workerUsersTable.uuid,
-
-    workerName:
-        sql<string>`
-            ${workerUsersTable.firstName}
-            || ' '
-            || ${workerUsersTable.lastName}
-        `,
-
-    roomUuid:
-    roomTable.uuid,
-
-    roomName:
-    roomTable.name,
-
-    userTitle:
-    appointmentTable.userTitle,
-
-    userNote:
-    appointmentTable.userNote,
-
-    userColour:
-    appointmentTable.userColour,
-
-    scheduledStartAtUTC:
-        sql<string>`
-            ${appointmentTable.scheduledStartAtUTC}
-        `,
-
-    scheduledEndAtUTC:
-        sql<string>`
-            ${appointmentTable.scheduledEndAtUTC}
-        `,
-
-    actualStartAtUTC:
-        sql<string | null>`
-            ${appointmentTable.actualStartAtUTC}
-        `,
-
-    actualEndAtUTC:
-        sql<string | null>`
-            ${appointmentTable.actualEndAtUTC}
-        `,
-
-    appointmentStatus:
-    appointmentTable.appointmentStatus,
-
-    rejectionReason:
-    appointmentTable.rejectionReason,
-
-    paymentMethod:
-    appointmentTable.paymentMethod,
-
-    paymentStatus:
-    appointmentTable.paymentStatus,
-
-    paidAtUTC:
-        sql<string | null>`
-            ${appointmentTable.paidAtUTC}
-        `,
-
-    createdAtUTC:
-        sql<string>`
-            ${appointmentTable.createdAtUTC}
-        `,
-
-    updatedAtUTC:
-        sql<string>`
-            ${appointmentTable.updatedAtUTC}
-        `,
-};
-
-
-/*
- * Builds common appointment filtering conditions.
- *
- * `includeOrganizationPrivateSearch` is true for
- * organization-side queries and false for user-side
- * queries.
- */
-function buildConditions(
-    query: QueryAppointment,
-    includeOrganizationPrivateSearch: boolean,
-): SQL[] {
+function buildConditions(query: QueryAppointment, includeOrganizationPrivateSearch: boolean) {
+    const filter = query.filter;
     const conditions: SQL[] = [];
 
-    if (query.filter?.organizationUuid) {
+    if (filter?.organizationUuid) {
+        conditions.push(eq(organizationTable.uuid, filter.organizationUuid));
+    }
+
+    if (filter?.appointmentStatus) {
+        conditions.push(eq(appointmentTable.appointmentStatus, filter.appointmentStatus));
+    }
+
+    if (filter?.userUuid) {
+        conditions.push(eq(usersTable.uuid, filter.userUuid));
+    }
+
+    if (filter?.serviceUuid) {
+        conditions.push(eq(serviceTable.uuid, filter.serviceUuid));
+    }
+
+    if (filter?.workerUuid) {
+        conditions.push(eq(workerUsersTable.uuid, filter.workerUuid));
+    }
+
+    if (filter?.roomUuid) {
+        conditions.push(eq(roomTable.uuid, filter.roomUuid));
+    }
+
+    if (filter?.approvalUserUuid) {
+        conditions.push(eq(approvalUsersTable.uuid, filter.approvalUserUuid));
+    }
+
+    if (filter?.paymentMethod) {
+        conditions.push(eq(appointmentTable.paymentMethod, filter.paymentMethod));
+    }
+
+    if (filter?.paymentStatus) {
+        conditions.push(eq(appointmentTable.paymentStatus, filter.paymentStatus));
+    }
+
+    if (filter?.appointmentDate) {
         conditions.push(
-            eq(
-                organizationTable.uuid,
-                query.filter.organizationUuid,
-            ),
+            and(
+                gte(appointmentTable.scheduledStartAtUTC, sql`${filter.appointmentDate}::date::timestamp AT TIME ZONE 'UTC'`),
+                lt(appointmentTable.scheduledStartAtUTC, sql`(${filter.appointmentDate}::date + interval '1 day')::timestamp AT TIME ZONE 'UTC'`),
+            )!,
         );
     }
 
-    if (query.filter?.appointmentStatus) {
+    if (filter?.fromDate) {
         conditions.push(
-            eq(
-                appointmentTable.appointmentStatus,
-                query.filter.appointmentStatus,
-            ),
+            gte(appointmentTable.scheduledStartAtUTC, sql`${filter.fromDate}::date::timestamp AT TIME ZONE 'UTC'`),
         );
     }
 
-    if (query.filter?.userUuid) {
+    if (filter?.toDate) {
         conditions.push(
-            eq(
-                usersTable.uuid,
-                query.filter.userUuid,
-            ),
-        );
-    }
-
-    if (query.filter?.serviceUuid) {
-        conditions.push(
-            eq(
-                serviceTable.uuid,
-                query.filter.serviceUuid,
-            ),
-        );
-    }
-
-    if (query.filter?.workerUuid) {
-        conditions.push(
-            eq(
-                workerUsersTable.uuid,
-                query.filter.workerUuid,
-            ),
-        );
-    }
-
-    if (query.filter?.roomUuid) {
-        conditions.push(
-            eq(
-                roomTable.uuid,
-                query.filter.roomUuid,
-            ),
-        );
-    }
-
-    if (query.filter?.approvalUserUuid) {
-        conditions.push(
-            eq(
-                approvalUsersTable.uuid,
-                query.filter.approvalUserUuid,
-            ),
-        );
-    }
-
-    if (query.filter?.paymentMethod) {
-        conditions.push(
-            eq(
-                appointmentTable.paymentMethod,
-                query.filter.paymentMethod,
-            ),
-        );
-    }
-
-    if (query.filter?.paymentStatus) {
-        conditions.push(
-            eq(
-                appointmentTable.paymentStatus,
-                query.filter.paymentStatus,
-            ),
-        );
-    }
-
-    /*
-     * Appointment date.
-     *
-     * >= date
-     * < date + 1 day
-     */
-    if (query.filter?.appointmentDate) {
-        conditions.push(
-            sql`
-                ${appointmentTable.scheduledStartAtUTC}
-                >=
-                ${query.filter.appointmentDate}::date
-
-                AND
-
-                ${appointmentTable.scheduledStartAtUTC}
-                <
-                (
-                ${query.filter.appointmentDate}::date
-                + INTERVAL '1 day'
-                )
-            `,
-        );
-    }
-
-    if (query.filter?.fromDate) {
-        conditions.push(
-            sql`
-                ${appointmentTable.scheduledStartAtUTC}
-                >=
-                ${query.filter.fromDate}::date
-            `,
-        );
-    }
-
-    if (query.filter?.toDate) {
-        conditions.push(
-            sql`
-                ${appointmentTable.scheduledStartAtUTC}
-                <
-                (
-                ${query.filter.toDate}::date
-                + INTERVAL '1 day'
-                )
-            `,
+            lt(appointmentTable.scheduledStartAtUTC, sql`(${filter.toDate}::date + interval '1 day')::timestamp AT TIME ZONE 'UTC'`),
         );
     }
 
     if (query.search) {
-        const searchValue =
-            `%${query.search}%`;
-
+        const searchPattern = `%${query.search}%`;
         const searchConditions: SQL[] = [
-            ilike(
-                appointmentTable.userTitle,
-                searchValue,
-            ),
-
-            ilike(
-                appointmentTable.userNote,
-                searchValue,
-            ),
-
-            ilike(
-                sql<string>`
-                    ${usersTable.firstName}
-                    || ' '
-                    || ${usersTable.lastName}
-                `,
-                searchValue,
-            ),
-
-            ilike(
-                serviceTable.name,
-                searchValue,
-            ),
-
-            ilike(
-                sql<string>`
-                    ${workerUsersTable.firstName}
-                    || ' '
-                    || ${workerUsersTable.lastName}
-                `,
-                searchValue,
-            ),
-
-            ilike(
-                roomTable.name,
-                searchValue,
-            ),
+            ilike(appointmentTable.userTitle, searchPattern),
+            ilike(appointmentTable.userNote, searchPattern),
+            ilike(usersTable.firstName, searchPattern),
+            ilike(usersTable.lastName, searchPattern),
+            ilike(serviceTable.name, searchPattern),
+            ilike(workerUsersTable.firstName, searchPattern),
+            ilike(workerUsersTable.lastName, searchPattern),
+            ilike(roomTable.name, searchPattern),
         ];
 
-        /*
-         * Organization-private fields may only be
-         * searched from organization-side queries.
-         */
         if (includeOrganizationPrivateSearch) {
             searchConditions.push(
-                ilike(
-                    appointmentTable.organizationTitle,
-                    searchValue,
-                ),
-
-                ilike(
-                    appointmentTable.organizationNote,
-                    searchValue,
-                ),
-
-                ilike(
-                    organizationTable.name,
-                    searchValue,
-                ),
+                ilike(appointmentTable.organizationTitle, searchPattern),
+                ilike(appointmentTable.organizationNote, searchPattern),
+                ilike(organizationTable.name, searchPattern),
             );
         }
 
-        const searchCondition =
-            or(...searchConditions);
-
-        if (searchCondition) {
-            conditions.push(
-                searchCondition,
-            );
-        }
+        conditions.push(or(...searchConditions)!);
     }
 
-    return conditions;
+    return conditions.length ? and(...conditions) : undefined;
 }
 
-
-/*
- * Appointment ordering.
- */
-function getOrderBy(
-    query: QueryAppointment,
-) {
-    const isDescending =
-        query.order === "desc";
+function getOrderBy(query: QueryAppointment) {
+    const direction = query.order === Order.ASC ? asc : desc;
 
     switch (query.sortBy) {
-        case "scheduledStartAtUTC":
-            return isDescending
-                ? desc(
-                    appointmentTable.scheduledStartAtUTC,
-                )
-                : asc(
-                    appointmentTable.scheduledStartAtUTC,
-                );
-
         case "scheduledEndAtUTC":
-            return isDescending
-                ? desc(
-                    appointmentTable.scheduledEndAtUTC,
-                )
-                : asc(
-                    appointmentTable.scheduledEndAtUTC,
-                );
-
+            return direction(appointmentTable.scheduledEndAtUTC);
         case "createdAtUTC":
-            return isDescending
-                ? desc(
-                    appointmentTable.createdAtUTC,
-                )
-                : asc(
-                    appointmentTable.createdAtUTC,
-                );
-
+            return direction(appointmentTable.createdAtUTC);
         default:
-            return isDescending
-                ? desc(
-                    appointmentTable.scheduledStartAtUTC,
-                )
-                : asc(
-                    appointmentTable.scheduledStartAtUTC,
-                );
+            return direction(appointmentTable.scheduledStartAtUTC);
     }
 }
 
-
-/*
- * Organization-side query.
- *
- * All related entities are joined here so the
- * response contains both UUIDs and display names.
- */
 function getOrganizationAppointmentQuery() {
     return drizzleConnection
-        .select(
-            organizationAppointmentSelect,
-        )
-        .from(
-            appointmentTable,
-        )
-        .innerJoin(
-            organizationTable,
-            eq(
-                appointmentTable.organizationId,
-                organizationTable.id,
-            ),
-        )
-        .innerJoin(
-            usersTable,
-            eq(
-                appointmentTable.userId,
-                usersTable.id,
-            ),
-        )
-        .innerJoin(
-            serviceTable,
-            eq(
-                appointmentTable.serviceId,
-                serviceTable.id,
-            ),
-        )
-        .innerJoin(
-            roomTable,
-            eq(
-                appointmentTable.roomId,
-                roomTable.id,
-            ),
-        )
-        .innerJoin(
-            workerUsersTable,
-            eq(
-                appointmentTable.workerId,
-                workerUsersTable.id,
-            ),
-        )
-        .leftJoin(
-            approvalUsersTable,
-            eq(
-                appointmentTable.approvalUserId,
-                approvalUsersTable.id,
-            ),
-        );
+        .select({
+            uuid: appointmentTable.uuid,
+            userUuid: usersTable.uuid,
+            userName: sql<string>`concat(${usersTable.firstName}, ' ', ${usersTable.lastName})`,
+            organizationUuid: organizationTable.uuid,
+            organizationName: organizationTable.name,
+            serviceUuid: serviceTable.uuid,
+            serviceName: serviceTable.name,
+            workerUuid: workerUsersTable.uuid,
+            workerName: sql<string>`concat(${workerUsersTable.firstName}, ' ', ${workerUsersTable.lastName})`,
+            roomUuid: roomTable.uuid,
+            roomName: roomTable.name,
+            approvalUserUuid: approvalUsersTable.uuid,
+            approvalUserName: sql<string | null>`case when ${approvalUsersTable.uuid} is null then null else concat(${approvalUsersTable.firstName}, ' ', ${approvalUsersTable.lastName}) end`,
+            organizationTitle: appointmentTable.organizationTitle,
+            organizationNote: appointmentTable.organizationNote,
+            organizationColour: appointmentTable.organizationColour,
+            userTitle: appointmentTable.userTitle,
+            userNote: appointmentTable.userNote,
+            userColour: appointmentTable.userColour,
+            scheduledStartAtUTC: sql<string>`${appointmentTable.scheduledStartAtUTC}::text`,
+            scheduledEndAtUTC: sql<string>`${appointmentTable.scheduledEndAtUTC}::text`,
+            actualStartAtUTC: sql<string | null>`${appointmentTable.actualStartAtUTC}::text`,
+            actualEndAtUTC: sql<string | null>`${appointmentTable.actualEndAtUTC}::text`,
+            appointmentStatus: appointmentTable.appointmentStatus,
+            rejectionReason: appointmentTable.rejectionReason,
+            paymentMethod: appointmentTable.paymentMethod,
+            paymentStatus: appointmentTable.paymentStatus,
+            paidAtUTC: sql<string | null>`${appointmentTable.paidAtUTC}::text`,
+            createdAtUTC: sql<string>`${appointmentTable.createdAtUTC}::text`,
+            updatedAtUTC: sql<string>`${appointmentTable.updatedAtUTC}::text`,
+        })
+        .from(appointmentTable)
+        .innerJoin(organizationTable, eq(appointmentTable.organizationId, organizationTable.id))
+        .innerJoin(usersTable, eq(appointmentTable.userId, usersTable.id))
+        .innerJoin(serviceTable, eq(appointmentTable.serviceId, serviceTable.id))
+        .innerJoin(workerUsersTable, eq(appointmentTable.workerId, workerUsersTable.id))
+        .innerJoin(roomTable, eq(appointmentTable.roomId, roomTable.id))
+        .leftJoin(approvalUsersTable, eq(appointmentTable.approvalUserId, approvalUsersTable.id));
 }
 
-
-/*
- * User-side query.
- *
- * Organization is joined because organizationUuid
- * belongs to UserAppointmentResponse.
- *
- * Organization-private fields are never selected.
- */
 function getUserAppointmentQuery() {
     return drizzleConnection
-        .select(
-            userAppointmentSelect,
-        )
-        .from(
-            appointmentTable,
-        )
-        .innerJoin(
-            organizationTable,
-            eq(
-                appointmentTable.organizationId,
-                organizationTable.id,
-            ),
-        )
-        .innerJoin(
-            usersTable,
-            eq(
-                appointmentTable.userId,
-                usersTable.id,
-            ),
-        )
-        .innerJoin(
-            serviceTable,
-            eq(
-                appointmentTable.serviceId,
-                serviceTable.id,
-            ),
-        )
-        .innerJoin(
-            roomTable,
-            eq(
-                appointmentTable.roomId,
-                roomTable.id,
-            ),
-        )
-        .innerJoin(
-            workerUsersTable,
-            eq(
-                appointmentTable.workerId,
-                workerUsersTable.id,
-            ),
-        );
+        .select({
+            uuid: appointmentTable.uuid,
+            userUuid: usersTable.uuid,
+            userName: sql<string>`concat(${usersTable.firstName}, ' ', ${usersTable.lastName})`,
+            organizationUuid: organizationTable.uuid,
+            organizationName: organizationTable.name,
+            serviceUuid: serviceTable.uuid,
+            serviceName: serviceTable.name,
+            workerUuid: workerUsersTable.uuid,
+            workerName: sql<string>`concat(${workerUsersTable.firstName}, ' ', ${workerUsersTable.lastName})`,
+            roomUuid: roomTable.uuid,
+            roomName: roomTable.name,
+            userTitle: appointmentTable.userTitle,
+            userNote: appointmentTable.userNote,
+            userColour: appointmentTable.userColour,
+            scheduledStartAtUTC: sql<string>`${appointmentTable.scheduledStartAtUTC}::text`,
+            scheduledEndAtUTC: sql<string>`${appointmentTable.scheduledEndAtUTC}::text`,
+            actualStartAtUTC: sql<string | null>`${appointmentTable.actualStartAtUTC}::text`,
+            actualEndAtUTC: sql<string | null>`${appointmentTable.actualEndAtUTC}::text`,
+            appointmentStatus: appointmentTable.appointmentStatus,
+            rejectionReason: appointmentTable.rejectionReason,
+            paymentMethod: appointmentTable.paymentMethod,
+            paymentStatus: appointmentTable.paymentStatus,
+            paidAtUTC: sql<string | null>`${appointmentTable.paidAtUTC}::text`,
+            createdAtUTC: sql<string>`${appointmentTable.createdAtUTC}::text`,
+            updatedAtUTC: sql<string>`${appointmentTable.updatedAtUTC}::text`,
+        })
+        .from(appointmentTable)
+        .innerJoin(organizationTable, eq(appointmentTable.organizationId, organizationTable.id))
+        .innerJoin(usersTable, eq(appointmentTable.userId, usersTable.id))
+        .innerJoin(serviceTable, eq(appointmentTable.serviceId, serviceTable.id))
+        .innerJoin(workerUsersTable, eq(appointmentTable.workerId, workerUsersTable.id))
+        .innerJoin(roomTable, eq(appointmentTable.roomId, roomTable.id))
+        .leftJoin(approvalUsersTable, eq(appointmentTable.approvalUserId, approvalUsersTable.id));
 }
 
-
-/*
- * Find all organization appointments.
- */
-export async function findAllOrganization(
-    query: QueryAppointment,
-): Promise<
-    OrganizationAppointmentResponse[]
-> {
-    const conditions =
-        buildConditions(
-            query,
-            true,
-        );
-
+export async function findAllOrganization(query: QueryAppointment): Promise<OrganizationAppointmentResponse[]> {
     return getOrganizationAppointmentQuery()
-        .where(
-            conditions.length > 0
-                ? and(...conditions)
-                : undefined,
-        )
-        .orderBy(
-            getOrderBy(query),
-            asc(
-                appointmentTable.uuid,
-            ),
-        )
-        .limit(
-            query.limit,
-        )
-        .offset(
-            query.offset,
-        );
+        .where(buildConditions(query, true))
+        .orderBy(getOrderBy(query), asc(appointmentTable.uuid))
+        .limit(query.limit)
+        .offset(query.offset);
 }
 
-
-/*
- * Find all user appointments.
- */
-export async function findAllUser(
-    query: QueryAppointment,
-): Promise<
-    UserAppointmentResponse[]
-> {
-    const conditions =
-        buildConditions(
-            query,
-            false,
-        );
-
+export async function findAllUser(query: QueryAppointment): Promise<UserAppointmentResponse[]> {
     return getUserAppointmentQuery()
-        .where(
-            conditions.length > 0
-                ? and(...conditions)
-                : undefined,
-        )
-        .orderBy(
-            getOrderBy(query),
-            asc(
-                appointmentTable.uuid,
-            ),
-        )
-        .limit(
-            query.limit,
-        )
-        .offset(
-            query.offset,
-        );
+        .where(buildConditions(query, false))
+        .orderBy(getOrderBy(query), asc(appointmentTable.uuid))
+        .limit(query.limit)
+        .offset(query.offset);
 }
 
+export async function countAll(query: QueryAppointment, scope: "user" | "organization" = "organization"): Promise<number> {
+    const conditions = buildConditions(query, scope === "organization");
 
-/*
- * Count appointments.
- */
-export async function countAll(
-    query: QueryAppointment,
-): Promise<number> {
-    const conditions =
-        buildConditions(
-            query,
-            true,
-        );
+    const [result] = await drizzleConnection
+        .select({ count: count() })
+        .from(appointmentTable)
+        .innerJoin(organizationTable, eq(appointmentTable.organizationId, organizationTable.id))
+        .innerJoin(usersTable, eq(appointmentTable.userId, usersTable.id))
+        .innerJoin(serviceTable, eq(appointmentTable.serviceId, serviceTable.id))
+        .innerJoin(workerUsersTable, eq(appointmentTable.workerId, workerUsersTable.id))
+        .innerJoin(roomTable, eq(appointmentTable.roomId, roomTable.id))
+        .leftJoin(approvalUsersTable, eq(appointmentTable.approvalUserId, approvalUsersTable.id))
+        .where(conditions);
 
-    const result =
-        await drizzleConnection
-            .select({
-                count:
-                    sql<number>`count(*)`,
-            })
-            .from(
-                appointmentTable,
-            )
-            .innerJoin(
-                organizationTable,
-                eq(
-                    appointmentTable.organizationId,
-                    organizationTable.id,
-                ),
-            )
-            .innerJoin(
-                usersTable,
-                eq(
-                    appointmentTable.userId,
-                    usersTable.id,
-                ),
-            )
-            .innerJoin(
-                serviceTable,
-                eq(
-                    appointmentTable.serviceId,
-                    serviceTable.id,
-                ),
-            )
-            .innerJoin(
-                roomTable,
-                eq(
-                    appointmentTable.roomId,
-                    roomTable.id,
-                ),
-            )
-            .innerJoin(
-                workerUsersTable,
-                eq(
-                    appointmentTable.workerId,
-                    workerUsersTable.id,
-                ),
-            )
-            .leftJoin(
-                approvalUsersTable,
-                eq(
-                    appointmentTable.approvalUserId,
-                    approvalUsersTable.id,
-                ),
-            )
-            .where(
-                conditions.length > 0
-                    ? and(...conditions)
-                    : undefined,
-            );
-
-    return Number(
-        result[0]?.count ?? 0,
-    );
+    return result?.count ?? 0;
 }
 
+export async function findByUuidAndOrganization(appointmentUuid: string, organizationUuid: string): Promise<OrganizationAppointmentResponse | undefined> {
+    const [appointment] = await getOrganizationAppointmentQuery()
+        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(organizationTable.uuid, organizationUuid)))
+        .limit(1);
 
-/*
- * Find organization appointment by UUID.
- */
-export async function findByUuidAndOrganization(
-    appointmentUuid: string,
-    organizationId: number,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [result] =
-        await getOrganizationAppointmentQuery()
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-                ),
-            );
-
-    return result;
+    return appointment;
 }
 
+export async function findByUuidAndUser(appointmentUuid: string, userUuid: string): Promise<UserAppointmentResponse | undefined> {
+    const [appointment] = await getUserAppointmentQuery()
+        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(usersTable.uuid, userUuid)))
+        .limit(1);
 
-/*
- * Find user appointment by UUID.
- */
-export async function findByUuidAndUser(
-    appointmentUuid: string,
-    userId: number,
-): Promise<
-    UserAppointmentResponse | undefined
-> {
-    const [result] =
-        await getUserAppointmentQuery()
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.userId,
-                        userId,
-                    ),
-                ),
-            );
-
-    return result;
+    return appointment;
 }
 
-
-/*
- * CUSTOMER / USER CREATION.
- */
 export async function createByUser(
-    appointment: CreateAppointment,
-): Promise<
-    UserAppointmentResponse | undefined
-> {
-    const [created] =
-        await drizzleConnection
-            .insert(
-                appointmentTable,
-            )
-            .values({
-                userId:
-                appointment.userId,
+    appointment: Omit<CreateAppointment, "scheduledStartAtUTC"> & { userUuid: string; roomId: number; scheduledStartAtUTC: Date; scheduledEndAtUTC: Date },
+): Promise<UserAppointmentResponse | undefined> {
+    const [created] = await drizzleConnection
+        .insert(appointmentTable)
+        .select(
+            drizzleConnection
+                .select({
+                    userId: usersTable.id,
+                    organizationId: organizationTable.id,
+                    serviceId: serviceTable.id,
+                    workerId: workerUsersTable.id,
+                    roomId: sql<number>`${appointment.roomId}`.as("roomId"),
+                    userTitle: sql<string | null>`${appointment.userTitle ?? null}`.as("userTitle"),
+                    userNote: sql<string | null>`${appointment.userNote ?? null}`.as("userNote"),
+                    userColour: sql<string>`${appointment.userColour ?? "#2563EB"}`.as("userColour"),
+                    scheduledStartAtUTC: sql<Date>`${appointment.scheduledStartAtUTC}`.as("scheduledStartAtUTC"),
+                    scheduledEndAtUTC: sql<Date>`${appointment.scheduledEndAtUTC}`.as("scheduledEndAtUTC"),
+                    paymentMethod: sql<PaymentMethod | null>`${appointment.paymentMethod ?? null}`.as("paymentMethod"),
+                    appointmentStatus: sql<AppointmentStatus>`${AppointmentStatus.PENDING_USER_CONFIRMATION}`.as("appointmentStatus"),
+                    paymentStatus: sql<PaymentStatus>`${PaymentStatus.UNPAID}`.as("paymentStatus"),
+                })
+                .from(organizationTable)
+                .innerJoin(usersTable, eq(usersTable.uuid, appointment.userUuid))
+                .innerJoin(serviceTable, eq(serviceTable.uuid, appointment.serviceUuid))
+                .innerJoin(workerUsersTable, eq(workerUsersTable.uuid, appointment.workerUuid))
+                .innerJoin(roomTable, eq(roomTable.id, appointment.roomId))
+                .where(eq(organizationTable.uuid, appointment.organizationUuid)),
+        )
+        .returning({ uuid: appointmentTable.uuid });
 
-                organizationId:
-                appointment.organizationId,
-
-                serviceId:
-                appointment.serviceId,
-
-                workerId:
-                appointment.workerId,
-
-                roomId:
-                appointment.roomId,
-
-                userTitle:
-                    appointment.userTitle ??
-                    null,
-
-                userNote:
-                    appointment.userNote ??
-                    null,
-
-                userColour:
-                    appointment.userColour ??
-                    "#2563EB",
-
-                scheduledStartAtUTC:
-                appointment.scheduledStartAtUTC,
-
-                scheduledEndAtUTC:
-                appointment.scheduledEndAtUTC,
-
-                paymentMethod:
-                    appointment.paymentMethod ??
-                    null,
-
-                appointmentStatus:
-                AppointmentStatus.PENDING_USER_CONFIRMATION,
-
-                paymentStatus:
-                PaymentStatus.UNPAID,
-            })
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!created) {
-        return undefined;
-    }
-
-    return findByUuidAndUser(
-        created.uuid,
-        appointment.userId,
-    );
+    return created ? findByUuidAndUser(created.uuid, appointment.userUuid) : undefined;
 }
 
-
-/*
- * ORGANIZATION CREATION.
- */
 export async function createByOrganization(
-    appointment: CreateOrganizationAppointment,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [created] =
-        await drizzleConnection
-            .insert(
-                appointmentTable,
-            )
-            .values({
-                userId:
-                appointment.userId,
+    appointment: Omit<CreateOrganizationAppointment, "scheduledStartAtUTC"> & { roomId: number; scheduledStartAtUTC: Date; scheduledEndAtUTC: Date },
+): Promise<OrganizationAppointmentResponse | undefined> {
+    const [created] = await drizzleConnection
+        .insert(appointmentTable)
+        .select(
+            drizzleConnection
+                .select({
+                    userId: usersTable.id,
+                    organizationId: organizationTable.id,
+                    serviceId: serviceTable.id,
+                    workerId: workerUsersTable.id,
+                    roomId: sql<number>`${appointment.roomId}`.as("roomId"),
+                    organizationTitle: sql<string | null>`${appointment.organizationTitle ?? null}`.as("organizationTitle"),
+                    organizationNote: sql<string | null>`${appointment.organizationNote ?? null}`.as("organizationNote"),
+                    organizationColour: sql<string>`${appointment.organizationColour ?? "#2563EB"}`.as("organizationColour"),
+                    scheduledStartAtUTC: sql<Date>`${appointment.scheduledStartAtUTC}`.as("scheduledStartAtUTC"),
+                    scheduledEndAtUTC: sql<Date>`${appointment.scheduledEndAtUTC}`.as("scheduledEndAtUTC"),
+                    paymentMethod: sql<PaymentMethod | null>`${appointment.paymentMethod ?? null}`.as("paymentMethod"),
+                    appointmentStatus: sql<AppointmentStatus>`${AppointmentStatus.PENDING_USER_CONFIRMATION}`.as("appointmentStatus"),
+                    paymentStatus: sql<PaymentStatus>`${PaymentStatus.UNPAID}`.as("paymentStatus"),
+                })
+                .from(organizationTable)
+                .innerJoin(usersTable, eq(usersTable.uuid, appointment.userUuid))
+                .innerJoin(serviceTable, eq(serviceTable.uuid, appointment.serviceUuid))
+                .innerJoin(workerUsersTable, eq(workerUsersTable.uuid, appointment.workerUuid))
+                .innerJoin(roomTable, eq(roomTable.id, appointment.roomId))
+                .where(eq(organizationTable.uuid, appointment.organizationUuid)),
+        )
+        .returning({ uuid: appointmentTable.uuid });
 
-                organizationId:
-                appointment.organizationId,
-
-                serviceId:
-                appointment.serviceId,
-
-                workerId:
-                appointment.workerId,
-
-                roomId:
-                appointment.roomId,
-
-                organizationTitle:
-                    appointment.organizationTitle ??
-                    null,
-
-                organizationNote:
-                    appointment.organizationNote ??
-                    null,
-
-                organizationColour:
-                    appointment.organizationColour ??
-                    "#2563EB",
-
-                scheduledStartAtUTC:
-                appointment.scheduledStartAtUTC,
-
-                scheduledEndAtUTC:
-                appointment.scheduledEndAtUTC,
-
-                paymentMethod:
-                appointment.paymentMethod,
-
-                appointmentStatus:
-                AppointmentStatus.PENDING_USER_CONFIRMATION,
-
-                paymentStatus:
-                PaymentStatus.UNPAID,
-            })
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!created) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        created.uuid,
-        appointment.organizationId,
-    );
+    return created ? findByUuidAndOrganization(created.uuid, appointment.organizationUuid) : undefined;
 }
 
-
-/*
- * Update user-owned appointment fields.
- */
 export async function updateByUser(
     appointmentUuid: string,
-    userId: number,
-    updateValues: {
-        userTitle?: string | null;
-        userNote?: string | null;
-        userColour?: string;
-    },
-): Promise<
-    UserAppointmentResponse | undefined
-> {
-    if (
-        Object.keys(updateValues).length === 0
-    ) {
-        return undefined;
+    userUuid: string,
+    updateValues: UpdateAppointmentByUserValues,
+): Promise<UserAppointmentResponse | undefined> {
+    const values = Object.fromEntries(Object.entries(updateValues).filter(([, value]) => value !== undefined)) as Partial<UpdateAppointmentByUserValues>;
+
+    if (!Object.keys(values).length) {
+        return findByUuidAndUser(appointmentUuid, userUuid);
     }
 
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                ...updateValues,
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({ ...values, updatedAtUTC: new Date() })
+        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(appointmentTable.userId, userIdSubquery(userUuid))))
+        .returning({ uuid: appointmentTable.uuid });
 
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.userId,
-                        userId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndUser(
-        updated.uuid,
-        userId,
-    );
+    return updated ? findByUuidAndUser(updated.uuid, userUuid) : undefined;
 }
 
-
-/*
- * Update organization-owned appointment fields.
- */
 export async function updateByOrganization(
     appointmentUuid: string,
-    organizationId: number,
-    updateValues: {
-        organizationTitle?: string | null;
-        organizationNote?: string | null;
-        organizationColour?: string;
-    },
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    if (
-        Object.keys(updateValues).length === 0
-    ) {
-        return undefined;
+    organizationUuid: string,
+    updateValues: UpdateAppointmentByOrganizationValues,
+    approvalUserUuid?: string,
+    expectedStatus?: AppointmentStatus,
+): Promise<OrganizationAppointmentResponse | undefined> {
+    const values = Object.fromEntries(Object.entries(updateValues).filter(([, value]) => value !== undefined)) as Partial<UpdateAppointmentByOrganizationValues>;
+
+    if (!Object.keys(values).length && !approvalUserUuid) {
+        return findByUuidAndOrganization(appointmentUuid, organizationUuid);
     }
 
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                ...updateValues,
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({
+            ...values,
+            ...(values.paymentStatus === PaymentStatus.PAID ? {
+                paidAtUTC: sql`COALESCE(${appointmentTable.paidAtUTC}, ${new Date().toISOString()})`,
+            } : {}),
+            ...(approvalUserUuid ? { approvalUserId: approvalUserIdSubquery(approvalUserUuid) } : {}),
+            updatedAtUTC: new Date(),
+        })
+        .where(
+            and(
+                eq(appointmentTable.uuid, appointmentUuid),
+                eq(appointmentTable.organizationId, organizationIdSubquery(organizationUuid)),
+                ...(expectedStatus ? [eq(appointmentTable.appointmentStatus, expectedStatus)] : []),
+            ),
+        )
+        .returning({ uuid: appointmentTable.uuid });
 
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        updated.uuid,
-        organizationId,
-    );
+    return updated ? findByUuidAndOrganization(updated.uuid, organizationUuid) : undefined;
 }
 
+export async function cancelByUser(appointmentUuid: string, userUuid: string): Promise<UserAppointmentResponse | undefined> {
+    const [updated] = await drizzleConnection
+        .update(appointmentTable)
+        .set({ appointmentStatus: AppointmentStatus.CANCELLED, updatedAtUTC: new Date() })
+        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(appointmentTable.userId, userIdSubquery(userUuid)), inArray(appointmentTable.appointmentStatus, ACTIVE_APPOINTMENT_STATUSES)))
+        .returning({ uuid: appointmentTable.uuid });
 
-/*
- * Confirm appointment.
- *
- * The current confirmAppointmentSchema still
- * contains `name`.
- *
- * Since appointmentTable.name no longer exists,
- * the incoming name is stored as organizationTitle.
- */
-export async function confirm(
-    appointmentUuid: string,
-    organizationId: number,
-    approvalUserId: number,
-    name: string,
-    organizationColour?: string,
-    organizationNote?: string | null,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                organizationTitle:
-                name,
-
-                organizationColour:
-                    organizationColour ??
-                    "#2563EB",
-
-                organizationNote,
-
-                approvalUserId,
-
-                appointmentStatus:
-                AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-
-                    eq(
-                        appointmentTable.appointmentStatus,
-                        AppointmentStatus.PENDING_USER_CONFIRMATION,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        updated.uuid,
-        organizationId,
-    );
-}
-
-
-/*
- * Approve appointment.
- */
-export async function approve(
-    appointmentUuid: string,
-    organizationId: number,
-    approvalUserId: number,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                approvalUserId,
-
-                appointmentStatus:
-                AppointmentStatus.CONFIRMED,
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-
-                    eq(
-                        appointmentTable.appointmentStatus,
-                        AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        updated.uuid,
-        organizationId,
-    );
-}
-
-
-/*
- * Reject appointment.
- */
-export async function reject(
-    appointmentUuid: string,
-    organizationId: number,
-    approvalUserId: number,
-    rejectionReason: string,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                approvalUserId,
-
-                rejectionReason,
-
-                appointmentStatus:
-                AppointmentStatus.REJECTED,
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-
-                    eq(
-                        appointmentTable.appointmentStatus,
-                        AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        updated.uuid,
-        organizationId,
-    );
-}
-
-
-/*
- * Update appointment status.
- */
-export async function updateStatus(
-    appointmentUuid: string,
-    organizationId: number,
-    appointmentStatus: AppointmentStatus,
-): Promise<
-    OrganizationAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                appointmentStatus,
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.organizationId,
-                        organizationId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndOrganization(
-        updated.uuid,
-        organizationId,
-    );
-}
-
-
-/*
- * Cancel appointment by customer/user.
- */
-export async function cancelByUser(
-    appointmentUuid: string,
-    userId: number,
-): Promise<
-    UserAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                appointmentStatus:
-                AppointmentStatus.CANCELLED,
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.userId,
-                        userId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndUser(
-        updated.uuid,
-        userId,
-    );
-}
-
-
-/*
- * Pay appointment.
- */
-export async function pay(
-    appointmentUuid: string,
-    userId: number,
-    paymentMethod: PaymentMethod,
-): Promise<
-    UserAppointmentResponse | undefined
-> {
-    const [updated] =
-        await drizzleConnection
-            .update(
-                appointmentTable,
-            )
-            .set({
-                paymentMethod,
-
-                paymentStatus:
-                PaymentStatus.PAID,
-
-                paidAtUTC:
-                    new Date(),
-
-                updatedAtUTC:
-                    new Date(),
-            })
-            .where(
-                and(
-                    eq(
-                        appointmentTable.uuid,
-                        appointmentUuid,
-                    ),
-
-                    eq(
-                        appointmentTable.userId,
-                        userId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                appointmentTable.uuid,
-            });
-
-    if (!updated) {
-        return undefined;
-    }
-
-    return findByUuidAndUser(
-        updated.uuid,
-        userId,
-    );
+    return updated ? findByUuidAndUser(updated.uuid, userUuid) : undefined;
 }

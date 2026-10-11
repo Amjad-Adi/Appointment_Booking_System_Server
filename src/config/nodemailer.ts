@@ -3,8 +3,7 @@ import nodemailer from "nodemailer";
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
-console.log("[SMTP] Configuration initialized for user:", SMTP_USER);
-
+console.log("SMTP Configuration initialized for user:", SMTP_USER);
 export const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,

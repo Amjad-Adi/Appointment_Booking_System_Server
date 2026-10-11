@@ -1,44 +1,14 @@
 import express from "express";
-
-import {
-    validateBody,
-    validateParameter,
-    validateQuery,
-} from "../middlewares/validaiton";
-
-import {
-    createServiceSchema,
-    queryServiceSchema,
-    updateServiceSchema,
-} from "../middlewares/zod-schemas/service.schema";
-
-import {
-    handleGetService,
-    handleGetServices,
-    handleCreateOrganizationService,
-    handleUpdateOrganizationService,
-} from "../controllers/service.controller";
-
-import {
-    authenticateToken,
-} from "../controllers/authentication/jwt.authentication.controller";
-
-import {
-    CREATE_SERVICE,
-    UPDATE_SERVICE,
-} from "../permissions/permissions";
-
-import {
-    validateUuid,
-} from "../middlewares/zod-schemas/parameters.schema";
-
-import {
-    authorize,
-} from "../middlewares/authorization/authorization";
-
-import {
-    serviceJunctionCategoryRouter,
-} from "./service-junction-category.route";
+import { validateBody, validateParameter, validateQuery } from "../middlewares/validaiton";
+import { createServiceSchema, queryServiceSchema, updateServiceSchema } from "../middlewares/zod-schemas/service.schema";
+import { handleGetService, handleGetServices, handleCreateOrganizationService, handleUpdateOrganizationService, } from "../controllers/service.controller";
+import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
+import { CREATE_SERVICE, UPDATE_SERVICE } from "../permissions/permissions";
+import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
+import { authorize } from "../middlewares/authorization/authorization";
+import { serviceJunctionCategoryRouter } from "./service-junction-category.route";
+import { handleSingleUpload } from '../config/multer';
+import { CLOUDINARY_PICTURE_PATH } from '../databases/contracts/service.contract';
 
 export const publicServiceRoute=express.Router();
 publicServiceRoute.route("/")
@@ -51,10 +21,10 @@ export const serviceRouter = express.Router({mergeParams: true,});
 
 serviceRouter.route("/")
     .get(authenticateToken,validateQuery(queryServiceSchema), handleGetServices)
-    .post(authenticateToken, authorize(CREATE_SERVICE), validateBody(createServiceSchema), handleCreateOrganizationService,);
+    .post(authenticateToken, authorize(CREATE_SERVICE), validateBody(createServiceSchema), handleSingleUpload(CLOUDINARY_PICTURE_PATH), handleCreateOrganizationService);
 
 serviceRouter.route("/:serviceUuid")
-    .get(authenticateToken,validateParameter(validateUuid, "serviceUuid"), handleGetService,)
-    .patch(authenticateToken, authorize(UPDATE_SERVICE), validateParameter(validateUuid, "serviceUuid"), validateBody(updateServiceSchema), handleUpdateOrganizationService,);
+    .get(authenticateToken,validateParameter(validateUuid, "serviceUuid"), handleGetService)
+    .patch(authenticateToken, authorize(UPDATE_SERVICE), validateParameter(validateUuid, "serviceUuid"), validateBody(updateServiceSchema), handleSingleUpload(CLOUDINARY_PICTURE_PATH),handleUpdateOrganizationService);
 
-serviceRouter.use("/:serviceUuid/categories", validateParameter(validateUuid, "serviceUuid"), serviceJunctionCategoryRouter,);
+serviceRouter.use("/:serviceUuid/categories", validateParameter(validateUuid, "serviceUuid"), serviceJunctionCategoryRouter);

@@ -1,31 +1,24 @@
-import { pool } from "../databases/postgre-connection.js";
-
-import {
-    COLUMN_ID as SERVICE_COLUMN_ID,
-    COLUMN_UUID as SERVICE_COLUMN_UUID,
-    COLUMN_ORGANIZATION_ID as SERVICE_COLUMN_ORGANIZATION_ID,
-    TABLE_NAME as SERVICE_TABLE_NAME,
-} from "../databases/contracts/service.contract.js";
-
-import {
-    COLUMN_ID as SERVICE_CATEGORY_COLUMN_ID,
-    COLUMN_UUID as SERVICE_CATEGORY_COLUMN_UUID,
-    TABLE_NAME as SERVICE_CATEGORY_TABLE_NAME,
-} from "../databases/contracts/service-category.contract.js";
+import { pool } from "../databases/postgres-connection";
 
 import {
     COLUMN_SERVICE_ID,
     COLUMN_SERVICE_CATEGORY_ID,
     TABLE_NAME,
-} from "../databases/contracts/service-junction-category.contract.js";
+} from "../databases/contracts/service-junction-category.contract";
+import { mapDatabaseError } from '../utils/map/map-database-error';
+
 export async function create(serviceId: number, categoryIds: number[]): Promise<void> {
-    await pool.query(
-        `
-            INSERT INTO ${TABLE_NAME} (${COLUMN_SERVICE_ID}, ${COLUMN_SERVICE_CATEGORY_ID})
-            SELECT $1,category.id
-            FROM UNNEST($2::BIGINT[]) AS category(id)`,
-        [serviceId, categoryIds]
-    );
+    try{
+        await pool.query(
+            `
+                INSERT INTO ${TABLE_NAME} (${COLUMN_SERVICE_ID}, ${COLUMN_SERVICE_CATEGORY_ID})
+                SELECT $1, category.id
+                FROM UNNEST($2::BIGINT[]) AS category(id)`,
+            [serviceId, categoryIds]
+        );
+    }catch(error){
+        mapDatabaseError(error);
+    }
 }
 
 export async function update(serviceId: number, categoryIds: number[]): Promise<void> {
@@ -33,22 +26,18 @@ export async function update(serviceId: number, categoryIds: number[]): Promise<
     try {
         await client.query("BEGIN");
         await client.query(
-`DELETE FROM ${TABLE_NAME}
-                WHERE ${COLUMN_SERVICE_ID} = $1`,
+            `DELETE FROM ${TABLE_NAME}
+             WHERE ${COLUMN_SERVICE_ID} = $1`,
             [serviceId]);
-
         await client.query(
-`INSERT INTO ${TABLE_NAME} (
-                 ${COLUMN_SERVICE_ID},
-                 ${COLUMN_SERVICE_CATEGORY_ID}
-                 )
-                 SELECT $1, category.id
-                 FROM UNNEST($2::BIGINT[]) AS category(id)`,
-                [serviceId, categoryIds,]);
+            `INSERT INTO ${TABLE_NAME} (${COLUMN_SERVICE_ID}, ${COLUMN_SERVICE_CATEGORY_ID})
+             SELECT $1, category.id
+             FROM UNNEST($2::BIGINT[]) AS category(id)`,
+            [serviceId, categoryIds]);
         await client.query("COMMIT");
     } catch (error) {
         await client.query("ROLLBACK");
-        throw error;
+        mapDatabaseError(error);
     } finally {
         client.release();
     }

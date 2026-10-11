@@ -1,21 +1,8 @@
-import {
-    findAll,
-    findByUuid,
-    create,
-    update,
-    isNameFound,
-    findCategoryIds,
-    countAll
-} from "../repositories/service-category.repository.js";
-import { NotFoundError } from "../errors/not-found.error.js";
-import { BadRequestError } from "../errors/bad-request.error.js";
-import { ConflictError } from "../errors/conflict.error.js";
-import {
-    CreateServiceCategory,
-    QueryServiceCategory,
-    ServiceCategory,
-    UpdateServiceCategory
-} from "../models/service-category.model.js";
+import { findAll, findByUuid, create, update, isNameFound, findCategoryIds, countAll } from "../repositories/service-category.repository";
+import { NotFoundError } from "../errors/not-found.error";
+import { BadRequestError } from "../errors/bad-request.error";
+import { ConflictError } from "../errors/conflict.error";
+import { CreateServiceCategory, QueryServiceCategory, ServiceCategory, UpdateServiceCategory } from "../models/service-category.model";
 
 export async function getServiceCategories(query: QueryServiceCategory): Promise<ServiceCategory[]> {
     return await findAll(query);

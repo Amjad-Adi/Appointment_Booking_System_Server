@@ -1,4 +1,4 @@
-import {Order} from "./enums/order.js";
+import {Order} from "./enums/order";
 
 export interface Filter{}
 export interface DataResponses{}

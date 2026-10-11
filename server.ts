@@ -19,12 +19,10 @@ const shutdown = (signal: string) => {
     console.log(
         `[Server] ${signal} received. Closing HTTP server...`,
     );
-
     server.close(() => {
         console.log("[Server] HTTP server closed cleanly.");
         process.exit(0);
     });
-
     setTimeout(() => {
         console.error("[Server] Forceful shutdown initiated.");
         process.exit(1);

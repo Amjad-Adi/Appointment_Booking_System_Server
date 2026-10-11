@@ -1,5 +1,5 @@
 import { getAuth } from "firebase-admin/auth";
-import {mapFirebaseError} from "../middlewares/map-firebase-error.js";
+import {mapFirebaseError} from "../utils/map/map-firebase-error";
 
 export async function createFireBaseUser(email:string,password:string) {
     try{
@@ -19,10 +19,11 @@ export async function updateFireBaseUser(uid:string,password:string) {
     }
 }
 
-export async function revokeUserSessions(uid: string) {
+export async function deleteFireBaseUser(uid:string) {
     try {
-        return await getAuth().revokeRefreshTokens(uid);
+        return await getAuth().deleteUser(uid);
     }catch(e) {
         mapFirebaseError(e)
     }
 }
+

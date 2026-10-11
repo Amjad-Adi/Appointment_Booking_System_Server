@@ -1,82 +1,20 @@
 import express from "express";
+import { authenticateToken } from '../controllers/authentication/jwt.authentication.controller';
+import { validateBody, validateParameter, validateQuery } from '../middlewares/validaiton';
+import { createSpecialDaySchema, querySpecialDaySchema, updateSpecialDaySchema } from '../middlewares/zod-schemas/special-days.schema';
+import { handleCreateOrganizationSpecialDay, handleGetOrganizationSpecialDay, handleGetOrganizationSpecialDays,
+    handleUpdateOrganizationSpecialDay
+} from '../controllers/special-days.controller';
+import { CREATE_SPECIAL_DAY, UPDATE_SPECIAL_DAY } from '../permissions/permissions';
+import { authorize } from '../middlewares/authorization/authorization';
+import { validateUuid } from '../middlewares/zod-schemas/parameters.schema';
 
-import {
-    validateBody,
-    validateParameter,
-    validateQuery,
-} from "../middlewares/validaiton.js";
+export const specialDaysRouter = express.Router({ mergeParams: true, });
 
-import {
-    handleGetOrganizationSpecialDays,
-    handleGetOrganizationSpecialDay,
-    handleCreateOrganizationSpecialDay,
-    handleUpdateOrganizationSpecialDay,
-} from "../controllers/special-days.controller.js";
+specialDaysRouter.route("/")
+    .get(authenticateToken, validateQuery(querySpecialDaySchema), handleGetOrganizationSpecialDays)
+    .post(authenticateToken, authorize(CREATE_SPECIAL_DAY), validateBody(createSpecialDaySchema), handleCreateOrganizationSpecialDay);
 
-import {
-    authenticateToken,
-} from "../controllers/authentication/jwt.authentication.controller.js";
-
-import {
-    authorize,
-} from "../middlewares/authorization/authorization.js";
-
-import {
-    validateUuid,
-} from "../middlewares/zod-schemas/parameters.schema.js";
-
-import {
-    querySpecialDaySchema,
-    createSpecialDaySchema,
-    updateSpecialDaySchema
-} from "../middlewares/zod-schemas/special-days.schema.js";
-
-import {
-    UPDATE_SPECIAL_DAY,
-    CREATE_SPECIAL_DAY,
-} from "../permissions/permissions.js";
-
-export const specialDaysRouter =
-    express.Router({
-        mergeParams: true,
-    });
-
-specialDaysRouter
-    .route("/")
-    .get(
-        authenticateToken,
-        validateQuery(
-            querySpecialDaySchema,
-        ),
-        handleGetOrganizationSpecialDays,
-    )
-    .post(
-        authenticateToken,
-        authorize(CREATE_SPECIAL_DAY),
-        validateBody(
-            createSpecialDaySchema,
-        ),
-        handleCreateOrganizationSpecialDay,
-    );
-specialDaysRouter
-    .route("/:specialDayUuid")
-    .get(
-        authenticateToken,
-        validateParameter(
-            validateUuid,
-            "specialDayUuid",
-        ),
-        handleGetOrganizationSpecialDay,
-    )
-    .patch(
-        authenticateToken,
-        authorize(UPDATE_SPECIAL_DAY),
-        validateParameter(
-            validateUuid,
-            "specialDayUuid",
-        ),
-        validateBody(
-            updateSpecialDaySchema,
-        ),
-        handleUpdateOrganizationSpecialDay,
-    );
+specialDaysRouter.route("/:specialDayUuid")
+    .get(authenticateToken, validateParameter(validateUuid, "specialDayUuid"), handleGetOrganizationSpecialDay,)
+    .patch(authenticateToken, authorize(UPDATE_SPECIAL_DAY), validateParameter(validateUuid, "specialDayUuid"), validateBody(updateSpecialDaySchema), handleUpdateOrganizationSpecialDay);

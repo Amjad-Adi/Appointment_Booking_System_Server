@@ -1,4 +1,3 @@
-import {ActivationStatus} from "../../models/enums/activation-status.js";
 export const TABLE_NAME = "rooms";
 export const COLUMN_ID = "id";
 export const COLUMN_UUID = "uuid";
@@ -14,8 +13,7 @@ export const ALIAS="r"
 export const ALIAS_COLUMN_OCCUPANCY_STATUS=`"occupancyStatus"`;
 export const ALIAS_COLUMN_CREATED_AT_UTC=`"createdAtUTC"`;
 export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
-export const ALIAS_COLUMN_ORGANIZATION_ID=`"organizationId"`;
-export const ALIAS_COLUMN_USER_ID=`"userId"`;
 export const ALIAS_TOTAL_NUMBER_OF_ROOMS = `"totalNumberOfRooms"`;
 export const SORT_BY_NAME = "name";
 export const SORT_BY_CREATED_AT_UTC = "createdAtUTC";
+export const SORT_BY_UPDATED_AT_UTC = "updatedAtUTC";

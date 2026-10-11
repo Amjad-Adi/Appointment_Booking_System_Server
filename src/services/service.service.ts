@@ -2,15 +2,11 @@ import {
     findAll,
     findByUuid,
     create,
-    update,
-    isNameFound, countAll,findIdByUuid
-} from "../repositories/service.repository.js"
-import {NotFoundError} from "../errors/not-found.error.js";
-import {BadRequestError} from "../errors/bad-request.error.js";
-import {ConflictError} from "../errors/conflict.error.js";
-import {CreateService, QueryService, Service, ServiceResponse, UpdateService} from "../models/service.model.js";
-import {findIdByUuid as findOrganizationIdByUuid} from "../repositories/organizaiton.repository.js";
-import {AuthorizeOrganizationUser} from "./user.service.js";
+    update,countAll,findIdByUuid, findPictureIdByUuid
+} from "../repositories/service.repository"
+import {NotFoundError} from "../errors/not-found.error";
+import {CreateService, QueryService, Service, ServiceResponse, UpdateService} from "../models/service.model";
+
 export async function getServices(query:QueryService):Promise<ServiceResponse[]>{
     return (await findAll(query))
 }
@@ -35,25 +31,19 @@ export async function getServiceIdByUuid(serviceUuid:string,organizationUuid:str
     return result
 }
 
-export async function createService(service:CreateService,userUuid:string):Promise<Service>{
-    await AuthorizeOrganizationUser(userUuid,service.organizationUuid)
-    const organizationId:number|undefined= await findOrganizationIdByUuid(service.organizationUuid)
-    if(organizationId===undefined){
-        throw new NotFoundError("Organization");
-    }
-    service.organizationId=organizationId
-    if(await isNameFound(service.organizationUuid,service.name)) {
-        throw new ConflictError()
-    }
-    const result:Service= await create(service)
+export async function getServicePictureIdByUuid(serviceUuid:string):Promise<string>{
+    const result:string|undefined= await findPictureIdByUuid(serviceUuid)
     if(result===undefined){
-        throw new BadRequestError()
+        throw new NotFoundError("Service");
     }
-    return result;
+    return result
+}
+
+export function createService(service:CreateService):Promise<Service>{
+    return create(service)
 }
 
 export async function updateService(service:UpdateService):Promise<Service>{
-    await AuthorizeOrganizationUser(service.userUuid,service.organizationUuid)
     const result:Service= await update(service)
     if(result===undefined){
         throw new NotFoundError("Service")

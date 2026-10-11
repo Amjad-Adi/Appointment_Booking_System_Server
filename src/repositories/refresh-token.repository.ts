@@ -1,4 +1,4 @@
-import {pool} from "../databases/postgre-connection.js"
+import {pool} from "../databases/postgres-connection"
 import {
     COLUMN_EXPIRES_AT_UTC,
     COLUMN_REVOKED_AT_UTC,
@@ -6,14 +6,8 @@ import {
     COLUMN_TOKEN_HASH, TABLE_NAME, COLUMN_CREATED_AT_UTC,
     ALIAS_COLUMN_CREATED_AT_UTC, ALIAS_COLUMN_REVOKED_AT_UTC, ALIAS_COLUMN_TOKEN_HASH, ALIAS_COLUMN_USER_ID,
     ALIAS_COLUMN_EXPIRES_AT_UTC, COLUMN_USER_ID
-} from "../databases/contracts/refresh-token.contract.js"
-import {CreateRefreshToken, RefreshToken} from "../models/refresh-token.model.js";
-import {BlacklistedToken} from "../models/blacklisted-token.model.js";
-import {
-    ALIAS_COLUMN_BLACKLISTED_AT_UTC,
-    COLUMN_BLACKLISTED_AT_UTC,
-    COLUMN_JTI, COLUMN_REASON
-} from "../databases/contracts/blacklisted-token.contract.js";
+} from "../databases/contracts/refresh-token.contract"
+import {CreateRefreshToken, RefreshToken} from "../models/refresh-token.model";
 
 export async function findRefreshToken(hashedRefreshToken:string):Promise<RefreshToken>{
     return (await pool.query(

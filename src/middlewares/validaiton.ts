@@ -1,15 +1,15 @@
 import {z, ZodObject} from "zod";
 import express from "express";
-import {BadRequestError} from "../errors/bad-request.error.js";
-import {Role} from "../models/enums/roles.js";
-import {NotFoundError} from "../errors/not-found.error.js";
+import {BadRequestError} from "../errors/bad-request.error";
+import {Role} from "../models/enums/roles";
+import {NotFoundError} from "../errors/not-found.error";
 import {} from "../utils/Request"
-import {QueryUser} from "../models/user.model.js";
+import {QueryUser} from "../models/user.model";
 import { Request, Response, NextFunction } from "express";
 export function validateBody(schema:z.ZodSchema) {
     return (req: express.Request, res: express.Response, next: express.NextFunction) =>{
-        const result = schema.safeParse(req.body);
         console.log(req.body);
+        const result = schema.safeParse(req.body);
         if (!result.success) {
             console.log(result);
             throw new BadRequestError();

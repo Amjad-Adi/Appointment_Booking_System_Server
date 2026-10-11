@@ -1,14 +1,13 @@
-import {Role} from "./enums/roles.js";
+import {Role} from "./enums/roles";
 import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
+import {ActivationStatus} from "./enums/activation-status";
 import {
-    createUserSchema,
-    inviteUserSchema, queryUserSchema,
-    updateUserByAdminSchema,
-    updateUserSchema, userFilterSchema
-} from "../middlewares/zod-schemas/user.schema.js"
-import {DataResponses, Filter} from "./query.model.js";
-import {Order} from "./enums/order.js";
+    registerUserSchema, queryUserSchema,
+    updateUserByAdminSchema, updateUserPasswordSchema,
+    updateUserSchema, userFilterSchema, createUserSchema
+} from "../middlewares/zod-schemas/user.schema"
+import {DataResponses, Filter} from "./query.model";
+import {Order} from "./enums/order";
 
 export interface User{
     uuid:string,
@@ -26,9 +25,20 @@ export interface User{
 export interface UserResponse extends User,DataResponses {
     organizationUuid:string
 }
-
-export type CreateUser= z.infer<typeof createUserSchema> & {uid:string};
-export type InviteUser= z.infer<typeof inviteUserSchema>;
-export type UpdateUser= z.infer<typeof updateUserSchema> & {uid:string ,uuid:string};
+type UpdateUserFields = {
+    role?: Role;
+    status?: ActivationStatus;
+    firstName?: string;
+    lastName?: string;
+    language?: string;
+    profilePicturePath?: string;
+    profilePictureId?: string;
+};
+export type RegisterUser = z.infer<typeof registerUserSchema> & { uid: string; profilePicturePath?: string; profilePictureId?: string};
+export type CreateUser = z.infer<typeof createUserSchema> & { uid: string; profilePicturePath?: string; profilePictureId?: string};
 export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema> & {uuid:string};
+export type UpdateCurrentUser = z.infer<typeof updateUserSchema>& { uuid: string; profilePicturePath?: string; profilePictureId?: string; };
+const combinedUpdateUserSchema = updateUserSchema.extend(updateUserByAdminSchema.shape);
+export type UpdateUser = z.infer<typeof combinedUpdateUserSchema>&{ uuid: string; profilePicturePath?: string; profilePictureId?: string; };
+export type UpdateCurrentUserPassword = z.infer<typeof updateUserPasswordSchema> & {uid:string};
 export type QueryUser=z.infer<typeof queryUserSchema>&{offset?:number};

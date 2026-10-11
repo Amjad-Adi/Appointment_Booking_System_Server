@@ -1,5 +1,5 @@
-import { BadRequestError } from "../errors/bad-request.error.js";
-import { TooManyRequests } from "../errors/too-many-requests.js";
+import { BadRequestError } from "../../errors/bad-request.error";
+import { TooManyRequests } from "../../errors/too-many-requests";
 
 export function mapEmailError(error: unknown): never {
     if (!(error instanceof Error) || !("code" in error)) {

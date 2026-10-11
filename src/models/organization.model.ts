@@ -1,14 +1,15 @@
-import {Role} from "./enums/roles.js";
-import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
+import {Role} from "./enums/roles";
+import {ActivationStatus} from "./enums/activation-status";
 import {
     createOrganizationSchema,
     updateOrganizationSchema,
     updateOrganizationByAdminSchema,
     queryOrganizationSchema, createOrganizationByAdminSchema
-} from "../middlewares/zod-schemas/organization.schema.js"
-import {createLocationSchema} from "../middlewares/zod-schemas/location.schema.js";
-import {LocationResponse} from "./location.model.js";
+} from "../middlewares/zod-schemas/organization.schema"
+import {createLocationSchema} from "../middlewares/zod-schemas/location.schema";
+import {LocationResponse} from "./location.model";
+import { z } from 'zod';
+import { updateUserByAdminSchema, updateUserSchema } from '../middlewares/zod-schemas/user.schema';
 export interface Organization {
     uuid:string,
     name:string
@@ -50,8 +51,10 @@ export interface OrganizationRow {
     updatedAtUTC: Date;
     status: ActivationStatus;
 }
-export type CreateOrganization= z.infer<typeof createOrganizationSchema> & {organizationOwnerUuid:string};
-export type UpdateOrganization= z.infer<typeof updateOrganizationSchema> & {uuid:string ,userUuid:string};
+export type CreateOrganization= z.infer<typeof createOrganizationSchema> & {organizationOwnerUuid:string,profilePicturePath?:string,profilePictureId?:string}
+export type UpdateOrganizationByUser = z.infer<typeof updateOrganizationSchema>& {uuid:string ,userUuid:string,profilePicturePath?:string,profilePictureId?:string}
 export type UpdateOrganizationByAdmin= z.infer<typeof updateOrganizationByAdminSchema> & {uuid:string};
+const combinedUpdateOrganizationSchema = updateOrganizationByAdminSchema.extend(updateOrganizationSchema.shape).partial({ status: true })
+;export type UpdateOrganization = z.infer<typeof combinedUpdateOrganizationSchema>&{ uuid: string; profilePicturePath?: string; profilePictureId?: string; };
 export type QueryOrganization = z.infer<typeof queryOrganizationSchema> & { offset: number; };
 export type CreateOrganizationByAdmin = z.infer<typeof createOrganizationByAdminSchema>;

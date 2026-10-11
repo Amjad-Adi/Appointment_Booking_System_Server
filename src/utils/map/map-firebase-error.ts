@@ -1,8 +1,8 @@
-import {ConflictError} from "../errors/conflict.error.js";
-import {BadRequestError} from "../errors/bad-request.error.js";
-import {NotFoundError} from "../errors/not-found.error.js";
-import {ForbiddenError} from "../errors/forbidden.error.js";
-import {UnauthorizedError} from "../errors/unauthorized.error.js";
+import {ConflictError} from "../../errors/conflict.error";
+import {BadRequestError} from "../../errors/bad-request.error";
+import {NotFoundError} from "../../errors/not-found.error";
+import {ForbiddenError} from "../../errors/forbidden.error";
+import {UnauthorizedError} from "../../errors/unauthorized.error";
 
 export function mapFirebaseError(error: unknown):never{
     if (!(error instanceof Error) || !("code" in error)) {

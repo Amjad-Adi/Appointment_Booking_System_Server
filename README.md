@@ -1,1 +1,1 @@
-Appointment Booking System developed using Node.js, Express.js, PostgreSQL, and TypeScript.
+Appointment Booking System developed using Node, Express, PostgreSQL, and TypeScript.

@@ -1,6 +1,6 @@
 import { type Request, type Response, type NextFunction, type RequestHandler } from "express";
 import {ipKeyGenerator, rateLimit as expressRateLimit} from "express-rate-limit";
-import { TooManyRequests } from "../errors/too-many-requests.js";
+import { TooManyRequests } from "../errors/too-many-requests";
 import {} from "../utils/Request";
 const DURATION = 60;
 const GLOBAL_AUTHENTICATION_POINTS = 1000;
@@ -52,10 +52,12 @@ export function rateLimiterFactory(rateLimiterType: string): RateLimiter {
             return new RateLimiter(GLOBAL_GENERAL_POINTS, LOCAL_GENERAL_POINTS);
     }
 }
-
-export function rateLimit(rateLimiter: RateLimiter) {
-    return (req: Request, res: Response, next: NextFunction) => {
+export function rateLimit(rateLimiter: RateLimiter): RequestHandler {
+    return (req, res, next) => {
         rateLimiter.globalLimiter(req, res, (err) => {
+            if (err) {
+                return next(err);
+            }
             rateLimiter.localLimiter(req, res, next);
         });
     };

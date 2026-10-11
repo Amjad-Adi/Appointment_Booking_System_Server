@@ -1,11 +1,6 @@
-import {
-    cert,
-    getApps,
-    initializeApp,
-    type ServiceAccount,
-} from "firebase-admin/app";
 import fs from "fs";
 import path from "path";
+import { cert, getApps, initializeApp, ServiceAccount } from 'firebase-admin';
 
 const serviceAccountPath =
     process.env.NODE_ENV === "production"

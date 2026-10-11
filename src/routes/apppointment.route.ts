@@ -6,34 +6,30 @@ import {
     handleCreateAppointment,
     handleUpdateAppointmentByUser,
     handleCancelAppointment,
-    handlePayAppointment,
-} from "../controllers/appointment.controller.js";
+} from "../controllers/appointment.controller";
 
 import {
     authenticateToken,
-} from "../controllers/authentication/jwt.authentication.controller.js";
+} from "../controllers/authentication/jwt.authentication.controller";
 
 import {
     validateBody,
     validateParameter,
     validateQuery,
-} from "../middlewares/validaiton.js";
+} from "../middlewares/validaiton";
 
 import {
     createAppointmentSchema,
     updateAppointmentSchemaByUser,
-    payAppointmentSchema,
     queryAppointmentSchema,
-} from "../middlewares/zod-schemas/appointment.schema.js";
+} from "../middlewares/zod-schemas/appointment.schema";
 
 import {
     validateUuid,
-} from "../middlewares/zod-schemas/parameters.schema.js";
-
+} from "../middlewares/zod-schemas/parameters.schema";
 
 export const appointmentRouter =
     express.Router();
-
 
 appointmentRouter.get(
     "/me",
@@ -43,7 +39,6 @@ appointmentRouter.get(
     ),
     handleGetAppointments,
 );
-
 
 appointmentRouter.get(
     "/:appointmentUuid",
@@ -55,7 +50,6 @@ appointmentRouter.get(
     handleGetUserAppointment,
 );
 
-
 appointmentRouter.post(
     "/",
     authenticateToken,
@@ -64,7 +58,6 @@ appointmentRouter.post(
     ),
     handleCreateAppointment,
 );
-
 
 appointmentRouter.patch(
     "/:appointmentUuid",
@@ -79,7 +72,6 @@ appointmentRouter.patch(
     handleUpdateAppointmentByUser,
 );
 
-
 appointmentRouter.patch(
     "/:appointmentUuid/cancel",
     authenticateToken,
@@ -88,18 +80,4 @@ appointmentRouter.patch(
         "appointmentUuid",
     ),
     handleCancelAppointment,
-);
-
-
-appointmentRouter.patch(
-    "/:appointmentUuid/pay",
-    authenticateToken,
-    validateParameter(
-        validateUuid,
-        "appointmentUuid",
-    ),
-    validateBody(
-        payAppointmentSchema,
-    ),
-    handlePayAppointment,
 );

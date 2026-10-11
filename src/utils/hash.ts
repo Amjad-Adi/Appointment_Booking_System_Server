@@ -6,3 +6,12 @@ export function generateRawToken(): string {
 export function generateHashToken(token: string): string {
     return crypto.createHash("sha256").update(token).digest("hex");
 }
+
+export function generateSecureToken() {
+    const rawToken = generateRawToken();
+    const tokenHash = generateHashToken(rawToken);
+    return {
+        rawToken,
+        tokenHash,
+    };
+}

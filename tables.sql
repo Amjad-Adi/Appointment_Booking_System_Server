@@ -8,7 +8,8 @@ first_name VARCHAR(64) NOT NULL,
 last_name VARCHAR(64) NOT NULL,
 email VARCHAR(320) UNIQUE NOT NULL,
 firebase_uid VARCHAR(128) NOT NULL,
-profile_picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
+profile_picture_path TEXT,
+profile_picture_id TEXT UNIQUE,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 organization_id BIGINT,
@@ -30,7 +31,7 @@ id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 name varchar(1024) NOT NULL,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
-timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Jerusalem',
+timezone VARCHAR(64) NOT NULL,
 location_on_map GEOMETRY(point,4326)
 );
 
@@ -53,7 +54,8 @@ email VARCHAR(320) UNIQUE NOT NULL,
 phone_number VARCHAR(20),
 bio VARCHAR(4096),
 location_id BIGINT,
-profile_picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
+profile_picture_path TEXT,
+profile_picture_id TEXT UNIQUE,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
@@ -84,7 +86,8 @@ description VARCHAR(4096),
 price REAL NOT NULL,
 duration_in_minutes INTEGER NOT NULL,
 organization_id BIGINT NOT NULL,
-picture_path TEXT  NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
+picture_path TEXT,
+picture_id TEXT UNIQUE,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 status VARCHAR(8) NOT NULL CHECK (status in('ACTIVE','INACTIVE')) DEFAULT 'ACTIVE',
@@ -96,7 +99,8 @@ CREATE TABLE service_categories(
     uuid UUID DEFAULT gen_random_uuid() UNIQUE,
     name VARCHAR(256) NOT NULL UNIQUE,
     description VARCHAR(4096),
-	picture_path TEXT NOT NULL DEFAULT 'DEFAULT_PICTURE_PATH',
+	picture_path TEXT NOT NULL,
+	picture_id TEXT UNIQUE,
     created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
     status VARCHAR(8) NOT NULL CHECK (status IN ('ACTIVE', 'INACTIVE')) DEFAULT 'ACTIVE'
@@ -163,6 +167,17 @@ FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT ON
 
 DROP TABLE time_block;
 
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE time_block
+ADD CONSTRAINT time_block_no_overlap
+EXCLUDE USING gist (
+    organization_id WITH =,
+    tstzrange(start_at_utc, end_at_utc, '[)') WITH &&
+)
+WHERE (request_status = 'APPROVED');
+
+
 ALTER TABLE appointments DROP COLUMN name;
 
 CREATE TABLE appointments (
@@ -200,6 +215,36 @@ CREATE TABLE appointments (
     FOREIGN KEY (worker_id) REFERENCES users(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (approval_user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+DROP TABLE appointments;
+
+ALTER TABLE appointments
+ADD CONSTRAINT appointments_worker_no_overlap
+EXCLUDE USING gist (
+    worker_id WITH =,
+    tstzrange(scheduled_start_at_utc, scheduled_end_at_utc, '[)') WITH &&
+)
+WHERE (
+    appointment_status IN (
+        'PENDING_ORGANIZATION_APPROVAL',
+        'CONFIRMED',
+        'IN_PROGRESS'
+    )
+);
+
+ALTER TABLE appointments
+ADD CONSTRAINT appointments_room_no_overlap
+EXCLUDE USING gist (
+    room_id WITH =,
+    tstzrange(scheduled_start_at_utc, scheduled_end_at_utc, '[)') WITH &&
+)
+WHERE (
+    appointment_status IN (
+        'PENDING_ORGANIZATION_APPROVAL',
+        'CONFIRMED',
+        'IN_PROGRESS'
+    )
 );
 
 CREATE TABLE reviews(
@@ -267,8 +312,8 @@ user_id BIGINT NOT NULL,
 token_hash TEXT NOT NULL,
 created_at_utc TIMESTAMPTZ NOT NULL DEFAULT now(),
 expires_at_utc TIMESTAMPTZ NOT NULL DEFAULT now() + INTERVAL '7 days',
-    revoked BOOLEAN NOT NULL DEFAULT False,
-    revoked_at_utc TIMESTAMPTZ,
+revoked BOOLEAN NOT NULL DEFAULT False,
+revoked_at_utc TIMESTAMPTZ,
 FOREIGN KEY (user_id) REFERENCES users(id) on DELETE CASCADE ON UPDATE CASCADE
 );
 

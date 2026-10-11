@@ -1,7 +1,7 @@
 import {z} from "zod"
-import {ActivationStatus} from "./enums/activation-status.js";
-import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema.js"
-import {DataResponses} from "./query.model.js";
+import {ActivationStatus} from "./enums/activation-status";
+import {createServiceSchema, queryServiceSchema, updateServiceSchema} from "../middlewares/zod-schemas/service.schema"
+import {DataResponses} from "./query.model";
 
 export interface ServiceCategorySummary {
     uuid:string,
@@ -28,6 +28,6 @@ export interface ServiceResponse extends Service,DataResponses{
     categories: ServiceCategorySummary[];
 }
 
-export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,organizationId:number;};
-export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string;};
+export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,servicePicturePath?:string,servicePicturePathId?:string};
+export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string,servicePicturePath?:string,servicePicturePathId?:string};
 export type QueryService=z.infer<typeof queryServiceSchema>&{offset:number}

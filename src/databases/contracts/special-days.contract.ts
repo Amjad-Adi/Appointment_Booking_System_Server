@@ -1,13 +1,10 @@
 export const TABLE_NAME = "special_days";
-
 export const COLUMN_NAME = "name";
 export const COLUMN_ORGANIZATION_ID = "organization_id";
 export const COLUMN_DAY_DATE = "day_date";
-export const COLUMN_DESCRIPTION = "description";
-
 export const COLUMN_CREATED_AT_UTC = "created_at_utc";
 export const COLUMN_UPDATED_AT_UTC = "updated_at_utc";
-
 export const SORT_BY_NAME = "name";
 export const SORT_BY_DAY_DATE = "dayDate";
 export const SORT_BY_CREATED_AT_UTC = "createdAtUTC";
+export const SORT_BY_UPDATED_AT_UTC = "updatedAtUTC";

@@ -1,4 +1,4 @@
-import {AppError} from "./app-error.js";
+import {AppError} from "./app-error";
 export class BadRequestError extends AppError {
     code:string;
     constructor(message:string="Bad Request") {

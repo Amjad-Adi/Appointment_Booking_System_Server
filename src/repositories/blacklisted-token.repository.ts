@@ -1,11 +1,10 @@
-import {pool} from "../databases/postgre-connection.js"
+import {pool} from "../databases/postgres-connection"
 import {
     COLUMN_EXPIRES_AT_UTC,
-    COLUMN_REASON, COLUMN_BLACKLISTED_AT_UTC, COLUMN_ID, COLUMN_JTI, TABLE_NAME,
+    COLUMN_REASON, COLUMN_BLACKLISTED_AT_UTC, COLUMN_JTI, TABLE_NAME,
     ALIAS_COLUMN_EXPIRES_AT_UTC, ALIAS_COLUMN_BLACKLISTED_AT_UTC,
-} from "../databases/contracts/blacklisted-token.contract.js"
-import {CreateRefreshToken, RefreshToken} from "../models/refresh-token.model.js";
-import {BlacklistedToken, CreateBlacklistedToken} from "../models/blacklisted-token.model.js";
+} from "../databases/contracts/blacklisted-token.contract"
+import {BlacklistedToken, CreateBlacklistedToken} from "../models/blacklisted-token.model";
 
 export async function findBlacklistedToken(jti:string):Promise<BlacklistedToken>{
     return (await pool.query(

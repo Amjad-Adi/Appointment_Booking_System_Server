@@ -1,454 +1,133 @@
-import {
-    and,
-    asc,
-    count,
-    desc,
-    eq,
-    gt,
-    ilike,
-    lt,
-    or,
-} from "drizzle-orm";
-
+import { and, asc, count, desc, eq, gt, ilike, lt, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-
-import { drizzleConnection } from "../databases/drizzle-connection.js";
-
-import { timeBlockTable } from "../drizzle-schemas/time-block.db.js";
-import { usersTable } from "../drizzle-schemas/users.db.js";
-
+import { drizzleConnection } from "../databases/drizzle-connection";
+import { timeBlockTable } from "../drizzle-schemas/time-block.db";
+import { usersTable } from "../drizzle-schemas/users.db";
+import { ALIAS, SECONDARY_ALIAS } from "../databases/contracts/user.contract";
+import type { CreateTimeBlock, QueryTimeBlock, TimeBlock, TimeBlockResponse, UpdateTimeBlock, } from "../models/time-block.model";
+import { organizationTable } from '../drizzle-schemas/organizations.db';
 import {
-    ALIAS,
-    SECONDARY_ALIAS,
-} from "../databases/contracts/user.contract.js";
+    ALIAS_COLUMN_END_AT_UTC,
+    ALIAS_COLUMN_START_AT_UTC,
+    COLUMN_REASON, SORT_BY_END_AT_UTC, SORT_BY_REQUESTED_AT_UTC, SORT_BY_RESPONDED_AT_UTC, SORT_BY_START_AT_UTC } from '../databases/contracts/time-block.contract';
+import { mapDatabaseError } from '../utils/map/map-database-error';
 
-import type {
-    CreateTimeBlock,
-    QueryTimeBlock,
-    TimeBlock,
-    TimeBlockResponse,
-    UpdateTimeBlock,
-} from "../models/time-block.model.js";
+const requestUsersTable = alias(usersTable, ALIAS);
+const respondUsersTable = alias(usersTable, SECONDARY_ALIAS);
 
-const requestUsersTable =
-    alias(
-        usersTable,
-        ALIAS,
-    );
-
-const respondUsersTable =
-    alias(
-        usersTable,
-        SECONDARY_ALIAS,
-    );
-
-function selectTimeBlock(
-    requestUsersTable:
-        | typeof usersTable
-        | ReturnType<typeof alias>,
-    respondUsersTable:
-        | typeof usersTable
-        | ReturnType<typeof alias>,
-) {
-    return {
-        uuid:
-        timeBlockTable.uuid,
-
-        reason:
-        timeBlockTable.reason,
-
-        startAtUTC:
-        timeBlockTable.startAtUTC,
-
-        endAtUTC:
-        timeBlockTable.endAtUTC,
-
-        requestedAtUTC:
-        timeBlockTable.requestedAtUTC,
-
-        respondedAtUTC:
-        timeBlockTable.respondedAtUTC,
-
-        requestStatus:
-        timeBlockTable.requestStatus,
-
-        requestUserUuid:
-        requestUsersTable.uuid,
-
-        requestUserFirstName:
-        requestUsersTable.firstName,
-
-        requestUserLastName:
-        requestUsersTable.lastName,
-
-        requestUserProfilePicturePath:
-        requestUsersTable.profilePicturePath,
-
-        respondUserUuid:
-        respondUsersTable.uuid,
-
-        respondUserFirstName:
-        respondUsersTable.firstName,
-
-        respondUserLastName:
-        respondUsersTable.lastName,
-
-        respondUserProfilePicturePath:
-        respondUsersTable.profilePicturePath,
+export async function findAll(query: QueryTimeBlock): Promise<TimeBlockResponse[]> {
+    const { search, filter, sortBy, order, limit, offset } = query;
+    const conditions = [eq(organizationTable.uuid, query.filter?.organizationUuid as string)];
+    const sortColumnsDefinition = {
+        [SORT_BY_START_AT_UTC]: timeBlockTable.startAtUTC,
+        [SORT_BY_END_AT_UTC]: timeBlockTable.endAtUTC,
+        [SORT_BY_REQUESTED_AT_UTC]: timeBlockTable.requestedAtUTC,
+        [SORT_BY_RESPONDED_AT_UTC]: timeBlockTable.respondedAtUTC,
     };
-}
-
-function buildDateRangeConditions(
-    query: QueryTimeBlock,
-) {
-    if (
-        query.filter?.fromDate === undefined ||
-        query.filter?.toDate === undefined
-    ) {
-        return undefined;
-    }
-
-    /*
-     * Interval overlap:
-     *
-     * block.start < requestedEnd
-     * AND
-     * block.end > requestedStart
-     *
-     * This also finds blocks that cross midnight.
-     */
-    return and(
-        lt(
-            timeBlockTable.startAtUTC,
-            query.filter.toDate,
-        ),
-        gt(
-            timeBlockTable.endAtUTC,
-            query.filter.fromDate,
-        ),
-    );
-}
-
-function buildConditions(
-    query: QueryTimeBlock,
-) {
-    const conditions = [
-        eq(
-            timeBlockTable.organizationId,
-            query.organizationId,
-        ),
-    ];
-
-    const {
-        search,
-        filter,
-    } = query;
-
     if (search) {
-        const searchValue =
-            `%${search}%`;
-
-        conditions.push(
-            or(
-                ilike(
-                    timeBlockTable.reason,
-                    searchValue,
-                ),
-
-                ilike(
-                    requestUsersTable.firstName,
-                    searchValue,
-                ),
-
-                ilike(
-                    requestUsersTable.lastName,
-                    searchValue,
-                ),
-            )!,
-        );
+        const searchValue = `%${search}%`;
+        conditions.push(or(ilike(sql`${requestUsersTable.firstName} || ' ' || ${requestUsersTable.lastName}`, searchValue), ilike(sql`${respondUsersTable.firstName} || ' ' || ${respondUsersTable.lastName}`, searchValue))!);
     }
-
     if (filter?.requestStatus) {
-        conditions.push(
-            eq(
-                timeBlockTable.requestStatus,
-                filter.requestStatus,
-            ),
-        );
+        conditions.push(eq(timeBlockTable.requestStatus, filter.requestStatus));
     }
-
     if (filter?.requestUserUuid) {
-        conditions.push(
-            eq(
-                requestUsersTable.uuid,
-                filter.requestUserUuid,
-            ),
-        );
+        conditions.push(eq(requestUsersTable.uuid, filter.requestUserUuid));
     }
-
     if (filter?.respondUserUuid) {
-        conditions.push(
-            eq(
-                respondUsersTable.uuid,
-                filter.respondUserUuid,
-            ),
-        );
+        conditions.push(eq(respondUsersTable.uuid, filter.respondUserUuid));
     }
-
-    const dateRange =
-        buildDateRangeConditions(
-            query,
-        );
-
-    if (dateRange) {
-        conditions.push(dateRange);
+    if (filter?.fromDate !== undefined && filter?.toDate !== undefined) {
+        conditions.push(and(lt(timeBlockTable.startAtUTC, filter.toDate), gt(timeBlockTable.endAtUTC, filter.fromDate))!);
     }
-
-    return conditions;
-}
-
-export async function findAll(
-    query: QueryTimeBlock,
-): Promise<TimeBlockResponse[]> {
-    const {
-        sortBy = "requestedAtUTC",
-        order = "desc",
-        limit,
-        offset,
-    } = query;
-
-    const conditions =
-        buildConditions(query);
-
-    const sortColumn = {
-        startAtUTC:
-        timeBlockTable.startAtUTC,
-
-        endAtUTC:
-        timeBlockTable.endAtUTC,
-
-        requestedAtUTC:
-        timeBlockTable.requestedAtUTC,
-
-        respondedAtUTC:
-        timeBlockTable.respondedAtUTC,
-
-        requestStatus:
-        timeBlockTable.requestStatus,
-    }[sortBy];
-
-    const sortOrder =
-        order === "asc"
-            ? asc(sortColumn)
-            : desc(sortColumn);
-
+    const sortColumn = sortColumnsDefinition[sortBy ?? SORT_BY_REQUESTED_AT_UTC];
+    const sortOrder = order?.toUpperCase() === "ASC" ? asc(sortColumn) : desc(sortColumn);
     return await drizzleConnection
-        .select(
-            selectTimeBlock(
-                requestUsersTable,
-                respondUsersTable,
-            ),
-        )
+        .select({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus, requestUserUuid: requestUsersTable.uuid, requestUserFirstName: requestUsersTable.firstName, requestUserLastName: requestUsersTable.lastName, requestUserProfilePicturePath: requestUsersTable.profilePicturePath, respondUserUuid: respondUsersTable.uuid, respondUserFirstName: respondUsersTable.firstName, respondUserLastName: respondUsersTable.lastName, respondUserProfilePicturePath: respondUsersTable.profilePicturePath })
         .from(timeBlockTable)
-        .innerJoin(
-            requestUsersTable,
-            eq(
-                requestUsersTable.id,
-                timeBlockTable.requestUserId,
-            ),
-        )
-        .leftJoin(
-            respondUsersTable,
-            eq(
-                respondUsersTable.id,
-                timeBlockTable.respondUserId,
-            ),
-        )
-        .where(
-            and(...conditions),
-        )
-        .orderBy(
-            sortOrder,
-            asc(timeBlockTable.uuid),
-        )
+        .innerJoin(requestUsersTable, eq(requestUsersTable.id, timeBlockTable.requestUserId))
+        .leftJoin(respondUsersTable, eq(respondUsersTable.id, timeBlockTable.respondUserId))
+        .where(and(...conditions))
+        .orderBy(sortOrder, asc(timeBlockTable.uuid))
         .limit(limit)
-        .offset(offset);
+        .offset(offset as number);
 }
 
-export async function countAll(
-    query: QueryTimeBlock,
-): Promise<number> {
-    const conditions =
-        buildConditions(query);
-
-    const [result] =
-        await drizzleConnection
-            .select({
-                count: count(),
-            })
-            .from(timeBlockTable)
-            .innerJoin(
-                requestUsersTable,
-                eq(
-                    requestUsersTable.id,
-                    timeBlockTable.requestUserId,
-                ),
-            )
-            .leftJoin(
-                respondUsersTable,
-                eq(
-                    respondUsersTable.id,
-                    timeBlockTable.respondUserId,
-                ),
-            )
-            .where(
-                and(...conditions),
-            );
-
-    return result?.count ?? 0;
+export async function countAll(query: QueryTimeBlock): Promise<number> {
+    const { search, filter} = query;
+    const conditions = [eq(organizationTable.uuid, query.filter?.organizationUuid as string)];
+    if (search) {
+        const searchValue = `%${search}%`;
+        conditions.push(or(ilike(sql`${requestUsersTable.firstName} || ' ' || ${requestUsersTable.lastName}`, searchValue), ilike(sql`${respondUsersTable.firstName} || ' ' || ${respondUsersTable.lastName}`, searchValue))!);
+    }
+    if (filter?.requestStatus) {
+        conditions.push(eq(timeBlockTable.requestStatus, filter.requestStatus));
+    }
+    if (filter?.requestUserUuid) {
+        conditions.push(eq(requestUsersTable.uuid, filter.requestUserUuid));
+    }
+    if (filter?.respondUserUuid) {
+        conditions.push(eq(respondUsersTable.uuid, filter.respondUserUuid));
+    }
+    if (filter?.fromDate !== undefined && filter?.toDate !== undefined) {
+        conditions.push(and(lt(timeBlockTable.startAtUTC, filter.toDate), gt(timeBlockTable.endAtUTC, filter.fromDate))!);
+    }
+    const [result] = await drizzleConnection
+        .select({ totalNumberOfTimeBlocks: count()})
+        .from(timeBlockTable)
+        .innerJoin(requestUsersTable, eq(requestUsersTable.id, timeBlockTable.requestUserId))
+        .leftJoin(respondUsersTable, eq(respondUsersTable.id, timeBlockTable.respondUserId))
+        .where(and(...conditions));
+    return result.totalNumberOfTimeBlocks;
 }
 
-export async function findByUuid(
-    organizationId: number,
-    timeBlockUuid: string,
-): Promise<TimeBlockResponse | undefined> {
-    return (
-        await drizzleConnection
-            .select(
-                selectTimeBlock(
-                    requestUsersTable,
-                    respondUsersTable,
-                ),
-            )
-            .from(timeBlockTable)
-            .innerJoin(
-                requestUsersTable,
-                eq(
-                    requestUsersTable.id,
-                    timeBlockTable.requestUserId,
-                ),
-            )
-            .leftJoin(
-                respondUsersTable,
-                eq(
-                    respondUsersTable.id,
-                    timeBlockTable.respondUserId,
-                ),
-            )
-            .where(
-                and(
-                    eq(
-                        timeBlockTable.uuid,
-                        timeBlockUuid,
-                    ),
-
-                    eq(
-                        timeBlockTable.organizationId,
-                        organizationId,
-                    ),
-                ),
-            )
-    )[0];
+export async function findByUuid(organizationUuid: string, timeBlockUuid: string): Promise<TimeBlockResponse> {
+    const [result] = await drizzleConnection
+        .select({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus, requestUserUuid: requestUsersTable.uuid, requestUserFirstName: requestUsersTable.firstName, requestUserLastName: requestUsersTable.lastName, requestUserProfilePicturePath: requestUsersTable.profilePicturePath, respondUserUuid: respondUsersTable.uuid, respondUserFirstName: respondUsersTable.firstName, respondUserLastName: respondUsersTable.lastName, respondUserProfilePicturePath: respondUsersTable.profilePicturePath })
+        .from(timeBlockTable)
+        .innerJoin(organizationTable,eq(organizationTable.id, timeBlockTable.organizationId))
+        .innerJoin(requestUsersTable, eq(requestUsersTable.id, timeBlockTable.requestUserId))
+        .leftJoin(respondUsersTable, eq(respondUsersTable.id, timeBlockTable.respondUserId))
+        .where(and(eq(timeBlockTable.uuid, timeBlockUuid), eq(organizationTable.uuid, organizationUuid)));
+    return result;
 }
 
-export async function create(
-    timeBlock: CreateTimeBlock,
-): Promise<TimeBlock> {
-    return (
-        await drizzleConnection
+export async function create(timeBlock: CreateTimeBlock): Promise<TimeBlock> {
+    try {
+        const [result] = await drizzleConnection
             .insert(timeBlockTable)
-            .values({
-                reason:
-                timeBlock.reason,
-
-                startAtUTC:
-                timeBlock.startAtUTC,
-
-                endAtUTC:
-                timeBlock.endAtUTC,
-
-                requestUserId:
-                timeBlock.requestUserId,
-
-                organizationId:
-                timeBlock.organizationId,
-            })
-            .returning({
-                uuid:
-                timeBlockTable.uuid,
-
-                reason:
-                timeBlockTable.reason,
-
-                startAtUTC:
-                timeBlockTable.startAtUTC,
-
-                endAtUTC:
-                timeBlockTable.endAtUTC,
-
-                requestedAtUTC:
-                timeBlockTable.requestedAtUTC,
-
-                respondedAtUTC:
-                timeBlockTable.respondedAtUTC,
-
-                requestStatus:
-                timeBlockTable.requestStatus,
-            })
-    )[0];
+            .select(
+                drizzleConnection
+                .select({ reason: sql<string>`${timeBlock.reason}`.as(COLUMN_REASON), startAtUTC: sql<string>`${timeBlock.startAtUTC}`.as(ALIAS_COLUMN_START_AT_UTC), endAtUTC: sql<string>`${timeBlock.endAtUTC}`.as(ALIAS_COLUMN_END_AT_UTC), requestUserId: usersTable.id, organizationId: organizationTable.id })
+                .from(organizationTable)
+                .innerJoin(usersTable, and(eq(usersTable.organizationId, organizationTable.id), eq(usersTable.uuid, timeBlock.requestUserUuid)))
+                .where(eq(organizationTable.uuid, timeBlock.organizationUuid)))
+            .returning({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus });
+        return result;
+    } catch (error) {
+        mapDatabaseError(error);
+    }
 }
 
-export async function update(
-    timeBlock: UpdateTimeBlock,
-    organizationId: number,
-): Promise<TimeBlock | undefined> {
-    return (
-        await drizzleConnection
+
+export async function update(timeBlock: UpdateTimeBlock): Promise<TimeBlock> {
+    try {
+        const respondUserId = drizzleConnection
+            .select({ id: usersTable.id })
+            .from(usersTable)
+            .where(eq(usersTable.uuid, timeBlock.respondUserUuid));
+        const organizationId = drizzleConnection
+            .select({ id: organizationTable.id })
+            .from(organizationTable)
+            .where(eq(organizationTable.uuid, timeBlock.organizationUuid));
+
+        const [result] = await drizzleConnection
             .update(timeBlockTable)
-            .set({
-                respondUserId:
-                timeBlock.respondUserId,
-
-                respondedAtUTC:
-                    new Date().toISOString(),
-
-                requestStatus:
-                timeBlock.requestStatus,
-            })
-            .where(
-                and(
-                    eq(
-                        timeBlockTable.uuid,
-                        timeBlock.uuid,
-                    ),
-
-                    eq(
-                        timeBlockTable.organizationId,
-                        organizationId,
-                    ),
-                ),
-            )
-            .returning({
-                uuid:
-                timeBlockTable.uuid,
-
-                reason:
-                timeBlockTable.reason,
-
-                startAtUTC:
-                timeBlockTable.startAtUTC,
-
-                endAtUTC:
-                timeBlockTable.endAtUTC,
-
-                requestedAtUTC:
-                timeBlockTable.requestedAtUTC,
-
-                respondedAtUTC:
-                timeBlockTable.respondedAtUTC,
-
-                requestStatus:
-                timeBlockTable.requestStatus,
-            })
-    )[0];
+            .set({ respondUserId: sql`(${respondUserId})`, respondedAtUTC: new Date().toISOString(), requestStatus: timeBlock.requestStatus, })
+            .where(and(eq(timeBlockTable.uuid, timeBlock.uuid), eq(timeBlockTable.organizationId, sql`(${organizationId})`)))
+            .returning({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus });
+        return result
+    } catch (error) {
+        mapDatabaseError(error);
+    }
 }

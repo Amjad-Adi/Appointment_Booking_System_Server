@@ -3,17 +3,11 @@ import {
     findByUuid,
     create,
     update,
-    updateByAdmin,
-    findByEmail,
-    findByUid, findIdByUuid, findUidByUuid, findById, countAll
-} from "../repositories/user.repository.js"
-import {CreateUser, UserResponse, UpdateUserByAdmin, UpdateUser, User, QueryUser} from "../models/user.model.js";
-import {NotFoundError} from "../errors/not-found.error.js";
-import {BadRequestError} from "../errors/bad-request.error.js";
-import {ConflictError} from "../errors/conflict.error.js";
-import {findUserOrganizationByEmail, findUserOrganizationByUuid} from "../repositories/organizaiton.repository.js";
-import {ForbiddenError} from "../errors/forbidden.error.js";
-import {getUserOrganization} from "./organization.service.js";
+    findByUid, findIdByUuid, findUidByUuid, findById, countAll, findPictureIdByUuid, findByEmail
+} from "../repositories/user.repository"
+import {RegisterUser, UserResponse, UpdateCurrentUser, User, QueryUser, CreateUser, UpdateUserByAdmin } from "../models/user.model";
+import {NotFoundError} from "../errors/not-found.error";
+import {findUserOrganizationByUuid} from "../repositories/organizaiton.repository";
 export async function getUsers(query:QueryUser):Promise<UserResponse[]>{
     return (await findAll(query))
 }
@@ -22,8 +16,8 @@ export async function getNumberOfUsers(query:QueryUser):Promise<number>{
     return (await countAll(query))
 }
 
-export async function getUser(uuid:string):Promise<UserResponse>{
-    const result:UserResponse= await findByUuid(uuid)
+export async function getUser(uuid:string,organizationUuid:string):Promise<UserResponse>{
+    const result:UserResponse= await findByUuid(uuid,organizationUuid)
     if(result===undefined){
         throw new NotFoundError("User");
     }
@@ -46,18 +40,27 @@ export async function getUserById(id:number):Promise<UserResponse>{
     return result
 }
 
-export async function createUser(user:CreateUser):Promise<User>{
-    if(await findByEmail(user.email)!==undefined) {
-        throw new ConflictError()
-    }
-    const result:User= await create(user)
+export async function getUserByEmail(email:string):Promise<UserResponse>{
+    const result:UserResponse= await findByEmail(email)
     if(result===undefined){
-        throw new BadRequestError()
+        throw new NotFoundError("User");
     }
-    return result;
+    return result
 }
 
-export async function updateUser(user:UpdateUser):Promise<User>{
+export async function getUserPictureIdByUuid(userUuid:string):Promise<string>{
+    const result:string|undefined= await findPictureIdByUuid(userUuid)
+    if(result===undefined){
+        throw new NotFoundError("User");
+    }
+    return result
+}
+
+export async function createUser(user:CreateUser):Promise<User>{
+    return create(user)
+}
+
+export async function updateUser(user:UpdateCurrentUser|UpdateUserByAdmin):Promise<User>{
     const result:User= await update(user)
     if(result===undefined){
         throw new NotFoundError("user")
@@ -65,22 +68,8 @@ export async function updateUser(user:UpdateUser):Promise<User>{
     return result;
 }
 
-export async function updateUserByAdmin(user:UpdateUserByAdmin):Promise<User>{
-    const result:User= await updateByAdmin(user)
-    if(result===undefined){
-        throw new NotFoundError("user")
-    }
-    return result;
-}
-
-
 export async function isUserWorkingByUuid(userUuid:string):Promise<boolean>{
     return (await findUserOrganizationByUuid(userUuid)) !== undefined
-}
-
-
-export async function isUserWorkingByEmail(userEmail:string):Promise<boolean>{
-    return (await findUserOrganizationByEmail(userEmail)) !== undefined
 }
 
 export async function getUserIdByUuid(uuid:string):Promise<number>{
@@ -98,12 +87,4 @@ export async function getUserUidByUuid(uuid:string):Promise<string>{
         throw new NotFoundError("User");
     }
     return result;
-}
-
-
-export async function AuthorizeOrganizationUser(userUuid:string, organizationUuid:string):Promise<boolean>{
-    if((await getUserOrganization(userUuid))?.uuid!==organizationUuid){
-        throw new ForbiddenError()
-    }
-    return true;
 }
