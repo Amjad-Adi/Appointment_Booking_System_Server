@@ -1,16 +1,51 @@
-/tmp
-/out-tsc
-/config
-/node_modules
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out-tsc/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/.pnp
+*.log
+
+# Package manager
 .pnp
-.env
+.pnp.*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# API development tools
+.postman/
+
+# Database / local configuration
+.neon/
+config/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Operating system
 .DS_Store
-.vscode/*
-.idea
-.postman
-.neon
-/dist
+Thumbs.db
+
+# Coverage and test output
+coverage/
+
+# Runtime files
+*.pid
+*.seed
