@@ -10,18 +10,25 @@ import {getAuth} from "firebase-admin/auth";
 import { createBlacklistedToken, getRefreshToken, removeToken, revokeToken } from '../../services/jwt-management-service';
 
 //Cookie options look up best practises
-const cookieOptions:CookieOptions = {
-    httpOnly:true,
-    secure:true,
-    sameSite:'strict',
-}
-const accessCookieOptions: CookieOptions = cookieOptions&& {maxAge:
-        process.env.NODE_ENV === "production"
+const cookieOptions: CookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+};
+
+const accessCookieOptions: CookieOptions = {
+    ...cookieOptions,
+    maxAge:
+        process.env.NODE_ENV === 'production'
             ? 25 * 60 * 60 * 1000
             : 13 * 60 * 60 * 1000,
 };
-const refreshCookieOptions:CookieOptions=cookieOptions&& {maxAge:refreshTokenExpiresIn+60*60*1000}
 
+const refreshCookieOptions: CookieOptions = {
+    ...cookieOptions,
+    maxAge: refreshTokenExpiresIn + 60 * 60 * 1000,
+};
 export async function login(req: Request, res: Response, ){
     const { idToken } = req.body;
     if (!idToken) {
@@ -80,6 +87,7 @@ export async function logOut(req: Request, res: Response){
     await createBlacklistedToken(blackListedToken)
     const refreshTokenString=req.cookies.refreshToken as string;
         await revokeToken(refreshTokenString)
-    res.clearCookie('refreshToken');
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
     res.status(204).send();
 }
