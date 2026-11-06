@@ -15,14 +15,16 @@ import {
     COLUMN_CREATED_AT_UTC,
     COLUMN_UPDATED_AT_UTC,
     COLUMN_STATUS,
-    ALIAS_COLUMN_PICTURE_PATH,
-    ALIAS_COLUMN_CREATED_AT_UTC,
-    ALIAS_COLUMN_UPDATED_AT_UTC,
     ALIAS_TOTAL_NUMBER_OF_SERVICE_CATEGORIES,
     SORT_BY_NAME, COLUMN_PICTURE_ID, SORT_BY_CREATED_AT_UTC, SORT_BY_UPDATED_AT_UTC,
 } from "../databases/contracts/service-category.contract";
 import { Order } from '../models/enums/order';
 import { mapDatabaseError } from '../utils/map/map-database-error';
+
+const ALIAS_PICTURE_PATH = `"picturePath"`;
+const ALIAS_CREATED_AT_UTC = `"createdAtUTC"`;
+const ALIAS_UPDATED_AT_UTC = `"updatedAtUTC"`;
+const CATEGORY_COLUMNS = `${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PICTURE_PATH} AS ${ALIAS_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_UPDATED_AT_UTC},${COLUMN_STATUS}`;
 
 export async function findAll(query: QueryServiceCategory): Promise<ServiceCategory[]> {
     const search = query.search ? `%${query.search}%` : null;
@@ -35,7 +37,7 @@ export async function findAll(query: QueryServiceCategory): Promise<ServiceCateg
     const sortOrder =query?.order?.toUpperCase() ?? Order.ASC;
     const { status } = query.filter ?? {};
     return (await pool.query(
-            `SELECT ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PICTURE_PATH } AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},  ${COLUMN_STATUS}
+            `SELECT ${CATEGORY_COLUMNS}
              FROM ${TABLE_NAME}
              WHERE ($1::TEXT IS NULL OR ${COLUMN_NAME} ILIKE $1)
              AND ($2::TEXT IS NULL OR ${COLUMN_STATUS} = $2)
@@ -59,10 +61,18 @@ return Number((await pool.query(
 
 export async function findByUuid(uuid: string): Promise<ServiceCategory> {
     return (await pool.query(
-            `SELECT ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PICTURE_PATH } AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},  ${COLUMN_STATUS}
+            `SELECT ${CATEGORY_COLUMNS}
              FROM ${TABLE_NAME}
              WHERE ${COLUMN_UUID} = $1`,
             [uuid])).rows[0];
+}
+
+export async function findPictureIdByUuid(uuid: string): Promise<string | undefined> {
+    return (await pool.query(
+            `SELECT ${COLUMN_PICTURE_ID}
+             FROM ${TABLE_NAME}
+             WHERE ${COLUMN_UUID} = $1`,
+            [uuid])).rows[0]?.[COLUMN_PICTURE_ID];
 }
 
 export async function isNameFound(name: string): Promise<boolean> {
@@ -78,8 +88,8 @@ export async function create(category: CreateServiceCategory): Promise<ServiceCa
     try{
     return (await pool.query(
             `INSERT INTO ${TABLE_NAME} ( ${COLUMN_NAME}, ${COLUMN_DESCRIPTION}, ${COLUMN_PICTURE_PATH})
-             VALUES ($1,$2,$3))
-            RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PICTURE_PATH } AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},  ${COLUMN_STATUS}`,
+             VALUES ($1,$2,$3)
+            RETURNING ${CATEGORY_COLUMNS}`,
             [category.name, category.description, category.picturePath])).rows[0];
     }catch (error) {
         mapDatabaseError(error);
@@ -98,7 +108,7 @@ export async function update(category: UpdateServiceCategory): Promise<ServiceCa
                 ${COLUMN_STATUS} =COALESCE($5, ${COLUMN_STATUS}),
                 ${COLUMN_UPDATED_AT_UTC} = now()
              WHERE ${COLUMN_UUID} = $6
-             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PICTURE_PATH } AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},  ${COLUMN_STATUS}`,
+             RETURNING ${CATEGORY_COLUMNS}`,
             [category.name, category.description, category.picturePath, category.picturePathId,category.status, category.uuid])).rows[0];
     }catch (error) {
         mapDatabaseError(error);

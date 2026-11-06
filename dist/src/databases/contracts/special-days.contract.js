@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SORT_BY_CREATED_AT_UTC = exports.SORT_BY_DAY_DATE = exports.SORT_BY_NAME = exports.COLUMN_UPDATED_AT_UTC = exports.COLUMN_CREATED_AT_UTC = exports.COLUMN_DESCRIPTION = exports.COLUMN_DAY_DATE = exports.COLUMN_ORGANIZATION_ID = exports.COLUMN_NAME = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "special_days";
+exports.COLUMN_NAME = "name";
+exports.COLUMN_ORGANIZATION_ID = "organization_id";
+exports.COLUMN_DAY_DATE = "day_date";
+exports.COLUMN_DESCRIPTION = "description";
+exports.COLUMN_CREATED_AT_UTC = "created_at_utc";
+exports.COLUMN_UPDATED_AT_UTC = "updated_at_utc";
+exports.SORT_BY_NAME = "name";
+exports.SORT_BY_DAY_DATE = "dayDate";
+exports.SORT_BY_CREATED_AT_UTC = "createdAtUTC";

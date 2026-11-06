@@ -1,13 +1,14 @@
-import {getWorkingHours, getWorkingHour, updateWorkingHours, getNumberOfWorkingHours, updateOrganizationWorkingHours, } from "../services/working-hours.services";
+import {getWorkingHours, getWorkingHour, updateWorkingHours, getNumberOfWorkingHours, } from "../services/working-hours.services";
 import {type Request, type Response,} from "express";
-import type { QueryWorkingHours, UpdateDayWorkingHours, UpdateWorkingHours, WorkingHours, WorkingHoursResponse, } from "../models/working-hours.model";
+import type { QueryWorkingHours, UpdateDayWorkingHours, WorkingHours, WorkingHoursResponse, } from "../models/working-hours.model";
 import {QueryResponse,} from "../models/query.model";
-import { QuerySpecialDay } from '../models/special-days.model';
+import { verifyOrganizationReadAccess, verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
 
 export async function handleGetOrganizationWorkingHours(req: Request, res: Response) {
     const query = req.validatedQuery as unknown as QueryWorkingHours;
     query.offset = (query.page - 1) * query.limit;
-    const organizationUuid = req.user?.organizationUuid??req.params.organizationUuid as string;
+    const organizationUuid = (req.params.organizationUuid ?? req.user?.organizationUuid) as string;
+    await verifyOrganizationReadAccess(req, organizationUuid);
     if (organizationUuid != null) {
         query.filter = {
             ...query.filter,
@@ -24,6 +25,7 @@ export async function handleGetOrganizationWorkingHours(req: Request, res: Respo
 export async function handleGetOrganizationWorkingHour(req: Request, res: Response){
     const workingHoursUuid = req.params.workingHoursUuid as string;
     const organizationUuid = req.params.organizationUuid as string;
+    await verifyOrganizationReadAccess(req, organizationUuid);
     const result: WorkingHoursResponse = await getWorkingHour(workingHoursUuid, organizationUuid);
     return res.status(200).json(result);
 }
@@ -33,16 +35,7 @@ export async function handleUpdateOrganizationDayWorkingHours(req: Request, res:
     workingHours.uuid = req.params.workingHoursUuid as string;
     workingHours.organizationUuid = req.params.organizationUuid as string;
     workingHours.userUuid = req.user?.uuid as string;
+    await verifyOrganizationOwnership(workingHours.userUuid, workingHours.organizationUuid);
     const result: WorkingHours = await updateWorkingHours(workingHours);
-    return res.status(200).json(result);
-}
-
-export async function handleUpdateOrganizationWorkingHours(req: Request, res: Response){
-    const organizationUuid = req.params.organizationUuid as string;
-    const userUuid = req.user?.uuid as string;
-    const workingHours = req.body as UpdateWorkingHours;
-    workingHours.userUuid = userUuid;
-    workingHours.organizationUuid = organizationUuid;
-    const result = await updateOrganizationWorkingHours(workingHours);
     return res.status(200).json(result);
 }

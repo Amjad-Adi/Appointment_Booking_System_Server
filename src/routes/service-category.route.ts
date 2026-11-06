@@ -15,20 +15,21 @@ import {
     handleCreateServiceCategory,
     handleUpdateServiceCategory
 } from "../controllers/service-categoty.controller";
-import {authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
+import {authenticateOptionalToken, authenticateToken} from "../controllers/authentication/jwt.authentication.controller";
 import {
     CREATE_SERVICE_CATEGORY,
     UPDATE_SERVICE_CATEGORY
 } from "../permissions/permissions";
 import {validateUuid} from "../middlewares/zod-schemas/parameters.schema";
 import {authorize} from "../middlewares/authorization/authorization";
+import { handleSingleUpload } from "../config/multer";
 
 export const serviceCategoryRouter = express.Router();
 
 serviceCategoryRouter.route("/")
-    .get(validateQuery(queryServiceCategorySchema), handleGetServiceCategories)
-    .post(authenticateToken, authorize(CREATE_SERVICE_CATEGORY), validateBody(createServiceCategorySchema), handleCreateServiceCategory);
+    .get(authenticateOptionalToken, validateQuery(queryServiceCategorySchema), handleGetServiceCategories)
+    .post(authenticateToken, authorize(CREATE_SERVICE_CATEGORY), handleSingleUpload("picturePath"), validateBody(createServiceCategorySchema), handleCreateServiceCategory);
 
 serviceCategoryRouter.route("/:categoryUuid")
     .get(validateParameter(validateUuid, "categoryUuid"), handleGetServiceCategory)
-    .patch(authenticateToken, authorize(UPDATE_SERVICE_CATEGORY), validateParameter(validateUuid, "categoryUuid"), validateBody(updateServiceCategorySchema), handleUpdateServiceCategory);
+    .patch(authenticateToken, authorize(UPDATE_SERVICE_CATEGORY), validateParameter(validateUuid, "categoryUuid"), handleSingleUpload("picturePath"), validateBody(updateServiceCategorySchema), handleUpdateServiceCategory);

@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.mainRouter = void 0;
+const express_1 = __importDefault(require("express"));
+const user_route_js_1 = require("./user.route.js");
+const organization_route_js_1 = require("./organization.route.js");
+const authentication_route_js_1 = require("./authentication.route.js");
+const rate_limiter_js_1 = require("../middlewares/rate-limiter.js");
+const service_route_1 = require("./service.route");
+const service_category_route_1 = require("./service-category.route");
+const room_route_1 = require("./room.route");
+const apppointment_route_1 = require("./apppointment.route");
+const invitation_route_1 = require("../../routes/invitation.route");
+exports.mainRouter = express_1.default.Router();
+exports.mainRouter.use((0, rate_limiter_js_1.rateLimit)((0, rate_limiter_js_1.rateLimiterFactory)(rate_limiter_js_1.RATE_LIMIT_FOR_GENERAL)));
+exports.mainRouter.use("/users", user_route_js_1.userRouter);
+exports.mainRouter.use("/organizations", organization_route_js_1.organizationRouter);
+exports.mainRouter.use("/auth", authentication_route_js_1.authenticationRouter);
+exports.mainRouter.use("/invitations", invitation_route_1.invitationRouter);
+exports.mainRouter.use("/services/categories", service_category_route_1.serviceCategoryRouter);
+exports.mainRouter.use("/services", service_route_1.publicServiceRoute);
+exports.mainRouter.use("/rooms", room_route_1.publicRoomRoute);
+exports.mainRouter.use("/appointments", apppointment_route_1.appointmentRouter);

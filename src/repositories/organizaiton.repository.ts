@@ -48,6 +48,7 @@ import {
 import {setUserOrganizationId} from "./user.repository";
 import {Order} from "../models/enums/order";
 import { createWorkingDaysService } from '../services/working-hours.services';
+import { NotFoundError } from '../errors/not-found.error';
 import { mapDatabaseError } from '../utils/map/map-database-error';
 
 export async function findAll(query: QueryOrganization,): Promise<OrganizationRow[]> {
@@ -102,8 +103,8 @@ export async function findByUuid(
             ${LOCATION_ALIAS}.${LOCATION_COLUMN_TIMEZONE},
             ST_X(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LONGITUDE},
             ST_Y(${LOCATION_ALIAS}.${COLUMN_LOCATION_ON_MAP}) AS ${ALIAS_LATITUDE},
-            ${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_COLUMN_CREATED_AT_UTC},
-            ${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_COLUMN_UPDATED_AT_UTC},
+            ${LOCATION_ALIAS}.${LOCATION_COLUMN_CREATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_CREATED_AT_UTC},
+            ${LOCATION_ALIAS}.${LOCATION_COLUMN_UPDATED_AT_UTC} AS ${LOCATION_ALIAS_COLUMN_UPDATED_AT_UTC},
             ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},
             ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},
             ${ALIAS}.${COLUMN_STATUS}
@@ -123,6 +124,14 @@ export async function findIdByUuid(uuid:string):Promise<number>{
          FROM ${TABLE_NAME}
          WHERE ${COLUMN_UUID} = $1`,
         [uuid])).rows[0]?.id
+}
+
+export async function findProfilePictureIdByUuid(uuid:string):Promise<string|undefined>{
+    return (await pool.query(
+        `SELECT ${COLUMN_PROFILE_PICTURE_ID}
+         FROM ${TABLE_NAME}
+         WHERE ${COLUMN_UUID} = $1`,
+        [uuid])).rows[0]?.[COLUMN_PROFILE_PICTURE_ID]
 }
 
 export async function findUserOrganizationByUuid(userUuid:string):Promise<OrganizationRow>{
@@ -150,12 +159,12 @@ export async function create(organization: CreateOrganization):Promise<Organizat
         const result= await client.query(
             `INSERT INTO ${TABLE_NAME}(${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_PROFILE_PICTURE_ID})
                         VALUES ($1,$2,$3,$4,$5,$6,$7)
-                        RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+                        RETURNING ${COLUMN_ID},${COLUMN_UUID},${COLUMN_NAME},${COLUMN_EMAIL},${COLUMN_PHONE_NUMBER},${COLUMN_BIO},${COLUMN_LOCATION_ID},${COLUMN_PROFILE_PICTURE_PATH},${COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
                         [organization.name, organization.email,organization.phoneNumber,organization.bio,locationId,organization.profilePicturePath,organization.profilePictureId]);
-        const organizationId=await findIdByUuid(result.rows[0].uuid);
+        const { id: organizationId, ...createdOrganization } = result.rows[0];
         await Promise.all([createWorkingDaysService(organizationId,client),setUserOrganizationId(organizationId,organization.organizationOwnerUuid,client)])
         await client.query("COMMIT")
-        return result.rows[0];
+        return createdOrganization;
     } catch (error) {
         await client.query("ROLLBACK")
         mapDatabaseError(error)
@@ -170,11 +179,15 @@ export async function update(organization: UpdateOrganization):Promise<Organizat
         await client.query("BEGIN")
         const location:UpdateLocation=organization.location as UpdateLocation
         if(location!==undefined) {
-            location.id = (await pool.query(
+            const locationRow = (await client.query(
                 `SELECT ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
                 FROM ${LOCATION_TABLE_NAME} ${LOCATION_ALIAS}
                 JOIN ${TABLE_NAME} ${ALIAS} ON ${ALIAS}.${COLUMN_LOCATION_ID} = ${LOCATION_ALIAS}.${LOCATION_COLUMN_ID}
-                WHERE ${ALIAS}.${COLUMN_UUID} = $1`,[organization.uuid])).rows[0].id
+                WHERE ${ALIAS}.${COLUMN_UUID} = $1`,[organization.uuid])).rows[0]
+            if (locationRow === undefined) {
+                throw new NotFoundError("Organization location")
+            }
+            location.id = locationRow.id
             await updateLocation(location, client)
         }
         const result= await client.query(

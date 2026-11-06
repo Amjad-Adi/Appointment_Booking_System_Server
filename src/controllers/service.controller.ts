@@ -1,30 +1,38 @@
-import { type Request, type Response } from "express";
+import { type Request, type Response } from 'express';
 import {
-    getService,
-    getServices,
     createService,
+    getNumberOfServices,
+    getService,
+    getServicePictureIdByUuid,
+    getServices,
     updateService,
-    getNumberOfServices, getServicePictureIdByUuid,
-} from "../services/service.service";
-import {
-    CreateService,
-    QueryService,
-    Service,
-    ServiceResponse,
-    UpdateService,
-} from "../models/service.model";
-import { QueryResponse } from "../models/query.model";
+} from '../services/service.service';
+import { CreateService, QueryService, Service, ServiceResponse, UpdateService, } from '../models/service.model';
+import { QueryResponse } from '../models/query.model';
 import { verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/cloudinary-service';
 import { UploadApiResponse } from 'cloudinary';
+import { Role } from '../models/enums/roles';
+import { ActivationStatus } from '../models/enums/activation-status';
+import { NotFoundError } from '../errors/not-found.error';
 
 export async function handleGetServices(req: Request, res: Response) {
     const query: QueryService = req.validatedQuery as unknown as QueryService;
     query.offset = (query.page - 1) * query.limit;
+    query.userUuid = req.user?.uuid;
     const organizationUuid = req.user?.organizationUuid??(req.params?.organizationUuid as string);
+    const role=req.user?.role
+    const restrictToActive =
+        role === Role.WORKER ||
+        role === Role.CRM ||
+        role === Role.CUSTOMER ||
+        (role == null && organizationUuid == null);
     query.filter = {
         ...query.filter,
-        organizationUuid,
+        ...(organizationUuid != null && { organizationUuid }),
+        ...(restrictToActive && {
+            status: ActivationStatus.ACTIVE,
+        }),
     };
     const [services, totalServices] = await Promise.all([
         getServices(query),
@@ -38,7 +46,16 @@ export async function handleGetServices(req: Request, res: Response) {
 export async function handleGetService(req: Request, res: Response) {
     const serviceUuid = req.params.serviceUuid as string;
     const organizationUuid = req.user?.organizationUuid??(req.params?.organizationUuid as string);
-    const result: ServiceResponse = await getService(serviceUuid,organizationUuid);
+    const result: ServiceResponse = await getService(serviceUuid,organizationUuid,req.user?.uuid);
+    const role=req.user?.role
+    const restrictToActive =
+        role === Role.WORKER ||
+        role === Role.CRM ||
+        role === Role.CUSTOMER ||
+        (role == null && organizationUuid == null);
+    if (restrictToActive && result.status !== ActivationStatus.ACTIVE) {
+        throw new NotFoundError('Service not found');
+    }
     return res.status(200).json(result);
 }
 

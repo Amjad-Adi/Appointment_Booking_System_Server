@@ -1,4 +1,4 @@
-import { findAll, findUserOrganizationByUuid, create, update ,countAll, findByUuid, findIdByUuid } from "../repositories/organizaiton.repository"
+import { findAll, findUserOrganizationByUuid, create, update ,countAll, findByUuid, findIdByUuid, findProfilePictureIdByUuid } from "../repositories/organizaiton.repository"
 import {NotFoundError} from "../errors/not-found.error";
 import {ConflictError} from "../errors/conflict.error";
 import { CreateOrganization, CreateOrganizationByAdmin, Organization, OrganizationResponse, OrganizationRow, QueryOrganization, UpdateOrganizationByUser, UpdateOrganizationByAdmin, } from "../models/organization.model";
@@ -110,6 +110,10 @@ export async function getOrganizationIdByUuid(uuid:string):Promise<number>{
         throw new NotFoundError("Organization");
     }
     return result;
+}
+
+export async function getOrganizationPictureIdByUuid(uuid:string):Promise<string|undefined>{
+    return await findProfilePictureIdByUuid(uuid);
 }
 
 export async function createOrganizationByAdmin(organization: CreateOrganizationByAdmin): Promise<Organization> {

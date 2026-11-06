@@ -22,7 +22,15 @@ function isValidInterval(startAtUTC: Date, endAtUTC: Date): boolean {
     return startAtUTC.getTime() < endAtUTC.getTime();
 }
 
-export async function findBlockingIntervals(organizationUuid: string, workerUuid: string, roomUuid: string, userUuid: string, startAtUTC: string, endAtUTC: string,): Promise<SchedulingInterval[]> {
+export async function findBlockingIntervals(
+    organizationUuid: string,
+    workerUuid: string,
+    roomUuid: string,
+    userUuid: string,
+    startAtUTC: string,
+    endAtUTC: string,
+    includeUserAppointments = true,
+): Promise<SchedulingInterval[]> {
     const startDate = parseDate(startAtUTC);
     const endDate = parseDate(endAtUTC);
     if (startDate >= endDate) {
@@ -32,21 +40,55 @@ export async function findBlockingIntervals(organizationUuid: string, workerUuid
     const normalizedEnd = endDate.toISOString();
     const targetWorker = alias(usersTable, "target_worker");
     const targetRoom = alias(roomTable, "target_room");
-    const [appointments, timeBlocks] = await Promise.all([
-        drizzleConnection
+    const targetUser = alias(usersTable, "target_user");
+
+    const resourceAppointmentsPromise = drizzleConnection
+        .select({ startAtUTC: appointmentTable.scheduledStartAtUTC, endAtUTC: appointmentTable.scheduledEndAtUTC, })
+        .from(appointmentTable)
+        .innerJoin(organizationTable, eq(appointmentTable.organizationId, organizationTable.id),)
+        .innerJoin(targetWorker, and(eq(targetWorker.uuid, workerUuid), eq(targetWorker.organizationId, organizationTable.id),),)
+        .innerJoin(targetRoom, and(eq(targetRoom.uuid, roomUuid), eq(targetRoom.organizationId, organizationTable.id),),)
+        .where(and(
+            eq(organizationTable.uuid, organizationUuid),
+            inArray(appointmentTable.appointmentStatus, ACTIVE_APPOINTMENT_STATUSES),
+            lt(appointmentTable.scheduledStartAtUTC, normalizedEnd),
+            gt(appointmentTable.scheduledEndAtUTC, normalizedStart),
+            or(eq(appointmentTable.workerId, targetWorker.id), eq(appointmentTable.roomId, targetRoom.id)),
+        ))
+        .orderBy(appointmentTable.scheduledStartAtUTC);
+
+    /*
+     * A customer cannot hold overlapping active appointments, in this or any
+     * other organization. Organization staff may intentionally assign the
+     * same customer to multiple appointments, so they skip this check.
+     */
+    const userAppointmentsPromise = includeUserAppointments
+        ? drizzleConnection
             .select({ startAtUTC: appointmentTable.scheduledStartAtUTC, endAtUTC: appointmentTable.scheduledEndAtUTC, })
             .from(appointmentTable)
-            .innerJoin(organizationTable, eq(appointmentTable.organizationId, organizationTable.id),)
-            .innerJoin(targetWorker, and(eq(targetWorker.uuid, workerUuid), eq(targetWorker.organizationId, organizationTable.id),),)
-            .innerJoin(targetRoom, and(eq(targetRoom.uuid, roomUuid), eq(targetRoom.organizationId, organizationTable.id),),)
-            .where(and(eq(organizationTable.uuid, organizationUuid), inArray(appointmentTable.appointmentStatus, ACTIVE_APPOINTMENT_STATUSES), lt(appointmentTable.scheduledStartAtUTC, normalizedEnd), gt(appointmentTable.scheduledEndAtUTC, normalizedStart), or(eq(appointmentTable.workerId, targetWorker.id), eq(appointmentTable.roomId, targetRoom.id), eq(appointmentTable.userId, drizzleConnection.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.uuid, userUuid))),),),)
-            .orderBy(appointmentTable.scheduledStartAtUTC),
-        drizzleConnection.select({ startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, })
-            .from(timeBlockTable)
-            .innerJoin(organizationTable, eq(timeBlockTable.organizationId, organizationTable.id),)
-            .innerJoin(targetWorker, and(eq(targetWorker.uuid, workerUuid), eq(targetWorker.organizationId, organizationTable.id),),)
-            .where(and(eq(organizationTable.uuid, organizationUuid), eq(timeBlockTable.requestStatus, TimeBlockStatus.APPROVED), eq(timeBlockTable.requestUserId, targetWorker.id), lt(timeBlockTable.startAtUTC, normalizedEnd), gt(timeBlockTable.endAtUTC, normalizedStart)),)
-            .orderBy(timeBlockTable.startAtUTC)]);
+            .innerJoin(targetUser, eq(appointmentTable.userId, targetUser.id),)
+            .where(and(
+                eq(targetUser.uuid, userUuid),
+                inArray(appointmentTable.appointmentStatus, ACTIVE_APPOINTMENT_STATUSES),
+                lt(appointmentTable.scheduledStartAtUTC, normalizedEnd),
+                gt(appointmentTable.scheduledEndAtUTC, normalizedStart),
+            ))
+        : Promise.resolve([] as { startAtUTC: Date; endAtUTC: Date }[]);
+
+    const timeBlocksPromise = drizzleConnection
+        .select({ startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, })
+        .from(timeBlockTable)
+        .innerJoin(organizationTable, eq(timeBlockTable.organizationId, organizationTable.id),)
+        .innerJoin(targetWorker, and(eq(targetWorker.uuid, workerUuid), eq(targetWorker.organizationId, organizationTable.id),),)
+        .where(and(eq(organizationTable.uuid, organizationUuid), eq(timeBlockTable.requestStatus, TimeBlockStatus.APPROVED), eq(timeBlockTable.requestUserId, targetWorker.id), lt(timeBlockTable.startAtUTC, normalizedEnd), gt(timeBlockTable.endAtUTC, normalizedStart)),)
+        .orderBy(timeBlockTable.startAtUTC);
+
+    const [resourceAppointments, userAppointments, timeBlocks] = await Promise.all([
+        resourceAppointmentsPromise,
+        userAppointmentsPromise,
+        timeBlocksPromise,
+    ]);
+    const appointments = [...resourceAppointments, ...userAppointments];
     const intervals: SchedulingInterval[] = [];
     for (const appointment of appointments) {
         const start = new Date(appointment.startAtUTC);

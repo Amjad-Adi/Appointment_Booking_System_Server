@@ -2,6 +2,8 @@ export class AppError extends Error {
     statusCode:number;
     message:string;
     status:string;
+    code:string = 'INTERNAL_ERROR';
+    fieldErrors?:Record<string, string>;
     isOperational:boolean;
 constructor(message:string,statusCode:number=500) {
     super(message);

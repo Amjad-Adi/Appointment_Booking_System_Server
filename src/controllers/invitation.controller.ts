@@ -1,4 +1,4 @@
-import { getInvitations, getNumberOfInvitations, createInvitation, getInvitation, updateInvitationByOrganization, acceptInvitationByUser} from "../services/invitation.service";
+import { getInvitations, getNumberOfInvitations, createInvitation, getInvitation, getInvitationByToken, updateInvitationByOrganization, acceptInvitationByUser} from "../services/invitation.service";
 import { getOrganization, } from "../services/organization.service";
 import { type Request, type Response, } from "express";
 import { AcceptInvitation, CreateInvitation, QueryInvitation, UpdateInvitationByOrganization } from "../models/invitation.model";
@@ -15,12 +15,12 @@ import { NotFoundError } from '../errors/not-found.error';
 export async function handleGetOrganizationInvitations(req: Request, res: Response) {
     const query = req.validatedQuery as unknown as QueryInvitation;
     query.offset = (query.page - 1) * query.limit;
-    const organizationUuid = req.user?.organizationUuid as string;
+    const organizationUuid = req.params.organizationUuid as string;
     const userUuid=req.user?.uuid as string;
     await verifyOrganizationOwnership(userUuid,organizationUuid);
     query.filter = {
-            ...query.filter,
-            organizationUuid,
+        ...query.filter,
+        organizationUuid,
     };
     const [invitations, totalNumberOfInvitations] = await Promise.all([getInvitations(query), getNumberOfInvitations(query)]);
     const baseUrl = req.originalUrl?.split("?")[0];
@@ -40,10 +40,16 @@ export async function handleCreateOrganizationInvitation(req: Request, res: Resp
     const invitation:CreateInvitation = req.body;
     invitation.organizationUuid  = req.params.organizationUuid as string;
     invitation.senderUuid = req.user?.uuid as string;
+    await verifyOrganizationOwnership(invitation.senderUuid, invitation.organizationUuid);
     const { invitationResult, rawToken } = await createInvitation(invitation);
     const organization = await getOrganization(invitation.organizationUuid as string);
     await sendInvitationEmail(organization.name, invitationResult.recipientEmail, rawToken);
-    return res.status(201).json(invitation);
+    return res.status(201).json(invitationResult);
+}
+
+export async function handleGetPublicInvitation(req: Request, res: Response) {
+    const invitation = await getInvitationByToken(req.params.token as string);
+    return res.status(200).json(invitation);
 }
 
 export async function handleUpdateOrganizationInvitation(req: Request, res: Response) {

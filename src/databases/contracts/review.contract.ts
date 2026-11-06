@@ -1,0 +1,16 @@
+export const TABLE_NAME = "reviews";
+export const ALIAS = "r";
+export const COLUMN_ID = "id";
+export const COLUMN_UUID = "uuid";
+export const COLUMN_CUSTOMER_ID = "customer_id";
+export const COLUMN_APPOINTMENT_ID = "appointment_id";
+export const COLUMN_RATING = "rating";
+export const COLUMN_COMMENT = "comment";
+export const COLUMN_CREATED_AT_UTC = "created_at_utc";
+export const COLUMN_UPDATED_AT_UTC = "updated_at_utc";
+export const ALIAS_COLUMN_CREATED_AT_UTC = `"createdAtUTC"`;
+export const ALIAS_COLUMN_UPDATED_AT_UTC = `"updatedAtUTC"`;
+export const ALIAS_TOTAL_NUMBER_OF_REVIEWS = `"totalNumberOfReviews"`;
+export const SORT_BY_CREATED_AT_UTC = "createdAtUTC";
+export const SORT_BY_RATING = "rating";
+export const SORT_BY_UPDATED_AT_UTC = "updatedAtUTC";

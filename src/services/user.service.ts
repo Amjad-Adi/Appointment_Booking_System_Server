@@ -3,9 +3,10 @@ import {
     findByUuid,
     create,
     update,
-    findByUid, findIdByUuid, findUidByUuid, findById, countAll, findPictureIdByUuid, findByEmail
+    findByUid, findIdByUuid, findUidByUuid, findById, countAll, findPictureIdByUuid, findByEmail,
+    findOrganizationCustomers, countOrganizationCustomers
 } from "../repositories/user.repository"
-import {RegisterUser, UserResponse, UpdateCurrentUser, User, QueryUser, CreateUser, UpdateUserByAdmin } from "../models/user.model";
+import {RegisterUser, UserResponse, UpdateCurrentUser, User, QueryUser, CreateUser, UpdateUserByAdmin, QueryOrganizationCustomer } from "../models/user.model";
 import {NotFoundError} from "../errors/not-found.error";
 import {findUserOrganizationByUuid} from "../repositories/organizaiton.repository";
 export async function getUsers(query:QueryUser):Promise<UserResponse[]>{
@@ -14,6 +15,14 @@ export async function getUsers(query:QueryUser):Promise<UserResponse[]>{
 
 export async function getNumberOfUsers(query:QueryUser):Promise<number>{
     return (await countAll(query))
+}
+
+export async function getOrganizationCustomers(organizationUuid:string, query:QueryOrganizationCustomer){
+    return (await findOrganizationCustomers(organizationUuid, query))
+}
+
+export async function getNumberOfOrganizationCustomers(organizationUuid:string, query:QueryOrganizationCustomer):Promise<number>{
+    return (await countOrganizationCustomers(organizationUuid, query))
 }
 
 export async function getUser(uuid:string,organizationUuid:string):Promise<UserResponse>{
@@ -48,12 +57,8 @@ export async function getUserByEmail(email:string):Promise<UserResponse>{
     return result
 }
 
-export async function getUserPictureIdByUuid(userUuid:string):Promise<string>{
-    const result:string|undefined= await findPictureIdByUuid(userUuid)
-    if(result===undefined){
-        throw new NotFoundError("User");
-    }
-    return result
+export async function getUserPictureIdByUuid(userUuid:string):Promise<string|undefined>{
+    return await findPictureIdByUuid(userUuid)
 }
 
 export async function createUser(user:CreateUser):Promise<User>{

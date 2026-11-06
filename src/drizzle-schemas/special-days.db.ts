@@ -1,9 +1,8 @@
 import { pgTable, bigint, uuid, varchar, date, timestamp, unique } from "drizzle-orm/pg-core";
 import {
-    COLUMN_CREATED_AT_UTC, COLUMN_DAY_DATE, COLUMN_UPDATED_AT_UTC,
+    COLUMN_CREATED_AT_UTC, COLUMN_DAY_DATE, COLUMN_STATUS, COLUMN_UPDATED_AT_UTC,
     COLUMN_ORGANIZATION_ID, TABLE_NAME
 } from "../databases/contracts/special-days.contract";
-import { activationStatusEnum } from "./enums";
 import { organizationTable } from "./organizations.db";
 import { ActivationStatus } from "../models/enums/activation-status";
 
@@ -16,7 +15,7 @@ export const specialDaysTable = pgTable(TABLE_NAME, {
     description: varchar({ length: 4096 }),
     createdAtUTC: timestamp(COLUMN_CREATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
     updatedAtUTC: timestamp(COLUMN_UPDATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
-    status: activationStatusEnum().notNull().default(ActivationStatus.ACTIVE),
+    status: varchar(COLUMN_STATUS, { length: 8 }).$type<ActivationStatus>().notNull().default(ActivationStatus.ACTIVE),
 }, (table) => [
-    unique("special_days_day_date_unique").on(table.dayDate),
+    unique("special_days_organization_id_day_date_key").on(table.organizationId, table.dayDate),
 ]);

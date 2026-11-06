@@ -46,6 +46,37 @@ export async function authenticateToken(req:Request,res:Response,next:NextFuncti
 
 
 
+export async function authenticateOptionalToken(req:Request,res:Response,next:NextFunction){
+    const token = req.cookies?.accessToken;
+    if (!token) {
+        return next();
+    }
+    try {
+        const verifyOptions:VerifyOptions = {
+            issuer:"appointment-booking-server",
+            audience:"appointment-booking-api",
+        }
+        const decodedToken =jwt.verify(token,JWT_SECRET,verifyOptions) as JwtPayload;
+        if (typeof decodedToken.sub!=="string" || typeof decodedToken.jti!=="string" || typeof decodedToken.exp!=="number") {
+            return next();
+        }
+        const blacklistedToken = await getBlackListedToken(decodedToken.jti);
+        if (blacklistedToken) {
+            return next();
+        }
+        const user:UserResponse = await getUserByFireBaseUid(decodedToken.sub);
+        req.user = {
+            ...user,
+            uid: decodedToken.sub,
+            jti: decodedToken.jti,
+            exp: new Date(decodedToken.exp * 1000)
+        };
+    } catch {
+        // Invalid or expired token: continue as an anonymous request.
+    }
+    return next();
+}
+
 export async function generateToken(userUid:string){
     const payload:JwtPayload={
         sub: userUid

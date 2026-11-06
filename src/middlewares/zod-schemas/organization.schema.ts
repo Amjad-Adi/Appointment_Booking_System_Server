@@ -17,7 +17,7 @@ export const updateOrganizationSchema = z.object({
     bio: z.string().trim().nonempty({ error: 'Bio cannot be empty'}).max(4096, { error: 'Bio must be at most 4096 characters'}).optional(),
     phoneNumber: z.e164({ error: 'Invalid phone number'}).optional(),
     location: updateLocationSchema.optional(),
-}).strict().refine((data)=>(Object.keys(data).length !== 0),{ message: "At least one field must be provided"});
+}).strict();
 
 export const updateOrganizationByAdminSchema = z.object({
     status: z.enum(ActivationStatus, { error: 'Invalid activation status'}),

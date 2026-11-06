@@ -1,20 +1,23 @@
 import {
     createUser,
+    getNumberOfOrganizationCustomers,
     getNumberOfUsers,
     getUser,
     getUserPictureIdByUuid,
     getUsers,
+    getOrganizationCustomers,
     updateUser
 } from '../services/user.service';
 import { type Request, type Response } from 'express';
 import { createFireBaseUser, deleteFireBaseUser, updateFireBaseUser, } from '../services/firebase-admin.service';
-import { CreateUser, QueryUser, UpdateCurrentUser, UpdateCurrentUserPassword, UpdateUserByAdmin, User, UserResponse } from '../models/user.model';
+import { CreateUser, QueryOrganizationCustomer, QueryUser, UpdateCurrentUser, UpdateCurrentUserPassword, UpdateUserByAdmin, User, UserResponse } from '../models/user.model';
 import { QueryResponse } from '../models/query.model';
 import { mapFirebaseError } from '../utils/map/map-firebase-error';
 import { Role } from '../models/enums/roles';
 import { deleteFromCloudinary, uploadToCloudinary } from '../services/cloudinary-service';
 import { ForbiddenError } from '../errors/forbidden.error';
 import { UploadApiResponse } from 'cloudinary';
+import { verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
 
 export async function handleGetUsers(req:Request,res:Response){
     const query:QueryUser= req.validatedQuery as unknown as QueryUser;
@@ -32,6 +35,30 @@ export async function handleGetUsers(req:Request,res:Response){
     const baseUrl=req.originalUrl?.split("?")[0]
     const responseResult:QueryResponse=new QueryResponse(users,totalUsers,baseUrl,query?.page,query?.limit)
     return res.status(200).json(responseResult)
+}
+
+export async function handleGetOrganizationCustomers(req: Request, res: Response) {
+    const query = req.validatedQuery as unknown as QueryOrganizationCustomer;
+    query.offset = (query.page - 1) * query.limit;
+    const organizationUuid = req.params.organizationUuid as string;
+
+    await verifyOrganizationOwnership(req.user?.uuid as string, organizationUuid);
+
+    const [customers, totalCustomers] = await Promise.all([
+        getOrganizationCustomers(organizationUuid, query),
+        getNumberOfOrganizationCustomers(organizationUuid, query),
+    ]);
+
+    const baseUrl = req.originalUrl.split('?')[0];
+    const responseResult = new QueryResponse(
+        customers,
+        totalCustomers,
+        baseUrl,
+        query.page,
+        query.limit,
+    );
+
+    return res.status(200).json(responseResult);
 }
 
 export async function handleGetUser(req: Request, res: Response,) {
@@ -134,11 +161,45 @@ export async function handleUpdateUserByAdmin(req:Request,res:Response){
     const uuid:string=(req.params.userUuid) as any as string;
     const user:UpdateUserByAdmin=(req.body)
     user.uuid=uuid;
-    const result:User=await updateUser(user)
-    return res.status(200).json(result)
+    let previousPictureId: string|undefined;
+    let uploadedImage:UploadApiResponse|undefined;
+    try{
+        const file=req.file
+        if(file){
+            previousPictureId=await getUserPictureIdByUuid(uuid)
+            uploadedImage=await uploadToCloudinary(file.buffer)
+            user.profilePicturePath=uploadedImage.secure_url
+            user.profilePictureId=uploadedImage.public_id
+        }
+        const result:User=await updateUser(user)
+        if(uploadedImage&&previousPictureId){
+            try {
+                await deleteFromCloudinary(previousPictureId)
+            } catch (cleanupError) {
+                console.error("Failed to delete previous user image", cleanupError);
+            }
+        }
+        return res.status(200).json(result)
+    }catch(err){
+        if(uploadedImage){
+            try {
+                await deleteFromCloudinary(uploadedImage.public_id);
+            } catch (cleanupError) {
+                console.error("Failed to clean up uploaded user image", cleanupError);
+            }
+        }
+        throw err;
+    }
 }
 
 function authorizeUserAccess(currentUserRole: Role, targetRole: Role | undefined) {
+    if (currentUserRole === Role.WORKER) {
+        if (targetRole !== Role.WORKER) {
+            throw new ForbiddenError('You are not allowed to access these users information.');
+        }
+        return;
+    }
+
     if (targetRole === undefined || (currentUserRole === Role.CRM && targetRole !== Role.WORKER) ||
         (currentUserRole === Role.MANAGER && targetRole !== Role.CRM && targetRole !== Role.WORKER) ||
         (currentUserRole === Role.OWNER && (targetRole === Role.CUSTOMER || targetRole === Role.SUPER_ADMIN))) {

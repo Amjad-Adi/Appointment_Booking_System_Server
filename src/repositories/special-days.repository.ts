@@ -59,6 +59,7 @@ export async function countAll(query: QuerySpecialDay): Promise<number> {
     }
     const [result] = await drizzleConnection.select({ totalNumberOfSpecialDays: count()})
         .from(specialDaysTable)
+        .innerJoin(organizationTable,eq(organizationTable.id,specialDaysTable.organizationId))
         .where(and(...conditions));
     return result.totalNumberOfSpecialDays;
 }

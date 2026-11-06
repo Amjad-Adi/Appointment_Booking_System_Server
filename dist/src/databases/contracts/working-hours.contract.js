@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SORT_BY_END_TIME = exports.SORT_BY_START_TIME = exports.SORT_BY_DAY_OF_WEEK = exports.ALIAS_TOTAL_NUMBER_OF_WORKING_HOURS = exports.ALIAS_COLUMN_END_TIME = exports.ALIAS_COLUMN_START_TIME = exports.ALIAS_COLUMN_DAY_OF_WEEK = exports.ALIAS = exports.COLUMN_END_TIME = exports.COLUMN_START_TIME = exports.COLUMN_DAY_OF_WEEK = exports.COLUMN_ORGANIZATION_ID = exports.COLUMN_UUID = exports.COLUMN_ID = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "working_hours";
+exports.COLUMN_ID = "id";
+exports.COLUMN_UUID = "uuid";
+exports.COLUMN_ORGANIZATION_ID = "organization_id";
+exports.COLUMN_DAY_OF_WEEK = "day_of_week";
+exports.COLUMN_START_TIME = "start_time";
+exports.COLUMN_END_TIME = "end_time";
+exports.ALIAS = "wh";
+exports.ALIAS_COLUMN_DAY_OF_WEEK = `"dayOfWeek"`;
+exports.ALIAS_COLUMN_START_TIME = `"startTime"`;
+exports.ALIAS_COLUMN_END_TIME = `"endTime"`;
+exports.ALIAS_TOTAL_NUMBER_OF_WORKING_HOURS = `"totalNumberOfWorkingHours"`;
+exports.SORT_BY_DAY_OF_WEEK = "dayOfWeek";
+exports.SORT_BY_START_TIME = "startTime";
+exports.SORT_BY_END_TIME = "endTime";

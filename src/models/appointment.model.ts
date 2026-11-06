@@ -9,6 +9,7 @@ import type {
 import { AppointmentStatus } from "./enums/appointment-status";
 import { PaymentMethod } from "./enums/payment-method";
 import { PaymentStatus } from "./enums/payment-status";
+import { DataResponses } from './query.model';
 
 interface Appointment {
     uuid: string;
@@ -35,13 +36,13 @@ interface Appointment {
     updatedAtUTC: string;
 }
 
-export interface UserAppointmentResponse extends Appointment {
+export interface UserAppointmentResponse extends Appointment,DataResponses {
     userTitle: string | null;
     userNote: string | null;
     userColour: string | null;
 }
 
-export interface OrganizationAppointmentResponse extends Appointment {
+export interface OrganizationAppointmentResponse extends Appointment,DataResponses {
     approvalUserUuid: string | null;
     approvalUserName: string | null;
     organizationTitle: string | null;
@@ -80,4 +81,14 @@ export const ACTIVE_APPOINTMENT_STATUSES = [
     AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
     AppointmentStatus.CONFIRMED,
     AppointmentStatus.IN_PROGRESS,
+];
+
+/*
+ * A customer may only cancel before the appointment has started. Once it is
+ * in progress, only the organization can close it.
+ */
+export const CANCELLABLE_BY_USER_APPOINTMENT_STATUSES = [
+    AppointmentStatus.PENDING_USER_CONFIRMATION,
+    AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
+    AppointmentStatus.CONFIRMED,
 ];

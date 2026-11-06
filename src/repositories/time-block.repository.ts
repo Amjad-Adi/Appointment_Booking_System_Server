@@ -7,9 +7,8 @@ import { ALIAS, SECONDARY_ALIAS } from "../databases/contracts/user.contract";
 import type { CreateTimeBlock, QueryTimeBlock, TimeBlock, TimeBlockResponse, UpdateTimeBlock, } from "../models/time-block.model";
 import { organizationTable } from '../drizzle-schemas/organizations.db';
 import {
-    ALIAS_COLUMN_END_AT_UTC,
-    ALIAS_COLUMN_START_AT_UTC,
-    COLUMN_REASON, SORT_BY_END_AT_UTC, SORT_BY_REQUESTED_AT_UTC, SORT_BY_RESPONDED_AT_UTC, SORT_BY_START_AT_UTC } from '../databases/contracts/time-block.contract';
+    SORT_BY_END_AT_UTC, SORT_BY_REQUESTED_AT_UTC, SORT_BY_RESPONDED_AT_UTC, SORT_BY_START_AT_UTC
+} from '../databases/contracts/time-block.contract';
 import { mapDatabaseError } from '../utils/map/map-database-error';
 
 const requestUsersTable = alias(usersTable, ALIAS);
@@ -46,6 +45,7 @@ export async function findAll(query: QueryTimeBlock): Promise<TimeBlockResponse[
         .select({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus, requestUserUuid: requestUsersTable.uuid, requestUserFirstName: requestUsersTable.firstName, requestUserLastName: requestUsersTable.lastName, requestUserProfilePicturePath: requestUsersTable.profilePicturePath, respondUserUuid: respondUsersTable.uuid, respondUserFirstName: respondUsersTable.firstName, respondUserLastName: respondUsersTable.lastName, respondUserProfilePicturePath: respondUsersTable.profilePicturePath })
         .from(timeBlockTable)
         .innerJoin(requestUsersTable, eq(requestUsersTable.id, timeBlockTable.requestUserId))
+        .innerJoin(organizationTable, eq(organizationTable.id, timeBlockTable.organizationId))
         .leftJoin(respondUsersTable, eq(respondUsersTable.id, timeBlockTable.respondUserId))
         .where(and(...conditions))
         .orderBy(sortOrder, asc(timeBlockTable.uuid))
@@ -76,6 +76,7 @@ export async function countAll(query: QueryTimeBlock): Promise<number> {
         .select({ totalNumberOfTimeBlocks: count()})
         .from(timeBlockTable)
         .innerJoin(requestUsersTable, eq(requestUsersTable.id, timeBlockTable.requestUserId))
+        .innerJoin(organizationTable, eq(organizationTable.id, timeBlockTable.organizationId))
         .leftJoin(respondUsersTable, eq(respondUsersTable.id, timeBlockTable.respondUserId))
         .where(and(...conditions));
     return result.totalNumberOfTimeBlocks;
@@ -96,12 +97,13 @@ export async function create(timeBlock: CreateTimeBlock): Promise<TimeBlock> {
     try {
         const [result] = await drizzleConnection
             .insert(timeBlockTable)
-            .select(
-                drizzleConnection
-                .select({ reason: sql<string>`${timeBlock.reason}`.as(COLUMN_REASON), startAtUTC: sql<string>`${timeBlock.startAtUTC}`.as(ALIAS_COLUMN_START_AT_UTC), endAtUTC: sql<string>`${timeBlock.endAtUTC}`.as(ALIAS_COLUMN_END_AT_UTC), requestUserId: usersTable.id, organizationId: organizationTable.id })
-                .from(organizationTable)
-                .innerJoin(usersTable, and(eq(usersTable.organizationId, organizationTable.id), eq(usersTable.uuid, timeBlock.requestUserUuid)))
-                .where(eq(organizationTable.uuid, timeBlock.organizationUuid)))
+            .values({
+                reason: timeBlock.reason ?? null,
+                startAtUTC: timeBlock.startAtUTC,
+                endAtUTC: timeBlock.endAtUTC,
+                requestUserId: sql<number>`(select ${usersTable.id} from ${usersTable} where ${usersTable.uuid} = ${timeBlock.requestUserUuid} and ${usersTable.organizationId} = (select ${organizationTable.id} from ${organizationTable} where ${organizationTable.uuid} = ${timeBlock.organizationUuid}))`,
+                organizationId: sql<number>`(select ${organizationTable.id} from ${organizationTable} where ${organizationTable.uuid} = ${timeBlock.organizationUuid})`,
+            })
             .returning({ uuid: timeBlockTable.uuid, reason: timeBlockTable.reason, startAtUTC: timeBlockTable.startAtUTC, endAtUTC: timeBlockTable.endAtUTC, requestedAtUTC: timeBlockTable.requestedAtUTC, respondedAtUTC: timeBlockTable.respondedAtUTC, requestStatus: timeBlockTable.requestStatus });
         return result;
     } catch (error) {

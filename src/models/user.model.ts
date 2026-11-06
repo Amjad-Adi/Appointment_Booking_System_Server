@@ -4,7 +4,7 @@ import {ActivationStatus} from "./enums/activation-status";
 import {
     registerUserSchema, queryUserSchema,
     updateUserByAdminSchema, updateUserPasswordSchema,
-    updateUserSchema, userFilterSchema, createUserSchema
+    updateUserSchema, userFilterSchema, createUserSchema, queryOrganizationCustomerSchema
 } from "../middlewares/zod-schemas/user.schema"
 import {DataResponses, Filter} from "./query.model";
 import {Order} from "./enums/order";
@@ -25,6 +25,17 @@ export interface User{
 export interface UserResponse extends User,DataResponses {
     organizationUuid:string
 }
+export interface OrganizationCustomer {
+    uuid:string,
+    firstName:string,
+    lastName:string,
+    email:string,
+    profilePicturePath:string,
+    isLinked:boolean,
+    appointmentsCount:number,
+    status:ActivationStatus,
+    createdAtUTC:Date
+}
 type UpdateUserFields = {
     role?: Role;
     status?: ActivationStatus;
@@ -36,9 +47,10 @@ type UpdateUserFields = {
 };
 export type RegisterUser = z.infer<typeof registerUserSchema> & { uid: string; profilePicturePath?: string; profilePictureId?: string};
 export type CreateUser = z.infer<typeof createUserSchema> & { uid: string; profilePicturePath?: string; profilePictureId?: string};
-export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema> & {uuid:string};
+export type UpdateUserByAdmin= z.infer<typeof updateUserByAdminSchema> & {uuid:string; profilePicturePath?: string; profilePictureId?: string};
 export type UpdateCurrentUser = z.infer<typeof updateUserSchema>& { uuid: string; profilePicturePath?: string; profilePictureId?: string; };
 const combinedUpdateUserSchema = updateUserSchema.extend(updateUserByAdminSchema.shape);
 export type UpdateUser = z.infer<typeof combinedUpdateUserSchema>&{ uuid: string; profilePicturePath?: string; profilePictureId?: string; };
 export type UpdateCurrentUserPassword = z.infer<typeof updateUserPasswordSchema> & {uid:string};
 export type QueryUser=z.infer<typeof queryUserSchema>&{offset?:number};
+export type QueryOrganizationCustomer=z.infer<typeof queryOrganizationCustomerSchema>&{offset:number};

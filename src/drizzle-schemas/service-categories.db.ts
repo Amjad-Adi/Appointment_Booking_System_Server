@@ -1,8 +1,7 @@
 import { pgTable, bigint, uuid, varchar, timestamp, text } from "drizzle-orm/pg-core";
 import {
-    COLUMN_CREATED_AT_UTC, COLUMN_UPDATED_AT_UTC, TABLE_NAME
+    COLUMN_CREATED_AT_UTC, COLUMN_UPDATED_AT_UTC, COLUMN_STATUS, TABLE_NAME
 } from "../databases/contracts/service-category.contract";
-import { activationStatusEnum } from "./enums";
 import { ActivationStatus } from "../models/enums/activation-status";
 import { COLUMN_PICTURE_ID, COLUMN_PICTURE_PATH } from '../databases/contracts/service.contract';
 
@@ -15,5 +14,5 @@ export const serviceCategoryTable = pgTable(TABLE_NAME, {
     pictureId: text(COLUMN_PICTURE_ID).unique(),
     createdAtUTC: timestamp(COLUMN_CREATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
     updatedAtUTC: timestamp(COLUMN_UPDATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
-    status: activationStatusEnum().notNull().default(ActivationStatus.ACTIVE),
+    status: varchar(COLUMN_STATUS, { length: 8 }).$type<ActivationStatus>().notNull().default(ActivationStatus.ACTIVE),
 });

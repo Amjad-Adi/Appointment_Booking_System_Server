@@ -7,6 +7,7 @@ import { PaymentMethod } from "../../models/enums/payment-method";
 import { PaymentStatus } from "../../models/enums/payment-status";
 
 export const createAppointmentSchema = z.object({
+        organizationUuid: z.uuid("Invalid UUID").optional(),
         userTitle: z.string().trim().min(1, "Appointment name is required").max(256, "Appointment name must not exceed 256 characters"),
         serviceUuid: z.uuid("Invalid UUID"),
         timeType: z.enum(AppointmentTimeType),

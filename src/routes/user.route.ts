@@ -15,15 +15,15 @@ import { handleSingleUpload } from '../config/multer';
 export const userRouter=express.Router()
 userRouter.route("/")
     .get(authenticateToken,authorize(READ_USERS),validateQuery(queryUserSchema),handleGetUsers)
-    .post(authenticateToken, authorize(CREATE_USER),validateBody(createUserSchema),handleCreateUser)
+    .post(authenticateToken, authorize(CREATE_USER), handleSingleUpload(CLOUDINARY_PROFILE_PICTURE_PATH), validateBody(createUserSchema), handleCreateUser)
 
 userRouter.route("/me")
     .get(authenticateToken,handleGetCurrentUser)
-    .patch(authenticateToken,validateBody(updateUserSchema), handleSingleUpload(CLOUDINARY_PROFILE_PICTURE_PATH),handleUpdateCurrentUser)
+    .patch(authenticateToken, handleSingleUpload(CLOUDINARY_PROFILE_PICTURE_PATH), validateBody(updateUserSchema), handleUpdateCurrentUser)
 
-userRouter.route("me/password")
-    .patch(authenticateToken,validateParameter(validateUuid,"userUuid"),validateBody(updateUserPasswordSchema),handleUpdateCurrentUserPassword)
+userRouter.route("/me/password")
+    .patch(authenticateToken,validateBody(updateUserPasswordSchema),handleUpdateCurrentUserPassword)
 
 userRouter.route("/:userUuid")
     .get(authenticateToken,authorize(READ_USERS),validateParameter(validateUuid,"userUuid"),handleGetUser)
-    .patch(authenticateToken,authorize(UPDATE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)
+    .patch(authenticateToken,authorize(UPDATE_USER_AS_ADMIN),validateParameter(validateUuid,"userUuid"),handleSingleUpload(CLOUDINARY_PROFILE_PICTURE_PATH),validateBody(updateUserByAdminSchema),handleUpdateUserByAdmin)

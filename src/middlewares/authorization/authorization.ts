@@ -23,3 +23,30 @@ export async function verifyOrganizationOwnership(userUuid: string, organization
         throw new ForbiddenError();
     }
 }
+
+export async function verifyOrganizationAccess(req: Request, organizationUuid: string): Promise<void> {
+    const role = req.user?.role;
+    if (!role) {
+        throw new ForbiddenError();
+    }
+    if (role === Role.SUPER_ADMIN) {
+        return;
+    }
+    await verifyOrganizationOwnership(req.user?.uuid as string, organizationUuid);
+}
+
+/**
+ * Read-only organization data (working hours, special days) that customers
+ * also need in order to book confidently. Writes must keep using
+ * verifyOrganizationOwnership.
+ */
+export async function verifyOrganizationReadAccess(req: Request, organizationUuid: string): Promise<void> {
+    const role = req.user?.role;
+    if (!role) {
+        throw new ForbiddenError();
+    }
+    if (role === Role.SUPER_ADMIN || role === Role.CUSTOMER) {
+        return;
+    }
+    await verifyOrganizationOwnership(req.user?.uuid as string, organizationUuid);
+}

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createTimeBlockSchema, createTimeBlockSchemaByCrm, queryTimeBlockSchema, updateTimeBlockSchema, } from '../middlewares/zod-schemas/time-block.schema';
 import { TimeBlockStatus } from './enums/time-block-status';
+import { DataResponses } from './query.model';
 
 export interface TimeBlock {
     uuid: string,
@@ -12,7 +13,7 @@ export interface TimeBlock {
     requestStatus: TimeBlockStatus
 }
 
-export interface TimeBlockResponse extends TimeBlock {
+export interface TimeBlockResponse extends TimeBlock,DataResponses {
     requestUserUuid: string,
     requestUserFirstName: string,
     requestUserLastName: string,
