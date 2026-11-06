@@ -12,8 +12,8 @@ import { usersTable } from "./users.db";
 import { organizationTable } from "./organizations.db";
 import { serviceTable } from "./services.db";
 import { roomTable } from "./rooms.db";
-import { appointmentStatusEnum, paymentMethodEnum, paymentStatusEnum } from "./enums";
 import { AppointmentStatus } from '../models/enums/appointment-status';
+import { PaymentMethod } from '../models/enums/payment-method';
 import { PaymentStatus } from '../models/enums/payment-status';
 
 export const appointmentTable = pgTable(TABLE_NAME, {
@@ -35,15 +35,15 @@ export const appointmentTable = pgTable(TABLE_NAME, {
     scheduledEndAtUTC: timestamp(COLUMN_SCHEDULED_END_AT_UTC, { withTimezone: true, mode: "string" }).notNull(),
     actualStartAtUTC: timestamp(COLUMN_ACTUAL_START_AT_UTC, { withTimezone: true, mode: "string" }),
     actualEndAtUTC: timestamp(COLUMN_ACTUAL_END_AT_UTC, { withTimezone: true, mode: "string" }),
-    appointmentStatus: appointmentStatusEnum(COLUMN_APPOINTMENT_STATUS).notNull().default(AppointmentStatus.PENDING_USER_CONFIRMATION),
+    appointmentStatus: varchar(COLUMN_APPOINTMENT_STATUS, { length: 64 }).$type<AppointmentStatus>().notNull().default(AppointmentStatus.PENDING_USER_CONFIRMATION),
     rejectionReason: varchar(COLUMN_REJECTION_REASON, { length: 4096 }),
-    paymentMethod: paymentMethodEnum(COLUMN_PAYMENT_METHOD),
-    paymentStatus: paymentStatusEnum(COLUMN_PAYMENT_STATUS).notNull().default(PaymentStatus.UNPAID),
+    paymentMethod: varchar(COLUMN_PAYMENT_METHOD, { length: 64 }).$type<PaymentMethod>(),
+    paymentStatus: varchar(COLUMN_PAYMENT_STATUS, { length: 64 }).$type<PaymentStatus>().notNull().default(PaymentStatus.UNPAID),
     paidAtUTC: timestamp(COLUMN_PAID_AT_UTC, { withTimezone: true, mode: "string" }),
     createdAtUTC: timestamp(COLUMN_CREATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
     updatedAtUTC: timestamp(COLUMN_UPDATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
-    check("appointments_scheduled_start_before_end", sql`${table.scheduledStartAtUTC} < ${table.scheduledEndAtUTC}`),
-    check("appointments_actual_start_before_end", sql`${table.actualStartAtUTC} IS NULL OR ${table.actualEndAtUTC} IS NULL OR ${table.actualStartAtUTC} < ${table.actualEndAtUTC}`),
-    check("appointments_paid_at_check", sql`(${table.paymentStatus} = 'PAID' AND ${table.paidAtUTC} IS NOT NULL) OR (${table.paymentStatus} <> 'PAID' AND ${table.paidAtUTC} IS NULL)`),
+    check("appointments_scheduled_time_check", sql`${table.scheduledStartAtUTC} < ${table.scheduledEndAtUTC}`),
+    check("appointments_actual_time_check", sql`${table.actualStartAtUTC} IS NULL OR ${table.actualEndAtUTC} IS NULL OR ${table.actualStartAtUTC} < ${table.actualEndAtUTC}`),
+    check("appointments_paid_at_check", sql`${table.paymentStatus} = 'PAID' OR ${table.paidAtUTC} IS NULL`),
 ]);

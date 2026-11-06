@@ -1,4 +1,4 @@
-import { findAll, findByUuid, create, update, isNameFound, findCategoryIds, countAll } from "../repositories/service-category.repository";
+import { findAll, findByUuid, create, update, isNameFound, findCategoryIds, countAll, findPictureIdByUuid } from "../repositories/service-category.repository";
 import { NotFoundError } from "../errors/not-found.error";
 import { BadRequestError } from "../errors/bad-request.error";
 import { ConflictError } from "../errors/conflict.error";
@@ -29,6 +29,10 @@ export async function createServiceCategory(category: CreateServiceCategory): Pr
         throw new BadRequestError();
     }
     return result;
+}
+
+export async function getServiceCategoryPictureIdByUuid(uuid: string): Promise<string | undefined> {
+    return await findPictureIdByUuid(uuid);
 }
 
 export async function updateServiceCategory(category: UpdateServiceCategory): Promise<ServiceCategory> {

@@ -2,14 +2,13 @@ import { getRooms, getRoom, updateRoom, createRoom, getNumberOfRooms, } from "..
 import { type Request, type Response, } from "express";
 import { CreateRoom, Room, RoomResponse, QueryRoom, UpdateRoom, } from "../models/room.model";
 import { QueryResponse } from "../models/query.model";
-import { verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
+import { verifyOrganizationAccess, verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
 
 export async function handleGetOrganizationRooms(req: Request, res: Response){
     const query = req.validatedQuery as unknown as QueryRoom;
     query.offset = (query.page - 1) * query.limit;
-    const organizationUuid = req.user?.organizationUuid as string;
-    const userUuid=req.user?.uuid as string;
-    await verifyOrganizationOwnership(userUuid,organizationUuid);
+    const organizationUuid = (req.params.organizationUuid ?? req.user?.organizationUuid) as string;
+    await verifyOrganizationAccess(req, organizationUuid);
     query.filter = {
         ...query.filter,
         organizationUuid,
@@ -22,7 +21,7 @@ export async function handleGetOrganizationRooms(req: Request, res: Response){
 
 export async function handleGetOrganizationRoom(req: Request, res: Response){
     const roomUuid = req.params.roomUuid as string
-    const organizationUuid=req.user?.organizationUuid as string;
+    const organizationUuid = (req.params.organizationUuid ?? req.user?.organizationUuid) as string;
     const userUuid=req.user?.uuid as string;
     const result: RoomResponse = await getRoom(roomUuid,organizationUuid,userUuid);
     return res.status(200).json(result);
@@ -33,6 +32,7 @@ export async function handleCreateOrganizationRoom(req: Request, res: Response){
     const room = req.body as CreateRoom;
     room.organizationUuid = req.params.organizationUuid as string;
     room.userUuid=req.user?.uuid as string;
+    await verifyOrganizationOwnership(room.userUuid, room.organizationUuid);
     const result: Room = await createRoom(room);
     return res.status(201).json(result);
 }
@@ -42,6 +42,7 @@ export async function handleUpdateOrganizationRoom(req: Request, res: Response) 
     room.uuid = req.params.roomUuid as string;
     room.organizationUuid = req.params.organizationUuid as string;
     room.userUuid = req.user?.uuid as string;
+    await verifyOrganizationOwnership(room.userUuid, room.organizationUuid);
     const result: Room = await updateRoom(room);
     return res.status(200).json(result);
 }

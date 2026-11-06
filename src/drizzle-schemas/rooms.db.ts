@@ -1,9 +1,9 @@
 import { pgTable, bigint, uuid, varchar, timestamp } from "drizzle-orm/pg-core";
 import {
     COLUMN_CREATED_AT_UTC, COLUMN_UPDATED_AT_UTC,
-    COLUMN_ORGANIZATION_ID, TABLE_NAME, COLUMN_USER_ID
+    COLUMN_ORGANIZATION_ID, TABLE_NAME, COLUMN_USER_ID, COLUMN_STATUS,
+    COLUMN_OCCUPANCY_STATUS
 } from "../databases/contracts/room.contract";
-import { activationStatusEnum, occupancyStatusEnum } from "./enums";
 import { organizationTable } from "./organizations.db";
 import { ActivationStatus } from "../models/enums/activation-status";
 import { RoomOccupancyStatus } from "../models/enums/room-occupancy-status";
@@ -19,8 +19,8 @@ export const roomTable = pgTable(TABLE_NAME, {
     organizationId: bigint(COLUMN_ORGANIZATION_ID, { mode: "number" }).notNull().references(() => organizationTable.id, { onUpdate: "cascade", onDelete: "cascade" }),
     createdAtUTC: timestamp(COLUMN_CREATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
     updatedAtUTC: timestamp(COLUMN_UPDATED_AT_UTC, { withTimezone: true }).notNull().defaultNow(),
-    status: activationStatusEnum().notNull().default(ActivationStatus.ACTIVE),
-    occupancyStatus: occupancyStatusEnum().notNull().default(RoomOccupancyStatus.AVAILABLE),
+    status: varchar(COLUMN_STATUS, { length: 8 }).$type<ActivationStatus>().notNull().default(ActivationStatus.ACTIVE),
+    occupancyStatus: varchar(COLUMN_OCCUPANCY_STATUS, { length: 10 }).$type<RoomOccupancyStatus>().notNull().default(RoomOccupancyStatus.AVAILABLE),
 }, (table) => [
-    unique("rooms_organization_name_unique").on(table.organizationId, table.name),
+    unique("rooms_organization_id_name_key").on(table.organizationId, table.name),
 ]);

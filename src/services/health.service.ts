@@ -5,11 +5,12 @@ import cloudinary from '../config/cloudinary';
 import { transporter } from '../config/nodemailer';
 import { firebaseAdminApp } from '../config/firebase';
 import { getAuth } from 'firebase-admin/auth';
+import { HealthStatus } from '../models/enums/health-status';
 
 export async function nodeHealthCheck():Promise<ServiceHealthCheck> {
     const startTime=Date.now();
     return {
-        status:"healthy",
+        status:HealthStatus.HEALTHY,
         responseTimeInMs:Date.now()-startTime,
     } as ServiceHealthCheck
 }
@@ -19,12 +20,12 @@ export async function postgresHealthCheck():Promise<ServiceHealthCheck>{
     try{
         await drizzleConnection.execute(sql`SELECT 1`)
         return {
-            status:"healthy",
+            status:HealthStatus.HEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }catch(e){
         return {
-            status:"unhealthy",
+            status:HealthStatus.UNHEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }
@@ -35,12 +36,12 @@ export async function cloudinaryHealthCheck():Promise<ServiceHealthCheck>{
     try{
         await cloudinary.api.ping();
         return {
-            status:"healthy",
+            status:HealthStatus.HEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }catch(e){
         return {
-            status:"unhealthy",
+            status:HealthStatus.UNHEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }
@@ -51,12 +52,12 @@ export async function nodemailerHealthCheck():Promise<ServiceHealthCheck>{
     try{
         await transporter.verify();
         return {
-            status:"healthy",
+            status:HealthStatus.HEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }catch(e){
         return {
-            status:"unhealthy",
+            status:HealthStatus.UNHEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }
@@ -67,12 +68,12 @@ export async function firebaseHealthCheck():Promise<ServiceHealthCheck>{
     try{
         await getAuth(firebaseAdminApp).listUsers(1);
         return {
-            status:"healthy",
+            status:HealthStatus.HEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }catch(e){
         return {
-            status:"unhealthy",
+            status:HealthStatus.UNHEALTHY,
             responseTimeInMs:Date.now()-startTime,
         } as ServiceHealthCheck
     }

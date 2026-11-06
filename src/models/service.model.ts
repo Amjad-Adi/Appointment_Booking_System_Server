@@ -26,8 +26,11 @@ export interface ServiceResponse extends Service,DataResponses{
     organizationName:string,
     profilePicturePath:string,
     categories: ServiceCategorySummary[];
+    isFavourite: boolean;
+    averageRating: number;
+    reviewCount: number;
 }
 
 export type CreateService= z.infer<typeof createServiceSchema> & {organizationUuid:string,servicePicturePath?:string,servicePicturePathId?:string};
 export type UpdateService= z.infer<typeof updateServiceSchema> & {uuid:string,organizationUuid:string,userUuid:string,servicePicturePath?:string,servicePicturePathId?:string};
-export type QueryService=z.infer<typeof queryServiceSchema>&{offset:number}
+export type QueryService=z.infer<typeof queryServiceSchema>&{offset:number,userUuid?:string}

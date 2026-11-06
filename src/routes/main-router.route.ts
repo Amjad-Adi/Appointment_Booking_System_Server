@@ -7,6 +7,10 @@ import {serviceCategoryRouter} from "./service-category.route";
 import {publicRoomRoute} from "./room.route";
 import {appointmentRouter} from "./apppointment.route";
 import {publicInvitationsRouter} from "./invitation.route";
+import { favouriteRouter } from './favourite.route';
+import { reviewRouter } from './review.route';
+import { customerInvitationsRouter } from './customer-invitation.route';
+import { settingsRouter } from './settings.route';
 import { generalRateLimiter } from '../middlewares/rate-limiter-instances';
 import { healthRoute } from './health.route';
 
@@ -21,4 +25,8 @@ mainRouter.use("/services/categories",serviceCategoryRouter)
 mainRouter.use("/services",publicServiceRoute)
 mainRouter.use("/rooms",publicRoomRoute)
 mainRouter.use("/appointments", appointmentRouter);
+mainRouter.use("/favourites", favouriteRouter);
+mainRouter.use("/reviews", reviewRouter);
+mainRouter.use("/customer-invitations", customerInvitationsRouter);
+mainRouter.use("/settings", settingsRouter);
 mainRouter.use("/health", healthRoute);

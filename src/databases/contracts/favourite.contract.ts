@@ -1,0 +1,15 @@
+export const TABLE_NAME = "customer_favourite_service";
+export const ALIAS = "f";
+export const COLUMN_USER_ID = "customer_id";
+export const COLUMN_SERVICE_ID = "service_id";
+export const COLUMN_CREATED_AT_UTC = "created_at_utc";
+export const ALIAS_COLUMN_FAVOURITED_AT_UTC = `"favouritedAtUTC"`;
+export const ALIAS_IS_FAVOURITE = `"isFavourite"`;
+export const ALIAS_COLUMN_AVERAGE_RATING = `"averageRating"`;
+export const ALIAS_COLUMN_REVIEW_COUNT = `"reviewCount"`;
+export const ALIAS_TOTAL_NUMBER_OF_FAVOURITES = `"totalNumberOfFavourites"`;
+export const SORT_BY_NAME = "name";
+export const SORT_BY_PRICE = "price";
+export const SORT_BY_FAVOURITED_AT_UTC = "favouritedAtUTC";
+export const SORT_BY_CREATED_AT_UTC = SORT_BY_FAVOURITED_AT_UTC;
+export const SORT_BY_UPDATED_AT_UTC = SORT_BY_FAVOURITED_AT_UTC;

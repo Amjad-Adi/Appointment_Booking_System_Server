@@ -1,4 +1,6 @@
+import { HealthStatus } from './enums/health-status';
+
 export interface ServiceHealthCheck {
-    status: "healthy"|"unhealthy"
+    status: HealthStatus
     responseTimeInMs:number
 }

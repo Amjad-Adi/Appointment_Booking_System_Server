@@ -8,6 +8,7 @@ import {
     createInvitationSchema,
     queryInvitationSchema, updateInvitationByOrganizationSchema,
 } from "../middlewares/zod-schemas/invitations.schema";
+import { DataResponses } from './query.model';
 
 export interface Invitation {
     uuid: string;
@@ -19,7 +20,7 @@ export interface Invitation {
     invitationStatus: InvitationStatus;
 }
 
-export interface InvitationResponse extends Invitation {
+export interface InvitationResponse extends Invitation,DataResponses {
     senderUuid: string;
     senderFirstName: string;
     senderLastName: string;

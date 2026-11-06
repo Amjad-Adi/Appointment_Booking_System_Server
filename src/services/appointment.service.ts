@@ -22,9 +22,37 @@ import type {
 } from "../models/appointment.model";
 import { AppointmentTimeType } from "../models/enums/appointment-time-type";
 import { AppointmentStatus } from "../models/enums/appointment-status";
+import { ActivationStatus } from "../models/enums/activation-status";
 import { NotFoundError } from "../errors/not-found.error";
 import { BadRequestError } from "../errors/bad-request.error";
 import { verifyOrganizationOwnership } from "../middlewares/authorization/authorization";
+
+/*
+ * Organization-side lifecycle:
+ *
+ * PENDING_USER_CONFIRMATION -> PENDING_ORGANIZATION_APPROVAL
+ * PENDING_ORGANIZATION_APPROVAL -> CONFIRMED | REJECTED
+ * CONFIRMED -> IN_PROGRESS | NO_SHOW
+ * IN_PROGRESS -> COMPLETED
+ *
+ * REJECTED, CANCELLED, COMPLETED and NO_SHOW are terminal.
+ */
+const ORGANIZATION_APPOINTMENT_STATUS_TRANSITIONS: Partial<
+    Record<AppointmentStatus, readonly AppointmentStatus[]>
+> = {
+    [AppointmentStatus.PENDING_USER_CONFIRMATION]: [
+        AppointmentStatus.PENDING_ORGANIZATION_APPROVAL,
+    ],
+    [AppointmentStatus.PENDING_ORGANIZATION_APPROVAL]: [
+        AppointmentStatus.CONFIRMED,
+        AppointmentStatus.REJECTED,
+    ],
+    [AppointmentStatus.CONFIRMED]: [
+        AppointmentStatus.IN_PROGRESS,
+        AppointmentStatus.NO_SHOW,
+    ],
+    [AppointmentStatus.IN_PROGRESS]: [AppointmentStatus.COMPLETED],
+};
 
 export async function getUserAppointments(query: QueryAppointment) {
     return findAllUser(query);
@@ -65,6 +93,7 @@ async function validateRequestedSlot(
     workerUuid: string,
     timeType: AppointmentTimeType,
     scheduledStartAtUTC: string,
+    includeUserConflicts: boolean,
 ) {
     const startAtUTC = new Date(scheduledStartAtUTC);
 
@@ -72,14 +101,17 @@ async function validateRequestedSlot(
         throw new BadRequestError("Invalid appointment start time");
     }
 
-    const availableTimes = await getAvailableTimes({
-        organizationUuid,
-        userUuid,
-        serviceUuid,
-        workerUuid,
-        timeType,
-        fromAtUTC: startAtUTC.toISOString(),
-    });
+    const availableTimes = await getAvailableTimes(
+        {
+            organizationUuid,
+            userUuid,
+            serviceUuid,
+            workerUuid,
+            timeType,
+            fromAtUTC: startAtUTC.toISOString(),
+        },
+        includeUserConflicts,
+    );
 
     const isAvailable = availableTimes.workers.some(
         ({ worker, options }) =>
@@ -102,10 +134,18 @@ export async function createAppointmentService(appointment: CreateAppointment, u
         throw new NotFoundError("Service not found");
     }
 
+    if (service.status !== ActivationStatus.ACTIVE) {
+        throw new NotFoundError("Service not found");
+    }
+
     if (!roomId) {
         throw new NotFoundError("Room not found");
     }
 
+    /*
+     * A customer booking by themselves must not overlap another active
+     * appointment they already hold.
+     */
     await validateRequestedSlot(
         appointment.organizationUuid,
         userUuid,
@@ -113,6 +153,7 @@ export async function createAppointmentService(appointment: CreateAppointment, u
         appointment.workerUuid,
         appointment.timeType,
         appointment.scheduledStartAtUTC,
+        true,
     );
 
     const scheduledStartAtUTC = new Date(appointment.scheduledStartAtUTC);
@@ -150,10 +191,18 @@ export async function createOrganizationAppointmentService(appointment: CreateOr
         throw new NotFoundError("Service not found");
     }
 
+    if (service.status !== ActivationStatus.ACTIVE) {
+        throw new NotFoundError("Service not found");
+    }
+
     if (!roomId) {
         throw new NotFoundError("Room not found");
     }
 
+    /*
+     * Organization staff may assign a customer to more than one appointment,
+     * so existing appointments of that customer are not treated as conflicts.
+     */
     await validateRequestedSlot(
         appointment.organizationUuid,
         appointment.userUuid,
@@ -161,6 +210,7 @@ export async function createOrganizationAppointmentService(appointment: CreateOr
         appointment.workerUuid,
         AppointmentTimeType.WORKER,
         appointment.scheduledStartAtUTC,
+        false,
     );
 
     const scheduledStartAtUTC = new Date(appointment.scheduledStartAtUTC);
@@ -222,25 +272,53 @@ export async function updateAppointmentByOrganizationService(
     let approvalUserUuid: string | undefined;
 
     if (nextStatus !== undefined) {
-        if (
-            nextStatus === AppointmentStatus.PENDING_ORGANIZATION_APPROVAL &&
-            currentAppointment.appointmentStatus === AppointmentStatus.PENDING_USER_CONFIRMATION
-        ) {
-            expectedStatus = AppointmentStatus.PENDING_USER_CONFIRMATION;
-        } else if (
-            nextStatus === AppointmentStatus.CONFIRMED &&
-            currentAppointment.appointmentStatus === AppointmentStatus.PENDING_ORGANIZATION_APPROVAL
-        ) {
-            expectedStatus = AppointmentStatus.PENDING_ORGANIZATION_APPROVAL;
-            approvalUserUuid = userUuid;
-        } else if (
-            nextStatus === AppointmentStatus.REJECTED &&
-            currentAppointment.appointmentStatus === AppointmentStatus.PENDING_ORGANIZATION_APPROVAL
-        ) {
-            expectedStatus = AppointmentStatus.PENDING_ORGANIZATION_APPROVAL;
-            approvalUserUuid = userUuid;
-        } else {
+        const allowedTransitions = ORGANIZATION_APPOINTMENT_STATUS_TRANSITIONS[
+            currentAppointment.appointmentStatus
+        ] ?? [];
+
+        if (!allowedTransitions.includes(nextStatus)) {
             throw new BadRequestError("The appointment status does not allow this transition");
+        }
+
+        expectedStatus = currentAppointment.appointmentStatus;
+
+        if (
+            nextStatus === AppointmentStatus.CONFIRMED ||
+            nextStatus === AppointmentStatus.REJECTED
+        ) {
+            approvalUserUuid = userUuid;
+        }
+
+        /*
+         * Execution statuses can only be recorded once the appointment has
+         * reached its scheduled start.
+         */
+        if (
+            nextStatus === AppointmentStatus.IN_PROGRESS ||
+            nextStatus === AppointmentStatus.NO_SHOW ||
+            nextStatus === AppointmentStatus.COMPLETED
+        ) {
+            const scheduledStartAt = new Date(currentAppointment.scheduledStartAtUTC).getTime();
+
+            if (Date.now() < scheduledStartAt) {
+                throw new BadRequestError(
+                    "The appointment cannot change to this status before its scheduled start time",
+                );
+            }
+        }
+
+        /*
+         * Completing an appointment means it has fully finished, so it must
+         * run until its scheduled end before it can reach the terminal state.
+         */
+        if (nextStatus === AppointmentStatus.COMPLETED) {
+            const scheduledEndAt = new Date(currentAppointment.scheduledEndAtUTC).getTime();
+
+            if (Date.now() < scheduledEndAt) {
+                throw new BadRequestError(
+                    "The appointment cannot be completed before its scheduled end time",
+                );
+            }
         }
     }
 

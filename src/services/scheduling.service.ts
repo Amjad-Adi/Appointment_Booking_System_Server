@@ -10,6 +10,7 @@ import { AppointmentTimeType } from "../models/enums/appointment-time-type";
 import { ActivationStatus } from "../models/enums/activation-status";
 import { DayOfWeek } from "../models/enums/day-of-week";
 import { Role } from "../models/enums/roles";
+import { NotFoundError } from "../errors/not-found.error";
 
 const OPTIONS_PER_WORKER = 3;
 const SEARCH_DAYS = 30;
@@ -127,6 +128,14 @@ function mergeIntervals(intervals: SchedulingInterval[]): TimestampInterval[] {
     return merged;
 }
 
+/*
+ * Starts are generated one appointment-length apart around the time closest
+ * to the requested instant. That guarantees the nearest three absolute times
+ * even when they fall within the same day or hour. The interval edges are
+ * included as fallbacks for short free windows.
+ */
+const CANDIDATE_OFFSETS = [0, -1, 1, -2, 2, -3, 3];
+
 function findAvailableCandidates(workingStart: number, workingEnd: number, durationInMinutes: number, blockingIntervals: SchedulingInterval[],preferredStart: number,): Candidate[] {
     const duration = durationInMinutes * MINUTE_MS;
     if (duration <= 0 || workingEnd - workingStart < duration) {
@@ -147,12 +156,20 @@ function findAvailableCandidates(workingStart: number, workingEnd: number, durat
         candidates.push({ start, end });
     };
     const inspectFreeInterval = (freeStart: number, freeEnd: number) => {
-        if (freeEnd - freeStart < duration) {
+        const latestStart = freeEnd - duration;
+        if (latestStart < freeStart) {
             return;
         }
+        /*
+         * The start inside this free interval that is closest to the requested
+         * time, either before or after it.
+         */
+        const nearestStart = Math.max(freeStart, Math.min(preferredStart, latestStart),);
+        for (const offset of CANDIDATE_OFFSETS) {
+            addCandidate(nearestStart + offset * duration, freeEnd);
+        }
         addCandidate(freeStart, freeEnd);
-        const nearestStart = Math.max(freeStart, Math.min(preferredStart, freeEnd - duration),);
-        addCandidate(nearestStart, freeEnd);
+        addCandidate(latestStart, freeEnd);
     };
 
     let freeStart = workingStart;
@@ -172,11 +189,6 @@ function findAvailableCandidates(workingStart: number, workingEnd: number, durat
         }
     }
     inspectFreeInterval(freeStart, workingEnd);
-    candidates.sort((a, b) => {
-        const distanceA = Math.abs(a.start - preferredStart);
-        const distanceB = Math.abs(b.start - preferredStart);
-        return distanceA - distanceB || a.start - b.start;
-    });
     return candidates;
 }
 
@@ -186,18 +198,32 @@ function compareOptions(a: SchedulingOption, b: SchedulingOption, preferredStart
     return Math.abs(startA - preferredStart) - Math.abs(startB - preferredStart) || startA - startB;
 }
 
-export async function getAvailableTimes(request: SchedulingRequest): Promise<SchedulingResponse> {
+export async function getAvailableTimes(
+    request: SchedulingRequest,
+    /*
+     * Customers must never see overlapping slots for their own active
+     * appointments. Organization staff may intentionally double-book a
+     * customer, so they opt out of the customer conflict check.
+     */
+    includeUserConflicts = true,
+): Promise<SchedulingResponse> {
     const organizationUuid=request.organizationUuid;
     const fromAtUTC = request.fromAtUTC ? new Date(request.fromAtUTC) : new Date();
     if (Number.isNaN(fromAtUTC.getTime())) {
         throw new Error("Invalid fromAtUTC");
     }
     const organization = await getOrganization(organizationUuid);
+    if (organization.status !== ActivationStatus.ACTIVE) {
+        throw new NotFoundError("Organization");
+    }
     const organizationTimeZone = organization.location.timezone;
     if (!organizationTimeZone) {
         throw new Error("Organization timezone is required for scheduling");
     }
     const service = await getService(request.serviceUuid, organizationUuid);
+    if (service.status !== ActivationStatus.ACTIVE) {
+        throw new NotFoundError("Service");
+    }
     if (service.durationInMinutes <= 0) {
         throw new Error("Service duration must be greater than zero");
     }
@@ -295,7 +321,7 @@ export async function getAvailableTimes(request: SchedulingRequest): Promise<Sch
     const blockingIntervals = new Map<string, SchedulingInterval[]>();
     await Promise.all(
         workerRooms.map(async ({ worker, room }) => {
-            const intervals = await findBlockingIntervals(organizationUuid, worker.uuid, room.uuid, request.userUuid, new Date(searchStart).toISOString(), new Date(searchEnd).toISOString())
+            const intervals = await findBlockingIntervals(organizationUuid, worker.uuid, room.uuid, request.userUuid, new Date(searchStart).toISOString(), new Date(searchEnd).toISOString(), includeUserConflicts)
             blockingIntervals.set(`${worker.uuid}:${room.uuid}`, intervals,)}));
     const workerOptions = new Map<string, SchedulingOption[]>();
     for (const worker of workers) {

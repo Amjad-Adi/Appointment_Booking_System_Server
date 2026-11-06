@@ -5,7 +5,6 @@ import { organizationTable } from "../drizzle-schemas/organizations.db";
 import type {
     CreateWorkingHours,
     QueryWorkingHours,
-    UpdateWorkingHours,
     UpdateDayWorkingHours,
     WorkingHours,
     WorkingHoursResponse,
@@ -95,32 +94,6 @@ export async function updateDay(workingHours: UpdateDayWorkingHours): Promise<Wo
             .returning({uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime})
         return result;
     }catch (error) {
-        mapDatabaseError(error)
-    }
-}
-
-export async function updateDays(workingHours: UpdateWorkingHours): Promise<WorkingHours[]> {
-    try{
-        return await drizzleConnection.transaction(
-            async (client) => {
-                const updatedDays: WorkingHours[] = [];
-                for (const day of workingHours.days) {
-                    const [result] = await client
-                        .update(workingHoursTable)
-                        .set({
-                            ...(day.startTime !== undefined && { startTime: day.startTime}),
-                            ...(day.endTime !== undefined && { endTime: day.endTime})
-                        })
-                        .where(and(eq(workingHoursTable.organizationId, workingHours.organizationId), eq(workingHoursTable.dayOfWeek, day.dayOfWeek)))
-                        .returning({uuid: workingHoursTable.uuid, dayOfWeek: workingHoursTable.dayOfWeek, startTime: workingHoursTable.startTime, endTime: workingHoursTable.endTime})
-                    if (result === undefined) {
-                        return updatedDays;
-                    }
-                    updatedDays.push(result);
-                }
-                return updatedDays;
-            });
-    }catch (error){
         mapDatabaseError(error)
     }
 }

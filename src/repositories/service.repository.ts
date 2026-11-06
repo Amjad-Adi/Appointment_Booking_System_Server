@@ -65,7 +65,26 @@ export async function findAll(query: QueryService): Promise<ServiceResponse[]> {
     const sortOrder =query?.order?.toUpperCase() ?? Order.ASC;
     const { organizationUuid,maxPrice, minPrice, status, serviceCategoryUuid} = query.filter ?? {};
     return (await pool.query(
-    `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+    `SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE}::float8,${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+                    EXISTS (
+                        SELECT 1
+                        FROM customer_favourite_service favourite
+                        INNER JOIN users favourite_user ON favourite_user.id = favourite.customer_id
+                        WHERE favourite.service_id = ${ALIAS}.${COLUMN_ID}
+                          AND favourite_user.uuid = $9
+                    ) AS "isFavourite",
+                    COALESCE((
+                        SELECT ROUND(AVG(review.rating)::numeric, 2)::float8
+                        FROM reviews review
+                        INNER JOIN appointments appointment ON appointment.id = review.appointment_id
+                        WHERE appointment.service_id = ${ALIAS}.${COLUMN_ID}
+                    ), 0) AS "averageRating",
+                    (
+                        SELECT COUNT(*)
+                        FROM reviews review
+                        INNER JOIN appointments appointment ON appointment.id = review.appointment_id
+                        WHERE appointment.service_id = ${ALIAS}.${COLUMN_ID}
+                    ) AS "reviewCount",
                     COALESCE((
                              SELECT jsonb_agg(
                                         jsonb_build_object('${SERVICE_CATEGORY_COLUMN_UUID}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID},   '${SERVICE_CATEGORY_COLUMN_NAME}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME},'${SERVICE_CATEGORY_COLUMN_DESCRIPTION}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_DESCRIPTION},'${SERVICE_CATEGORY_ALIAS_COLUMN_PICTURE_PATH}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_PICTURE_PATH},'${SERVICE_CATEGORY_ALIAS_COLUMN_CREATED_AT_UTC}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_CREATED_AT_UTC},    '${SERVICE_CATEGORY_ALIAS_COLUMN_UPDATED_AT_UTC}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UPDATED_AT_UTC},  '${SERVICE_CATEGORY_COLUMN_STATUS}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_STATUS})
@@ -95,7 +114,7 @@ export async function findAll(query: QueryService): Promise<ServiceResponse[]> {
                                                     AND ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID} = $6))
                 ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
                 LIMIT $7
-                OFFSET $8`, [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid, query.limit, query.offset,])).rows;
+                OFFSET $8`, [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid, query.limit, query.offset, query.userUuid ?? null])).rows;
 }
 
 export async function countAll(query: QueryService): Promise<number> {
@@ -120,9 +139,28 @@ export async function countAll(query: QueryService): Promise<number> {
                 [organizationUuid, search, maxPrice, minPrice, status, serviceCategoryUuid])).rows[0].totalNumberOfServices);
 }
 
-export async function findByUuid(serviceUuid: string,organizationUuid:string|undefined): Promise<ServiceResponse | undefined> {
+export async function findByUuid(serviceUuid: string,organizationUuid:string|undefined,userUuid?:string): Promise<ServiceResponse | undefined> {
     return (await pool.query(
-`SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE},${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+`SELECT ${ALIAS}.${COLUMN_UUID},${ALIAS}.${COLUMN_NAME},${ALIAS}.${COLUMN_DESCRIPTION},${ALIAS}.${COLUMN_PRICE}::float8,${ALIAS}.${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} AS ${ORGANIZATION_ALIAS_COLUMN_UUID},${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_NAME} AS ${ORGANIZATION_ALIAS_COLUMN_NAME}, ${ORGANIZATION_ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ORGANIZATION_ALIAS_COLUMN_PROFILE_PICTURE_PATH},${ALIAS}.${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC}, ${ALIAS}.${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${ALIAS}.${COLUMN_STATUS},
+                EXISTS (
+                    SELECT 1
+                    FROM customer_favourite_service favourite
+                    INNER JOIN users favourite_user ON favourite_user.id = favourite.customer_id
+                    WHERE favourite.service_id = ${ALIAS}.${COLUMN_ID}
+                      AND favourite_user.uuid = $3
+                ) AS "isFavourite",
+                COALESCE((
+                    SELECT ROUND(AVG(review.rating)::numeric, 2)::float8
+                    FROM reviews review
+                    INNER JOIN appointments appointment ON appointment.id = review.appointment_id
+                    WHERE appointment.service_id = ${ALIAS}.${COLUMN_ID}
+                ), 0) AS "averageRating",
+                (
+                    SELECT COUNT(*)
+                    FROM reviews review
+                    INNER JOIN appointments appointment ON appointment.id = review.appointment_id
+                    WHERE appointment.service_id = ${ALIAS}.${COLUMN_ID}
+                ) AS "reviewCount",
                 COALESCE((
                         SELECT jsonb_agg(
                             jsonb_build_object('${SERVICE_CATEGORY_COLUMN_UUID}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UUID},   '${SERVICE_CATEGORY_COLUMN_NAME}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_NAME},'${SERVICE_CATEGORY_COLUMN_DESCRIPTION}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_DESCRIPTION},'${SERVICE_CATEGORY_ALIAS_COLUMN_PICTURE_PATH}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_PICTURE_PATH},'${SERVICE_CATEGORY_ALIAS_COLUMN_CREATED_AT_UTC}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_CREATED_AT_UTC},    '${SERVICE_CATEGORY_ALIAS_COLUMN_UPDATED_AT_UTC}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_UPDATED_AT_UTC},  '${SERVICE_CATEGORY_COLUMN_STATUS}', ${SERVICE_CATEGORY_ALIAS}.${SERVICE_CATEGORY_COLUMN_STATUS})      
@@ -140,7 +178,7 @@ export async function findByUuid(serviceUuid: string,organizationUuid:string|und
                 ON ${ALIAS}.${COLUMN_ORGANIZATION_ID}= ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
                 WHERE ${ALIAS}.${COLUMN_UUID} = $1
                 AND ($2::UUID IS NULL OR ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $2)`,
-            [serviceUuid,organizationUuid])).rows[0];
+            [serviceUuid,organizationUuid,userUuid ?? null])).rows[0];
 }
 
 export async function isNameFound(organizationUuid:string,name:string):Promise<boolean>{
@@ -159,7 +197,7 @@ export async function create(service: CreateService):Promise<Service> {
              SELECT $1,$2,$3,$4,$5,$6,${ORGANIZATION_COLUMN_ID}
              FROM ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
              WHERE ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID}=$7
-             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE}::float8,${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
             [service.name, service.description,service.price,service.durationInMinutes,service.servicePicturePath,service.servicePicturePathId,service.organizationUuid])).rows[0];
     }catch (error) {
         mapDatabaseError(error);
@@ -182,8 +220,8 @@ export async function update(service: UpdateService):Promise<Service> {
              AND ${COLUMN_ORGANIZATION_ID} = (
                  SELECT ${ORGANIZATION_COLUMN_ID}
                  FROM ${ORGANIZATION_TABLE_NAME}
-                 WHERE ${ORGANIZATION_COLUMN_UUID} = $7)
-             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE},${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
+                 WHERE ${ORGANIZATION_COLUMN_UUID} = $9)
+             RETURNING ${COLUMN_UUID},${COLUMN_NAME},${COLUMN_DESCRIPTION},${COLUMN_PRICE}::float8,${COLUMN_DURATION_IN_MINUTES} AS ${ALIAS_COLUMN_DURATION_IN_MINUTES},${COLUMN_PICTURE_PATH} AS ${ALIAS_COLUMN_PICTURE_PATH},${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},${COLUMN_UPDATED_AT_UTC} AS ${ALIAS_COLUMN_UPDATED_AT_UTC},${COLUMN_STATUS}`,
             [service.name, service.description, service.price,service.durationInMinutes,service.servicePicturePath,service.servicePicturePathId,service.status,service.uuid,service.organizationUuid])).rows[0];
     }catch(err){
         mapDatabaseError(err)

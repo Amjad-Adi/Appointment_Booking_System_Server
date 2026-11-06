@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.appointmentStatusEnum = exports.paymentMethodEnum = exports.dayOfWeekEnum = exports.timeBlockStatusEnum = exports.occupancyStatusEnum = exports.roleEnum = exports.activationStatusEnum = void 0;
+const pg_core_1 = require("drizzle-orm/pg-core");
+const activation_status_js_1 = require("../models/enums/activation-status.js");
+const roles_js_1 = require("../models/enums/roles.js");
+const room_occupancy_status_js_1 = require("../models/enums/room-occupancy-status.js");
+const time_block_status_js_1 = require("../models/enums/time-block-status.js");
+const day_of_week_js_1 = require("../models/enums/day-of-week.js");
+const payment_method_js_1 = require("../models/enums/payment-method.js");
+const appointment_status_js_1 = require("../models/enums/appointment-status.js");
+exports.activationStatusEnum = (0, pg_core_1.pgEnum)("status", Object.values(activation_status_js_1.ActivationStatus));
+exports.roleEnum = (0, pg_core_1.pgEnum)("role", Object.values(roles_js_1.Role));
+exports.occupancyStatusEnum = (0, pg_core_1.pgEnum)("occupancy_status", Object.values(room_occupancy_status_js_1.RoomOccupancyStatus));
+exports.timeBlockStatusEnum = (0, pg_core_1.pgEnum)("request_status", Object.values(time_block_status_js_1.TimeBlockStatus));
+exports.dayOfWeekEnum = (0, pg_core_1.pgEnum)("day_of_week", Object.values(day_of_week_js_1.DayOfWeek));
+exports.paymentMethodEnum = (0, pg_core_1.pgEnum)("payment_method", Object.values(payment_method_js_1.PaymentMethod));
+exports.appointmentStatusEnum = (0, pg_core_1.pgEnum)("appointment_status", Object.values(appointment_status_js_1.AppointmentStatus));

@@ -10,6 +10,34 @@ import {
 
 import { DayOfWeek } from '../../models/enums/day-of-week';
 
+function parseTimeToMinutes(value: string): number | null {
+    const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
+
+    if (!match) {
+        return null;
+    }
+
+    const hours = Number(match[1]);
+    const minutes = Number(match[2]);
+
+    if (hours > 23 || minutes > 59) {
+        return null;
+    }
+
+    return hours * 60 + minutes;
+}
+
+function isEndAfterStart(startTime: string, endTime: string): boolean {
+    const startMinutes = parseTimeToMinutes(startTime);
+    const endMinutes = parseTimeToMinutes(endTime);
+
+    if (startMinutes === null || endMinutes === null) {
+        return true;
+    }
+
+    return endMinutes > startMinutes;
+}
+
 export const updateDayWorkingHoursSchema = z.object({
     startTime: z.iso.time({ precision: -1, error: 'Start time must be a valid time'}).nullable(),
     endTime: z.iso.time({ precision: -1, error: 'End time must be a valid time'}).nullable(),
@@ -36,7 +64,7 @@ export const updateDayWorkingHoursSchema = z.object({
         }
         return;
     }
-    if (startIsSet && endIsSet && startTime >= endTime) {
+    if (startIsSet && endIsSet && !isEndAfterStart(startTime, endTime)) {
         ctx.addIssue({
             code: 'custom',
             path: ['endTime'],
@@ -45,24 +73,6 @@ export const updateDayWorkingHoursSchema = z.object({
     }
 });
 
-const updateWorkingHours = updateDayWorkingHoursSchema.extend({
-    dayOfWeek: z.enum(DayOfWeek, { error: 'Day of week is required'})
-}).strict()
-
-
-export const updateWorkingHoursSchema = z.object({
-    days: z.array(updateWorkingHours).min(1, { error: 'At least one working-hours day is required'}).max(7, { error: 'A maximum of 7 working-hours days can be updated'})
-}).strict().superRefine((data, ctx) => {
-    const uniqueDays = new Set(data.days.map(day => day.dayOfWeek));
-    if (uniqueDays.size !== data.days.length) {
-        ctx.addIssue({
-            code: 'custom',
-            path: ['days'],
-            message:
-                'Each day of the week can only be included once',
-        });
-    }
-});
 
 export const workingHoursFilterSchema = z.object({
     organizationUuid: z.uuid({ error: 'Invalid organization UUID'}).optional(),

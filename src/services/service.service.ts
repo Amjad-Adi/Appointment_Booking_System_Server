@@ -15,8 +15,8 @@ export async function getNumberOfServices(query:QueryService):Promise<number>{
     return (await countAll(query))
 }
 
-export async function getService(serviceUuid:string,organizationUuid:string|undefined):Promise<ServiceResponse>{
-    const result:ServiceResponse | undefined= await findByUuid(serviceUuid,organizationUuid)
+export async function getService(serviceUuid:string,organizationUuid:string|undefined,userUuid?:string):Promise<ServiceResponse>{
+    const result:ServiceResponse | undefined= await findByUuid(serviceUuid,organizationUuid,userUuid)
     if(result===undefined){
         throw new NotFoundError("Service");
     }
@@ -31,12 +31,8 @@ export async function getServiceIdByUuid(serviceUuid:string,organizationUuid:str
     return result
 }
 
-export async function getServicePictureIdByUuid(serviceUuid:string):Promise<string>{
-    const result:string|undefined= await findPictureIdByUuid(serviceUuid)
-    if(result===undefined){
-        throw new NotFoundError("Service");
-    }
-    return result
+export async function getServicePictureIdByUuid(serviceUuid:string):Promise<string|undefined>{
+    return await findPictureIdByUuid(serviceUuid)
 }
 
 export function createService(service:CreateService):Promise<Service>{

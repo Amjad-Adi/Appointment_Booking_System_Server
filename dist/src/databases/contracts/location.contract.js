@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALIAS = exports.ALIAS_LATITUDE = exports.ALIAS_LONGITUDE = exports.ALIAS_COLUMN_NAME = exports.ALIAS_COLUMN_UPDATED_AT_UTC = exports.COLUMN_TIMEZONE = exports.ALIAS_COLUMN_CREATED_AT_UTC = exports.COLUMN_UPDATED_AT_UTC = exports.COLUMN_CREATED_AT_UTC = exports.COLUMN_LOCATION_ON_MAP = exports.COLUMN_NAME = exports.COLUMN_ID = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "locations";
+exports.COLUMN_ID = "id";
+exports.COLUMN_NAME = "name";
+exports.COLUMN_LOCATION_ON_MAP = "location_on_map";
+exports.COLUMN_CREATED_AT_UTC = "created_at_utc";
+exports.COLUMN_UPDATED_AT_UTC = "updated_at_utc";
+exports.ALIAS_COLUMN_CREATED_AT_UTC = `"locationCreatedAtUTC"`; //Postgre lowers unquoted "" uppercase words ;
+exports.COLUMN_TIMEZONE = "timezone";
+exports.ALIAS_COLUMN_UPDATED_AT_UTC = `"locationUpdatedAtUTC"`;
+exports.ALIAS_COLUMN_NAME = `"locationName"`;
+exports.ALIAS_LONGITUDE = "longitude";
+exports.ALIAS_LATITUDE = "latitude";
+exports.ALIAS = "l";

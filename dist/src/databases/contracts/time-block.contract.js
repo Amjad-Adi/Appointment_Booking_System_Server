@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SORT_BY_REQUEST_STATUS = exports.SORT_BY_RESPONDED_AT_UTC = exports.SORT_BY_REQUESTED_AT_UTC = exports.SORT_BY_END_AT_UTC = exports.SORT_BY_START_AT_UTC = exports.COLUMN_ORGANIZATION_ID = exports.COLUMN_REQUEST_STATUS = exports.COLUMN_RESPONDED_AT_UTC = exports.COLUMN_REQUESTED_AT_UTC = exports.COLUMN_RESPOND_USER_ID = exports.COLUMN_REQUEST_USER_ID = exports.COLUMN_END_AT_UTC = exports.COLUMN_START_AT_UTC = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "time_block";
+exports.COLUMN_START_AT_UTC = "start_at_utc";
+exports.COLUMN_END_AT_UTC = "end_at_utc";
+exports.COLUMN_REQUEST_USER_ID = "request_user_id";
+exports.COLUMN_RESPOND_USER_ID = "respond_user_id";
+exports.COLUMN_REQUESTED_AT_UTC = "requested_at_utc";
+exports.COLUMN_RESPONDED_AT_UTC = "responded_at_utc";
+exports.COLUMN_REQUEST_STATUS = "request_status";
+exports.COLUMN_ORGANIZATION_ID = "organization_id";
+exports.SORT_BY_START_AT_UTC = "startAtUTC";
+exports.SORT_BY_END_AT_UTC = "endAtUTC";
+exports.SORT_BY_REQUESTED_AT_UTC = "requestedAtUTC";
+exports.SORT_BY_RESPONDED_AT_UTC = "respondedAtUTC";
+exports.SORT_BY_REQUEST_STATUS = "requestStatus";

@@ -27,7 +27,7 @@ export const updateUserSchema = z.object({
     firstName: z.string().trim().nonempty({ error: 'First Name is required'}).max(64, { error: 'First Name must be at most 64 characters'}).optional(),
     lastName: z.string().trim().nonempty({ error: 'Last Name is required'}).max(64, { error: 'Last Name must be at most 64 characters'}).optional(),
     language: z.string().trim().length(2, { error: 'Language must be a 2-character code'}).optional(),
-}).strict().refine((data)=>(Object.keys(data).length !== 0),{ message: "At least one field must be provided"});
+}).strict();
 
 
 export const updateUserPasswordSchema = z.object({
@@ -42,7 +42,7 @@ export const loginUserSchema = z.object({
 export const updateUserByAdminSchema = z.object({
         role: z.enum(Role, { error: 'Invalid user role'}).optional(),
         status: z.enum(ActivationStatus, { error: 'Invalid activation status'}).optional(),
-}).strict().refine((data)=>(Object.keys(data).length !== 0),{ message: "At least one field must be provided"});
+}).strict();
 
 export const userFilterSchema = z.object({
         organizationUuid: z.uuid({ error: 'Invalid organization UUID'}).optional(),
@@ -54,4 +54,9 @@ export const queryUserSchema = querySchema.extend({
         search: z.string().trim().nonempty({ error: 'Search cannot be empty', }).max(320, { error: 'Search must be at most 320 characters' }).optional(),
         filter: userFilterSchema.optional(),
         sortBy: z.enum([SORT_BY_NAME, SORT_BY_CREATED_AT_UTC,SORT_BY_UPDATED_AT_UTC], { error: 'Invalid sort field'}).optional(),
+}).strict();
+
+export const queryOrganizationCustomerSchema = querySchema.extend({
+        search: z.string().trim().max(320, { error: 'Search must be at most 320 characters' }).optional(),
+        sortBy: z.enum([SORT_BY_NAME, SORT_BY_CREATED_AT_UTC], { error: 'Invalid sort field'}).optional(),
 }).strict();

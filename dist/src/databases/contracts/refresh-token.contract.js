@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALIAS_COLUMN_TOKEN_HASH = exports.ALIAS_COLUMN_USER_ID = exports.ALIAS_COLUMN_REVOKED_AT_UTC = exports.ALIAS_COLUMN_EXPIRES_AT_UTC = exports.ALIAS_COLUMN_CREATED_AT_UTC = exports.ALIAS = exports.COLUMN_REVOKED_AT_UTC = exports.COLUMN_REVOKED = exports.COLUMN_EXPIRES_AT_UTC = exports.COLUMN_CREATED_AT_UTC = exports.COLUMN_TOKEN_HASH = exports.COLUMN_USER_ID = exports.COLUMN_ID = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "refresh_tokens";
+exports.COLUMN_ID = "id";
+exports.COLUMN_USER_ID = "user_id";
+exports.COLUMN_TOKEN_HASH = "token_hash";
+exports.COLUMN_CREATED_AT_UTC = "created_at_utc";
+exports.COLUMN_EXPIRES_AT_UTC = "expires_at_utc";
+exports.COLUMN_REVOKED = "revoked";
+exports.COLUMN_REVOKED_AT_UTC = "revoked_at_utc";
+exports.ALIAS = "re";
+exports.ALIAS_COLUMN_CREATED_AT_UTC = `"createdAtUTC"`;
+exports.ALIAS_COLUMN_EXPIRES_AT_UTC = `"expiresAtUTC"`;
+exports.ALIAS_COLUMN_REVOKED_AT_UTC = `"revokedAtUTC"`;
+exports.ALIAS_COLUMN_USER_ID = `"userId"`;
+exports.ALIAS_COLUMN_TOKEN_HASH = `"tokenHash"`;

@@ -2,7 +2,7 @@ import express from "express";
 import { validateBody, validateParameter, validateQuery, } from "../middlewares/validaiton";
 import { createInvitationSchema, queryInvitationSchema, acceptInvitationSchema,updateInvitationByOrganizationSchema } from "../middlewares/zod-schemas/invitations.schema";
 import { validateUuid } from "../middlewares/zod-schemas/parameters.schema";
-import { handleAcceptUserInvitation, handleCreateOrganizationInvitation, handleGetOrganizationInvitation, handleGetOrganizationInvitations, handleUpdateOrganizationInvitation, } from "../controllers/invitation.controller";
+import { handleAcceptUserInvitation, handleCreateOrganizationInvitation, handleGetOrganizationInvitation, handleGetOrganizationInvitations, handleGetPublicInvitation, handleUpdateOrganizationInvitation, } from "../controllers/invitation.controller";
 import { CREATE_ORGANIZATION_INVITATIONS, READ_ORGANIZATION_INVITATIONS, UPDATE_ORGANIZATION_INVITATIONS, } from "../permissions/permissions";
 import { authorize } from "../middlewares/authorization/authorization";
 import { authenticateToken } from "../controllers/authentication/jwt.authentication.controller";
@@ -19,5 +19,7 @@ organizationInvitationsRouter.route("/:invitationUuid")
     .patch(authenticateToken, authorize(UPDATE_ORGANIZATION_INVITATIONS), validateParameter(validateUuid, "invitationUuid"), validateBody(updateInvitationByOrganizationSchema), handleUpdateOrganizationInvitation);
 
 export const publicInvitationsRouter = express.Router();
+publicInvitationsRouter.route("/:token")
+    .get(handleGetPublicInvitation);
 publicInvitationsRouter.route("/:token/accept")
     .post(upload.single("profilePicture"), validateBody(acceptInvitationSchema), handleAcceptUserInvitation);

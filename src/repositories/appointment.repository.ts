@@ -6,10 +6,9 @@ import { organizationTable } from "../drizzle-schemas/organizations.db";
 import { usersTable } from "../drizzle-schemas/users.db";
 import { serviceTable } from "../drizzle-schemas/services.db";
 import { roomTable } from "../drizzle-schemas/rooms.db";
-import { UserAppointmentResponse, OrganizationAppointmentResponse, CreateAppointment, CreateOrganizationAppointment, QueryAppointment, UpdateAppointmentByUserValues, UpdateAppointmentByOrganizationValues, ACTIVE_APPOINTMENT_STATUSES } from "../models/appointment.model";
+import { UserAppointmentResponse, OrganizationAppointmentResponse, CreateAppointment, CreateOrganizationAppointment, QueryAppointment, UpdateAppointmentByUserValues, UpdateAppointmentByOrganizationValues, CANCELLABLE_BY_USER_APPOINTMENT_STATUSES } from "../models/appointment.model";
 import { AppointmentStatus } from "../models/enums/appointment-status";
 import { PaymentStatus } from "../models/enums/payment-status";
-import { PaymentMethod } from "../models/enums/payment-method";
 import { Order } from '../models/enums/order';
 
 const workerUsersTable = alias(usersTable, "worker");
@@ -26,6 +25,20 @@ function userIdSubquery(userUuid: string) {
 function approvalUserIdSubquery(approvalUserUuid: string) {
     return sql<number>`(select ${approvalUsersTable.id} from ${approvalUsersTable} where ${approvalUsersTable.uuid} = ${approvalUserUuid})`;
 }
+
+function serviceIdSubquery(serviceUuid: string, organizationUuid: string) {
+    return sql<number>`(select ${serviceTable.id} from ${serviceTable} where ${serviceTable.uuid} = ${serviceUuid} and ${serviceTable.organizationId} = ${organizationIdSubquery(organizationUuid)})`;
+}
+
+function workerIdSubquery(workerUuid: string, organizationUuid: string) {
+    return sql<number>`(select ${usersTable.id} from ${usersTable} where ${usersTable.uuid} = ${workerUuid} and ${usersTable.organizationId} = ${organizationIdSubquery(organizationUuid)})`;
+}
+
+function roomIdSubquery(roomId: number, organizationUuid: string) {
+    return sql<number>`(select ${roomTable.id} from ${roomTable} where ${roomTable.id} = ${roomId} and ${roomTable.organizationId} = ${organizationIdSubquery(organizationUuid)})`;
+}
+
+const DEFAULT_APPOINTMENT_COLOUR = "#2563EB";
 
 function buildConditions(query: QueryAppointment, includeOrganizationPrivateSearch: boolean) {
     const filter = query.filter;
@@ -137,7 +150,7 @@ function getOrganizationAppointmentQuery() {
             organizationUuid: organizationTable.uuid,
             organizationName: organizationTable.name,
             serviceUuid: serviceTable.uuid,
-            serviceName: serviceTable.name,
+            serviceName: sql<string>`coalesce(${serviceTable.name}, '')`,
             workerUuid: workerUsersTable.uuid,
             workerName: sql<string>`concat(${workerUsersTable.firstName}, ' ', ${workerUsersTable.lastName})`,
             roomUuid: roomTable.uuid,
@@ -180,7 +193,7 @@ function getUserAppointmentQuery() {
             organizationUuid: organizationTable.uuid,
             organizationName: organizationTable.name,
             serviceUuid: serviceTable.uuid,
-            serviceName: serviceTable.name,
+            serviceName: sql<string>`coalesce(${serviceTable.name}, '')`,
             workerUuid: workerUsersTable.uuid,
             workerName: sql<string>`concat(${workerUsersTable.firstName}, ' ', ${workerUsersTable.lastName})`,
             roomUuid: roomTable.uuid,
@@ -263,30 +276,21 @@ export async function createByUser(
 ): Promise<UserAppointmentResponse | undefined> {
     const [created] = await drizzleConnection
         .insert(appointmentTable)
-        .select(
-            drizzleConnection
-                .select({
-                    userId: usersTable.id,
-                    organizationId: organizationTable.id,
-                    serviceId: serviceTable.id,
-                    workerId: workerUsersTable.id,
-                    roomId: sql<number>`${appointment.roomId}`.as("roomId"),
-                    userTitle: sql<string | null>`${appointment.userTitle ?? null}`.as("userTitle"),
-                    userNote: sql<string | null>`${appointment.userNote ?? null}`.as("userNote"),
-                    userColour: sql<string>`${appointment.userColour ?? "#2563EB"}`.as("userColour"),
-                    scheduledStartAtUTC: sql<Date>`${appointment.scheduledStartAtUTC}`.as("scheduledStartAtUTC"),
-                    scheduledEndAtUTC: sql<Date>`${appointment.scheduledEndAtUTC}`.as("scheduledEndAtUTC"),
-                    paymentMethod: sql<PaymentMethod | null>`${appointment.paymentMethod ?? null}`.as("paymentMethod"),
-                    appointmentStatus: sql<AppointmentStatus>`${AppointmentStatus.PENDING_USER_CONFIRMATION}`.as("appointmentStatus"),
-                    paymentStatus: sql<PaymentStatus>`${PaymentStatus.UNPAID}`.as("paymentStatus"),
-                })
-                .from(organizationTable)
-                .innerJoin(usersTable, eq(usersTable.uuid, appointment.userUuid))
-                .innerJoin(serviceTable, eq(serviceTable.uuid, appointment.serviceUuid))
-                .innerJoin(workerUsersTable, eq(workerUsersTable.uuid, appointment.workerUuid))
-                .innerJoin(roomTable, eq(roomTable.id, appointment.roomId))
-                .where(eq(organizationTable.uuid, appointment.organizationUuid)),
-        )
+        .values({
+            userId: userIdSubquery(appointment.userUuid),
+            organizationId: organizationIdSubquery(appointment.organizationUuid),
+            serviceId: serviceIdSubquery(appointment.serviceUuid, appointment.organizationUuid),
+            workerId: workerIdSubquery(appointment.workerUuid, appointment.organizationUuid),
+            roomId: roomIdSubquery(appointment.roomId, appointment.organizationUuid),
+            userTitle: appointment.userTitle,
+            userNote: appointment.userNote ?? null,
+            userColour: appointment.userColour ?? DEFAULT_APPOINTMENT_COLOUR,
+            scheduledStartAtUTC: appointment.scheduledStartAtUTC.toISOString(),
+            scheduledEndAtUTC: appointment.scheduledEndAtUTC.toISOString(),
+            paymentMethod: appointment.paymentMethod ?? null,
+            appointmentStatus: AppointmentStatus.PENDING_USER_CONFIRMATION,
+            paymentStatus: PaymentStatus.UNPAID,
+        })
         .returning({ uuid: appointmentTable.uuid });
 
     return created ? findByUuidAndUser(created.uuid, appointment.userUuid) : undefined;
@@ -297,30 +301,21 @@ export async function createByOrganization(
 ): Promise<OrganizationAppointmentResponse | undefined> {
     const [created] = await drizzleConnection
         .insert(appointmentTable)
-        .select(
-            drizzleConnection
-                .select({
-                    userId: usersTable.id,
-                    organizationId: organizationTable.id,
-                    serviceId: serviceTable.id,
-                    workerId: workerUsersTable.id,
-                    roomId: sql<number>`${appointment.roomId}`.as("roomId"),
-                    organizationTitle: sql<string | null>`${appointment.organizationTitle ?? null}`.as("organizationTitle"),
-                    organizationNote: sql<string | null>`${appointment.organizationNote ?? null}`.as("organizationNote"),
-                    organizationColour: sql<string>`${appointment.organizationColour ?? "#2563EB"}`.as("organizationColour"),
-                    scheduledStartAtUTC: sql<Date>`${appointment.scheduledStartAtUTC}`.as("scheduledStartAtUTC"),
-                    scheduledEndAtUTC: sql<Date>`${appointment.scheduledEndAtUTC}`.as("scheduledEndAtUTC"),
-                    paymentMethod: sql<PaymentMethod | null>`${appointment.paymentMethod ?? null}`.as("paymentMethod"),
-                    appointmentStatus: sql<AppointmentStatus>`${AppointmentStatus.PENDING_USER_CONFIRMATION}`.as("appointmentStatus"),
-                    paymentStatus: sql<PaymentStatus>`${PaymentStatus.UNPAID}`.as("paymentStatus"),
-                })
-                .from(organizationTable)
-                .innerJoin(usersTable, eq(usersTable.uuid, appointment.userUuid))
-                .innerJoin(serviceTable, eq(serviceTable.uuid, appointment.serviceUuid))
-                .innerJoin(workerUsersTable, eq(workerUsersTable.uuid, appointment.workerUuid))
-                .innerJoin(roomTable, eq(roomTable.id, appointment.roomId))
-                .where(eq(organizationTable.uuid, appointment.organizationUuid)),
-        )
+        .values({
+            userId: userIdSubquery(appointment.userUuid),
+            organizationId: organizationIdSubquery(appointment.organizationUuid),
+            serviceId: serviceIdSubquery(appointment.serviceUuid, appointment.organizationUuid),
+            workerId: workerIdSubquery(appointment.workerUuid, appointment.organizationUuid),
+            roomId: roomIdSubquery(appointment.roomId, appointment.organizationUuid),
+            organizationTitle: appointment.organizationTitle,
+            organizationNote: appointment.organizationNote ?? null,
+            organizationColour: appointment.organizationColour ?? DEFAULT_APPOINTMENT_COLOUR,
+            scheduledStartAtUTC: appointment.scheduledStartAtUTC.toISOString(),
+            scheduledEndAtUTC: appointment.scheduledEndAtUTC.toISOString(),
+            paymentMethod: appointment.paymentMethod ?? null,
+            appointmentStatus: AppointmentStatus.PENDING_USER_CONFIRMATION,
+            paymentStatus: PaymentStatus.UNPAID,
+        })
         .returning({ uuid: appointmentTable.uuid });
 
     return created ? findByUuidAndOrganization(created.uuid, appointment.organizationUuid) : undefined;
@@ -363,8 +358,10 @@ export async function updateByOrganization(
         .update(appointmentTable)
         .set({
             ...values,
-            ...(values.paymentStatus === PaymentStatus.PAID ? {
-                paidAtUTC: sql`COALESCE(${appointmentTable.paidAtUTC}, ${new Date().toISOString()})`,
+            ...(values.paymentStatus !== undefined ? {
+                paidAtUTC: values.paymentStatus === PaymentStatus.PAID
+                    ? sql`COALESCE(${appointmentTable.paidAtUTC}, ${new Date().toISOString()})`
+                    : null,
             } : {}),
             ...(approvalUserUuid ? { approvalUserId: approvalUserIdSubquery(approvalUserUuid) } : {}),
             updatedAtUTC: new Date(),
@@ -385,7 +382,7 @@ export async function cancelByUser(appointmentUuid: string, userUuid: string): P
     const [updated] = await drizzleConnection
         .update(appointmentTable)
         .set({ appointmentStatus: AppointmentStatus.CANCELLED, updatedAtUTC: new Date() })
-        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(appointmentTable.userId, userIdSubquery(userUuid)), inArray(appointmentTable.appointmentStatus, ACTIVE_APPOINTMENT_STATUSES)))
+        .where(and(eq(appointmentTable.uuid, appointmentUuid), eq(appointmentTable.userId, userIdSubquery(userUuid)), inArray(appointmentTable.appointmentStatus, CANCELLABLE_BY_USER_APPOINTMENT_STATUSES)))
         .returning({ uuid: appointmentTable.uuid });
 
     return updated ? findByUuidAndUser(updated.uuid, userUuid) : undefined;

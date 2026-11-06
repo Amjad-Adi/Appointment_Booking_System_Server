@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ALIAS_COLUMN_BLACKLISTED_AT_UTC = exports.ALIAS_COLUMN_EXPIRES_AT_UTC = exports.ALIAS = exports.COLUMN_REASON = exports.COLUMN_EXPIRES_AT_UTC = exports.COLUMN_BLACKLISTED_AT_UTC = exports.COLUMN_JTI = exports.COLUMN_ID = exports.TABLE_NAME = void 0;
+exports.TABLE_NAME = "blacklisted_tokens";
+exports.COLUMN_ID = "id";
+exports.COLUMN_JTI = "jti";
+exports.COLUMN_BLACKLISTED_AT_UTC = "blacklisted_at_utc";
+exports.COLUMN_EXPIRES_AT_UTC = "expires_at_utc";
+exports.COLUMN_REASON = "reason";
+exports.ALIAS = "b";
+exports.ALIAS_COLUMN_EXPIRES_AT_UTC = `"expiresAtUTC"`;
+exports.ALIAS_COLUMN_BLACKLISTED_AT_UTC = `"blacklistedAtUTC"`;

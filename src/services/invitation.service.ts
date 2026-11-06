@@ -3,10 +3,11 @@ import {
     UpdateInvitationByOrganization } from '../models/invitation.model';
 import { generateSecureToken } from '../utils/hash';
 import { verifyOrganizationOwnership } from '../middlewares/authorization/authorization';
-import { acceptInvitationByToken, countAll, create, findAll, findByUuid, update } from '../repositories/invitation.repository';
+import { acceptInvitationByToken, countAll, create, findAll, findByTokenHash, findByUuid, update } from '../repositories/invitation.repository';
 import { NotFoundError } from '../errors/not-found.error';
 import { ConflictError } from '../errors/conflict.error';
-import { getUserByEmail } from './user.service';
+import { findByEmail } from '../repositories/user.repository';
+import { generateHashToken } from '../utils/hash';
 
 export async function getInvitations(query: QueryInvitation) {
     return findAll(query);
@@ -18,7 +19,7 @@ export async function getNumberOfInvitations(query: QueryInvitation): Promise<nu
 
 export async function getInvitation(invitationUuid: string,organizationUuid: string,userUuid: string): Promise<InvitationResponse> {
     await verifyOrganizationOwnership(userUuid,organizationUuid);
-    const result = await findByUuid(organizationUuid,invitationUuid);
+    const result = await findByUuid(invitationUuid, organizationUuid);
     if (result === undefined) {
         throw new NotFoundError("Invitation");
     }
@@ -28,12 +29,20 @@ export async function getInvitation(invitationUuid: string,organizationUuid: str
 export async function createInvitation(invitation: CreateInvitation) {
     const { rawToken,tokenHash } = generateSecureToken();
     invitation.tokenHash = tokenHash;
-    const user=await getUserByEmail(invitation.recipientEmail);
-    if(user===undefined){
+    const user=await findByEmail(invitation.recipientEmail);
+    if(user!==undefined){
         throw new ConflictError("User is already registered");
     }
     const invitationResult = await create(invitation);
     return { invitationResult, rawToken};
+}
+
+export async function getInvitationByToken(rawToken: string): Promise<InvitationResponse> {
+    const invitation = await findByTokenHash(generateHashToken(rawToken));
+    if (!invitation) {
+        throw new NotFoundError("Invitation");
+    }
+    return invitation;
 }
 
 export async function updateInvitationByOrganization(invitation: UpdateInvitationByOrganization) {

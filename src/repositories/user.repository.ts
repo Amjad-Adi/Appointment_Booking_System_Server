@@ -2,7 +2,8 @@ import {
     QueryUser,
     UpdateCurrentUser,
     User,
-    UserResponse, CreateUser, UpdateUserByAdmin, UpdateUser,
+    UserResponse, CreateUser, UpdateUserByAdmin, UpdateUser, OrganizationCustomer,
+    QueryOrganizationCustomer,
 } from "../models/user.model"
 import {pool} from "../databases/postgres-connection"
 import {
@@ -24,7 +25,7 @@ import {
     ALIAS_COLUMN_UPDATED_AT_UTC,
     ALIAS_COLUMN_PROFILE_PICTURE_PATH,//Without alias names not compatible with JSON
     COLUMN_ORGANIZATION_ID, COLUMN_ID, ALIAS, ALIAS_TOTAL_NUMBER_OF_USERS, SORT_BY_NAME, SORT_BY_CREATED_AT_UTC,
-    SORT_BY_UPDATED_AT_UTC, COLUMN_PROFILE_PICTURE_ID
+    SORT_BY_UPDATED_AT_UTC, COLUMN_PROFILE_PICTURE_ID, ALIAS_COLUMN_PROFILE_PICTURE_ID
 }
     from "../databases/contracts/user.contract"
 import {PoolClient} from "pg";
@@ -37,7 +38,6 @@ import {
 } from "../databases/contracts/organization.contract"
 import {Order} from "../models/enums/order";
 import { mapDatabaseError } from '../utils/map/map-database-error';
-import { ALIAS_COLUMN_PICTURE_ID, COLUMN_PICTURE_ID } from '../databases/contracts/service.contract';
 
 export async function findAll(query:QueryUser):Promise<UserResponse[]>{
     const search=query.search?`%${query.search}%`: null
@@ -82,6 +82,83 @@ export async function countAll(query:QueryUser):Promise<number>{
         [search,  role,status,organizationUuid])).rows[0].totalNumberOfUsers)
 }
 
+
+export async function findOrganizationCustomers(
+    organizationUuid: string,
+    query: QueryOrganizationCustomer,
+): Promise<OrganizationCustomer[]> {
+    const search = query.search ? `%${query.search}%` : null;
+    const sortColumnsDefinition = {
+        [SORT_BY_NAME]: `${ALIAS}.${COLUMN_FIRST_NAME}||' '||${ALIAS}.${COLUMN_LAST_NAME}`,
+        [SORT_BY_CREATED_AT_UTC]: `${ALIAS}.${COLUMN_CREATED_AT_UTC}`,
+    };
+    const sortColumn = sortColumnsDefinition[query.sortBy ?? SORT_BY_NAME];
+    const sortOrder = query.order?.toUpperCase() ?? Order.ASC;
+
+    return (await pool.query(
+        `SELECT ${ALIAS}.${COLUMN_UUID},
+                ${ALIAS}.${COLUMN_FIRST_NAME} AS ${ALIAS_COLUMN_FIRST_NAME},
+                ${ALIAS}.${COLUMN_LAST_NAME} AS ${ALIAS_COLUMN_LAST_NAME},
+                ${ALIAS}.${COLUMN_EMAIL},
+                ${ALIAS}.${COLUMN_PROFILE_PICTURE_PATH} AS ${ALIAS_COLUMN_PROFILE_PICTURE_PATH},
+                ${ALIAS}.${COLUMN_STATUS},
+                ${ALIAS}.${COLUMN_CREATED_AT_UTC} AS ${ALIAS_COLUMN_CREATED_AT_UTC},
+                (
+                    EXISTS (
+                        SELECT 1
+                        FROM organization_customers organization_customer
+                        WHERE organization_customer.organization_id = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                          AND organization_customer.customer_id = ${ALIAS}.${COLUMN_ID}
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM appointments appointment
+                        WHERE appointment.organization_id = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                          AND appointment.user_id = ${ALIAS}.${COLUMN_ID}
+                    )
+                ) AS "isLinked",
+                (
+                    SELECT COUNT(*)
+                    FROM appointments appointment
+                    WHERE appointment.organization_id = ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_ID}
+                      AND appointment.user_id = ${ALIAS}.${COLUMN_ID}
+                ) AS "appointmentsCount"
+         FROM ${TABLE_NAME} ${ALIAS}
+         INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+             ON ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1
+         WHERE ${ALIAS}.${COLUMN_ROLE} = 'CUSTOMER'
+           AND (
+                $2::TEXT IS NULL
+                OR ${ALIAS}.${COLUMN_FIRST_NAME} || ' ' || ${ALIAS}.${COLUMN_LAST_NAME} ILIKE $2
+                OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $2
+           )
+         ORDER BY ${sortColumn} ${sortOrder},${ALIAS}.${COLUMN_UUID}
+         LIMIT $3
+         OFFSET $4`,
+        [organizationUuid, search, query.limit, query.offset],
+    )).rows;
+}
+
+export async function countOrganizationCustomers(
+    organizationUuid: string,
+    query: QueryOrganizationCustomer,
+): Promise<number> {
+    const search = query.search ? `%${query.search}%` : null;
+
+    return Number((await pool.query(
+        `SELECT COUNT(*) AS "totalNumberOfOrganizationCustomers"
+         FROM ${TABLE_NAME} ${ALIAS}
+         INNER JOIN ${ORGANIZATION_TABLE_NAME} ${ORGANIZATION_ALIAS}
+             ON ${ORGANIZATION_ALIAS}.${ORGANIZATION_COLUMN_UUID} = $1
+         WHERE ${ALIAS}.${COLUMN_ROLE} = 'CUSTOMER'
+           AND (
+                $2::TEXT IS NULL
+                OR ${ALIAS}.${COLUMN_FIRST_NAME} || ' ' || ${ALIAS}.${COLUMN_LAST_NAME} ILIKE $2
+                OR ${ALIAS}.${COLUMN_EMAIL} ILIKE $2
+           )`,
+        [organizationUuid, search],
+    )).rows[0].totalNumberOfOrganizationCustomers);
+}
 
 export async function findByUid(uid:string):Promise<UserResponse>{
     return (await pool.query(
@@ -166,7 +243,7 @@ export async function update(user:UpdateUser):Promise<User> {
              SET ${COLUMN_FIRST_NAME}=COALESCE($1,${COLUMN_FIRST_NAME}),
                  ${COLUMN_LAST_NAME}=COALESCE($2,${COLUMN_LAST_NAME}),
                  ${COLUMN_PROFILE_PICTURE_PATH}=COALESCE($3,${COLUMN_PROFILE_PICTURE_PATH}),
-                 ${COLUMN_PICTURE_ID}=COALESCE($4,${COLUMN_PICTURE_ID}),
+                 ${COLUMN_PROFILE_PICTURE_ID}=COALESCE($4,${COLUMN_PROFILE_PICTURE_ID}),
                  ${COLUMN_LANGUAGE}=COALESCE($5,${COLUMN_LANGUAGE}),
                  ${COLUMN_ROLE}=COALESCE($6,${COLUMN_ROLE}),
                  ${COLUMN_STATUS}=COALESCE($7,${COLUMN_STATUS}),
@@ -189,12 +266,12 @@ export async function setUserOrganizationId(organizationId: number, userUuid:str
 }
 
 
-export async function findPictureIdByUuid(serviceUuid: string): Promise<string|undefined> {
+export async function findPictureIdByUuid(userUuid: string): Promise<string|undefined> {
     return (
         await pool.query(
-            `SELECT ${ALIAS}.${COLUMN_PICTURE_ID} AS ${ALIAS_COLUMN_PICTURE_ID}
+            `SELECT ${ALIAS}.${COLUMN_PROFILE_PICTURE_ID} AS ${ALIAS_COLUMN_PROFILE_PICTURE_ID}
                 FROM ${TABLE_NAME} ${ALIAS}
                 WHERE
                 ${ALIAS}.${COLUMN_UUID} = $1`,
-            [serviceUuid])).rows[0]?.[ALIAS_COLUMN_PICTURE_ID];
+            [userUuid])).rows[0]?.profilePictureId;
 }

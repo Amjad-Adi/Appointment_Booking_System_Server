@@ -15,12 +15,16 @@ import {
 } from '../models/time-block.model';
 import { QueryResponse } from '../models/query.model';
 import { Role } from '../models/enums/roles';
+import { verifyOrganizationAccess } from '../middlewares/authorization/authorization';
 
 export async function handleGetOrganizationTimeBlocks(req: Request, res: Response) {
     const query = req.validatedQuery as unknown as QueryTimeBlock;
-    query.offset = (query.page - 1) * query.limit;
-    const organizationUuid = req.user?.organizationUuid as string;
+    const organizationUuid = req.params.organizationUuid as string;
     const role=req.user?.role as Role
+
+    await verifyOrganizationAccess(req, organizationUuid);
+
+    query.offset = (query.page - 1) * query.limit;
     query.filter = {
         ...query.filter,
         organizationUuid,
@@ -37,6 +41,7 @@ export async function handleGetOrganizationTimeBlock(req: Request, res: Response
     const organizationUuid = req.params.organizationUuid as string;
     const timeBlockUuid = req.params.timeBlockUuid as string;
     const userUuid = req.user?.uuid as string;
+    await verifyOrganizationAccess(req, organizationUuid);
     const result: TimeBlockResponse = await getTimeBlock(timeBlockUuid, organizationUuid, userUuid);
     return res.status(200).json(result);
 }
@@ -44,6 +49,9 @@ export async function handleGetOrganizationTimeBlock(req: Request, res: Response
 export async function handleCreateOrganizationTimeBlock(req: Request, res: Response) {
     const organizationUuid = req.params.organizationUuid as string;
     const currentUserUuid = req.user?.uuid as string;
+
+    await verifyOrganizationAccess(req, organizationUuid);
+
     let timeBlock: CreateTimeBlock;
     if (req.user?.role === Role.CRM) {
         const timeBlockBody: CreateTimeBlockByCrm = req.body;
@@ -69,6 +77,7 @@ export async function handleUpdateOrganizationTimeBlock(req: Request, res: Respo
     timeBlock.uuid = req.params.timeBlockUuid as string;
     timeBlock.organizationUuid = req.params.organizationUuid as string;
     timeBlock.respondUserUuid = req.user?.uuid as string;
+    await verifyOrganizationAccess(req, timeBlock.organizationUuid);
     const result: TimeBlock = await updateTimeBlock(timeBlock);
     return res.status(200).json(result);
 }
